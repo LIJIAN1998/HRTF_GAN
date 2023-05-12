@@ -11,7 +11,7 @@ domain = 'magnitude_db'
 side = 'left'
 subject_ids= 'first'
 
-ds = SONICOMPlane(base_dir/'SONICOM', plane, domain, side, subject_ids=subject_ids)
+ds = SONICOMPlane(base_dir/'SONICOM', plane, domain, side)
 
 print("is a class of HRTFDataset? ", isinstance(ds, HRTFDataset))
 print("length of datset: ", len(ds))
