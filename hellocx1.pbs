@@ -6,6 +6,6 @@ anaconda-setup
 source activate hrtf_env
 
 cd $PBS_O_WORKDIR
-test.py
+python test.py
 
-source deactivate
+conda deactivate
