@@ -1,8 +1,12 @@
 from hrtfdata.planar import CIPICPlane, ARIPlane, ListenPlane, BiLiPlane, ITAPlane, HUTUBSPlane, SADIE2Plane, ThreeDThreeAPlane, CHEDARPlane, WidespreadPlane, SONICOMPlane
 from hrtfdata import HRTFDataset
 from hrtfdata.full import CIPIC, ARI, Listen, BiLi, ITA, HUTUBS, SADIE2, ThreeDThreeA, CHEDAR, Widespread, SONICOM
+from hrtfdata.torch import collate_dict_dataset
+from hrtfdata.planar import CIPICPlane, ARIPlane
+from torch.utils.data import DataLoader, ConcatDataset, Subset
 from pathlib import Path
 import matplotlib.pyplot as plt
+from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 import numpy as np
 
 base_dir = Path('/rds/general/user/jl2622/projects/sonicom/live/HRTF Datasets')
@@ -37,3 +41,7 @@ print("available subject ids: ", ds.available_subject_ids[:10])
 print("shape of a datapoint feature: ", ds[0]['features'].shape)
 print("num row, column angles:", len(ds.row_angles), len(ds.column_angles))
 print("row, column angles: ", ds.row_angles, ds.column_angles)
+print("radii: ", ds.radii)
+
+
+
