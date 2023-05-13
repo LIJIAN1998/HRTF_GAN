@@ -24,26 +24,33 @@ subject_ids= 'first'
 # p = ds[0]
 # print("keys of a datapoint: ", p.keys())
 
-domain = 'magnitude_db'
+domain = 'time'
 side = 'left'
-sonicom_ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, 
-         target_spec={'side': {}}, group_spec={'subject': {}})
-print("length of datset: ", len(sonicom_ds))
-p = sonicom_ds[0]
-print("keys of a datapoint: ", p.keys())
-print("target: ", sonicom_ds[0]['target'])
-print("group: ", sonicom_ds[0]['group'])
+side_options = ['left', 'right', 'both', 'both-left', 'both-right', 'None']
+for side in side_options:
+    sonicom_ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, 
+            target_spec={'side': {}}, group_spec={'subject': {}})
+    print("length of datset: ", len(sonicom_ds))
+    p = sonicom_ds[0]
+    print("keys of a datapoint: ", p.keys())
+    print("target: ", sonicom_ds[0]['target'])
+    print("group: ", sonicom_ds[0]['group'])
+    print("num row, column angles:", len(sonicom_ds.row_angles), len(sonicom_ds.column_angles))
+    print("row, column angles: ", sonicom_ds.row_angles, sonicom_ds.column_angles)
+    print("radii: ", sonicom_ds.radii)
+    print("---------------------------------------------------------------")
 
-ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, 
-             target_spec={'side': {}}, group_spec={'subject': {}}, subject_ids='random')
-print("number of random sample: ", len(ds))
-print("id of random sample: ", ds.subject_ids)
-print("available subject ids: ", ds.available_subject_ids[:10])
-print("shape of a datapoint feature: ", ds[0]['features'].shape)
-print("num row, column angles:", len(ds.row_angles), len(ds.column_angles))
-print("row, column angles: ", ds.row_angles, ds.column_angles)
-print("radii: ", ds.radii)
-
+# ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, 
+#              target_spec={'side': {}}, group_spec={'subject': {}}, subject_ids='random')
+# print("number of random sample: ", len(ds))
+# print("id of random sample: ", ds.subject_ids)
+# print("available subject ids: ", ds.available_subject_ids[:10])
+# print("shape of a datapoint feature: ", ds[0]['features'].shape)
+# print("num row, column angles:", len(ds.row_angles), len(ds.column_angles))
+# print("row, column angles: ", ds.row_angles, ds.column_angles)
+# print("radii: ", ds.radii)
+sonicom_ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': 'left', 'domain': domain}}, 
+            target_spec={'side': {}}, group_spec={'subject': {}})
 sonicom_loader = DataLoader(sonicom_ds, collate_fn=collate_dict_dataset)
 features, target = next(iter(sonicom_loader))
 print("data from data loader, shape: ", features.shape)
@@ -55,3 +62,5 @@ SHTransform = SphericalHarmonicsTransform(max_degree=10, row_angles=sonicom_ds.r
 
 sphericalHarmonics = SHTransform(features)
 print("spherical harmonics shape: ", sphericalHarmonics.shape)
+hrir = SHTransform.inverse(sphericalHarmonics)
+print("reverse SH transform: ", hrir.shape)
