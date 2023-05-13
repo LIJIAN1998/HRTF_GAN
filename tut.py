@@ -25,13 +25,13 @@ subject_ids= 'first'
 # print("keys of a datapoint: ", p.keys())
 
 domain = 'time'
-side_options = ['left', 'right', 'both', 'both-left', 'both-right', 'None']
+side_options = ['left', 'right', 'both', 'both-left', 'both-right', None]
 for side in side_options:
+    print("side: ", side)
     sonicom_ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, 
             target_spec={'side': {}}, group_spec={'subject': {}})
     print("length of datset: ", len(sonicom_ds))
     p = sonicom_ds[0]
-    print("keys of a datapoint: ", p.keys())
     print("target: ", sonicom_ds[0]['target'])
     print("group: ", sonicom_ds[0]['group'])
     print("num row, column angles:", len(sonicom_ds.row_angles), len(sonicom_ds.column_angles))
