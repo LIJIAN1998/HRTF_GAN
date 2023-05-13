@@ -26,15 +26,16 @@ subject_ids= 'first'
 
 domain = 'magnitude_db'
 side = 'left'
-ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, 
+sonicom_ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, 
          target_spec={'side': {}}, group_spec={'subject': {}})
-print("length of datset: ", len(ds))
-p = ds[0]
+print("length of datset: ", len(sonicom_ds))
+p = sonicom_ds[0]
 print("keys of a datapoint: ", p.keys())
-print("target: ", ds[0]['target'])
-print("group: ", ds[0]['group'])
+print("target: ", sonicom_ds[0]['target'])
+print("group: ", sonicom_ds[0]['group'])
 
-ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, target_spec={'side': {}}, group_spec={'subject': {}}, subject_ids='random')
+ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, 
+             target_spec={'side': {}}, group_spec={'subject': {}}, subject_ids='random')
 print("number of random sample: ", len(ds))
 print("id of random sample: ", ds.subject_ids)
 print("available subject ids: ", ds.available_subject_ids[:10])
@@ -43,5 +44,12 @@ print("num row, column angles:", len(ds.row_angles), len(ds.column_angles))
 print("row, column angles: ", ds.row_angles, ds.column_angles)
 print("radii: ", ds.radii)
 
+sonicom_loader = DataLoader(sonicom_ds, collate_fn=collate_dict_dataset)
+features, target = next(iter(sonicom_loader))
+print("data from data loader, shape: ", features.shape)
+print("target: ", target)
 
+mask = torch.ones(len(sonicom_ds.row_angles), len(sonicom_ds.column_angles))
+SHTransform = SphericalHarmonicsTransform(max_degree=10, row_angles=sonicom_ds.row_angles, column_angles=sonicom_ds.column_angles,
+                                          radii=sonicom_ds.radii, selection_mask=mask, coordinate_system='spherical')
 
