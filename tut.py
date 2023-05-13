@@ -25,7 +25,7 @@ subject_ids= 'first'
 # print("keys of a datapoint: ", p.keys())
 
 domain = 'time'
-side_options = ['left', 'right', 'both', 'both-left', 'both-right', None]
+side_options = ['left', 'right', 'both', 'both-left', 'both-right', 'none']
 for side in side_options:
     print("side: ", side)
     sonicom_ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': side, 'domain': domain}}, 
