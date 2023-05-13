@@ -61,8 +61,12 @@ mask = torch.ones(len(sonicom_ds.row_angles), len(sonicom_ds.column_angles), dty
 SHTransform = SphericalHarmonicsTransform(max_degree=10, row_angles=sonicom_ds.row_angles, column_angles=sonicom_ds.column_angles,
                                           radii=sonicom_ds.radii, selection_mask=mask, coordinate_system='spherical')
 
-sphericalHarmonics = SHTransform(features[0])
-print("spherical harmonics shape: ", sphericalHarmonics.shape)
+harmonics_shape, mask_shape, hrir_shape = SHTransform(features[0])
+print("harmonics: ", harmonics_shape)
+print("mask: ", mask_shape)
+print("hrir: ", hrir_shape)
+# sphericalHarmonics = SHTransform(features[0])
+# print("spherical harmonics shape: ", sphericalHarmonics.shape)
 print("finished")
 # hrir = SHTransform.inverse(sphericalHarmonics)
 # print("reverse SH transform: ", hrir.shape)

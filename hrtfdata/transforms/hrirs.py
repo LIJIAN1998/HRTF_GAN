@@ -348,8 +348,7 @@ class SphericalHarmonicsTransform:
 
 
     def __call__(self, hrirs):
-        print("mask shape: ", self._valid_mask.shape)
-        print("masked hrir: ",  hrirs[self._valid_mask].shape)
+        return self._harmonics.shape, self._valid_mask.shape, hrirs[self._valid_mask].data.shape
         return np.linalg.lstsq(self._harmonics, hrirs[self._valid_mask].data, rcond=None)[0]
 
 
