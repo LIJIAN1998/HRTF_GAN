@@ -65,7 +65,7 @@ features, target = next(iter(sonicom_loader))
 print("data from data loader, shape: ", features.shape)
 print("target: ", target)
 
-mask = torch.ones((1, len(sonicom_ds.row_angles), len(sonicom_ds.column_angles)), dtype=torch.int32)
+mask = torch.ones((len(sonicom_ds.row_angles), len(sonicom_ds.column_angles)), dtype=torch.int32)
 SHTransform = SphericalHarmonicsTransform(max_degree=10, row_angles=sonicom_ds.row_angles, column_angles=sonicom_ds.column_angles,
                                           radii=sonicom_ds.radii, selection_mask=mask, coordinate_system='spherical')
 
