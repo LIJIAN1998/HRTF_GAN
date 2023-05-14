@@ -76,6 +76,7 @@ SHTransform = SphericalHarmonicsTransform(max_degree=10, row_angles=sonicom_ds.r
 # print("masked hrir: ", masked_hrir_shape)
 sphericalHarmonics = SHTransform(features[0])
 print("spherical harmonics shape: ", sphericalHarmonics.shape)
+print("harmonics coef: ", sphericalHarmonics)
 # print("finished")
 # hrir = SHTransform.inverse(sphericalHarmonics)
 # print("reverse SH transform: ", hrir.shape)
