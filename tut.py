@@ -1,3 +1,7 @@
+import os
+cuda_devices = os.environ.get('CUDA_VISIBLE_DEVICES')
+print("cuda device: ", cuda_devices)
+
 import torch
 from hrtfdata.planar import CIPICPlane, ARIPlane, ListenPlane, BiLiPlane, ITAPlane, HUTUBSPlane, SADIE2Plane, ThreeDThreeAPlane, CHEDARPlane, WidespreadPlane, SONICOMPlane
 from hrtfdata import HRTFDataset
@@ -9,6 +13,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 import numpy as np
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print("device: ", device)
 
 base_dir = Path('/rds/general/user/jl2622/projects/sonicom/live/HRTF Datasets')
 
@@ -61,10 +68,11 @@ mask = torch.ones(len(sonicom_ds.row_angles), len(sonicom_ds.column_angles), dty
 SHTransform = SphericalHarmonicsTransform(max_degree=10, row_angles=sonicom_ds.row_angles, column_angles=sonicom_ds.column_angles,
                                           radii=sonicom_ds.radii, selection_mask=mask, coordinate_system='spherical')
 
-harmonics_shape, mask_shape, hrir_shape = SHTransform(features[0])
+harmonics_shape, mask_shape, hrir_shape, masked_hrir_shape = SHTransform(features[0])
 print("harmonics: ", harmonics_shape)
 print("mask: ", mask_shape)
 print("hrir: ", hrir_shape)
+print("masked hrir: ", masked_hrir_shape)
 # sphericalHarmonics = SHTransform(features[0])
 # print("spherical harmonics shape: ", sphericalHarmonics.shape)
 print("finished")
