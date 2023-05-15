@@ -75,7 +75,8 @@ SHTransform = SphericalHarmonicsTransform(max_degree=20, row_angles=sonicom_ds.r
 # print("mask: ", mask_shape)
 # print("hrir: ", hrir_shape)
 # print("masked hrir: ", masked_hrir_shape)
-sphericalHarmonics = SHTransform(features[0])
+valid_mask, sphericalHarmonics = SHTransform(features[0])
+print("valid mask: ", valid_mask)
 print("spherical harmonics shape: ", sphericalHarmonics.shape)
 print("harmonics coef: ", sphericalHarmonics)
 if np.all(sphericalHarmonics == 0):
