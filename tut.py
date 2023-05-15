@@ -63,10 +63,13 @@ sonicom_ds = SONICOM(base_dir / 'SONICOM',  feature_spec={'hrirs': {'side': 'lef
 sonicom_loader = DataLoader(sonicom_ds, collate_fn=collate_dict_dataset)
 features, target = next(iter(sonicom_loader))
 print("data from data loader, shape: ", features.shape)
+print("feature mask: ", sonicom_ds[0]['features'].mask.shape)
+m = np.all(np.ma.getmask(sonicom_ds[0]['features']), axis=3)
+print("np mask: ", m.shape)
 print("target: ", target)
 
 mask = torch.zeros((len(sonicom_ds.row_angles), len(sonicom_ds.column_angles), 1), dtype=bool)
-print("input mask: ", mask)
+# print("input mask: ", mask)
 SHTransform = SphericalHarmonicsTransform(max_degree=20, row_angles=sonicom_ds.row_angles, column_angles=sonicom_ds.column_angles,
                                           radii=sonicom_ds.radii, selection_mask=mask, coordinate_system='spherical')
 
@@ -78,7 +81,7 @@ SHTransform = SphericalHarmonicsTransform(max_degree=20, row_angles=sonicom_ds.r
 valid_mask, sphericalHarmonics = SHTransform(features[0])
 print("valid mask: ", valid_mask)
 print("spherical harmonics shape: ", sphericalHarmonics.shape)
-print("harmonics coef: ", sphericalHarmonics)
+# print("harmonics coef: ", sphericalHarmonics)
 if np.all(sphericalHarmonics == 0):
     print("all zero")
 else:
