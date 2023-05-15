@@ -64,6 +64,7 @@ sonicom_loader = DataLoader(sonicom_ds, collate_fn=collate_dict_dataset)
 features, target = next(iter(sonicom_loader))
 print("data from data loader, shape: ", features.shape)
 print("target: ", target)
+print("hrir data: ", features[0])
 
 mask = torch.ones((len(sonicom_ds.row_angles), len(sonicom_ds.column_angles), 1), dtype=bool)
 SHTransform = SphericalHarmonicsTransform(max_degree=20, row_angles=sonicom_ds.row_angles, column_angles=sonicom_ds.column_angles,
