@@ -19,9 +19,6 @@ np.random.seed(0)
 def main(config, mode):
     # Initialize Config
     data_dir = config.raw_hrtf_dir / config.dataset
-    print("raw path: ", config.raw_hrtf_dir)
-    print("dataset:", config.dataset)
-    print("data dir: ", data_dir)
     print(os.getcwd())
     print(config.dataset)
 
@@ -34,9 +31,8 @@ def main(config, mode):
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                               'side': 'left', 'domain': 'time'}}, subject_ids='first')
         # need to use protected member to get this data, no getters
-        print("ds mask:", ds[0]['features'].mask)
-        # cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
-        # generate_euclidean_cube(config, cs.get_sphere_coords(), edge_len=config.hrtf_size)
+        cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
+        generate_euclidean_cube(config, cs.get_sphere_coords(), edge_len=config.hrtf_size)
 
     print("finished")
 
