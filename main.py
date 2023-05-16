@@ -19,6 +19,7 @@ np.random.seed(0)
 def main(config, mode):
     # Initialize Config
     data_dir = config.raw_hrtf_dir / config.dataset
+    print("data dir: ", data_dir)
     print(os.getcwd())
     print(config.dataset)
 
