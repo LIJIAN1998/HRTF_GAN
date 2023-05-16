@@ -28,7 +28,7 @@ def main(config, mode):
     if mode == 'generate_projection':
         # Must be run in this mode once per dataset, finds barycentric coordinates for each point in the cubed sphere
         # No need to load the entire dataset in this case
-        ds = load_function(data_dir, features_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                               'side': 'left', 'domain': 'time'}}, subject_ids='first')
         # need to use protected member to get this data, no getters
         print("ds mask:", ds[0]['features'].mask)
