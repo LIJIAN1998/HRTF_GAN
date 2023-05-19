@@ -14,6 +14,9 @@ from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories
 
+
+from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
+
 PI_4 = np.pi / 4
 
 # Random seed to maintain reproducible results
@@ -120,10 +123,24 @@ def main(config, mode):
 
         train_prefetcher.reset()
         batch_data = train_prefetcher.next()
-        lr = batch_data["lr"]
+        lr = batch_data["lr"].to(device=device, memory_format=torch.contiguous_format,
+                                 non_blocking=True, dtype=torch.float)
         hr = batch_data["hr"]
         print("lr: ", type(lr), lr.shape)
         print("hr: ", type(hr), hr.shape)
+
+        pad = CubeSpherePadding2D(1)
+        x = pad(lr)
+        print("padding: ", x.shape)
+
+        nbins = config.nbins_hrtf
+        if config.merge_flag:
+            nbins = config.nbins_hrtf * 2
+
+        ngf = 512
+        conv = CubeSphereConv2D(nbins, ngf, (3, 3), (1, 1))
+        x = conv(x)
+        print("cube sphere conv: ", x.shape)
 
         # util.initialise_folders(config, overwrite=True)
         # train(config, train_prefetcher)
