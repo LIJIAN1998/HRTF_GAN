@@ -6,6 +6,10 @@ import numpy as np
 import importlib
 
 from config import Config
+from model.train import train
+from model.test import test
+from model.util import load_dataset
+from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories
@@ -105,7 +109,24 @@ def main(config, mode):
         mean_std_filename = config.mean_std_filename
         with open(mean_std_filename, "wb") as file:
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
-            
+
+    elif mode == 'train':
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        print("device: ", device)
+
+        # Trains the model, according to the parameters specified in Config
+        train_prefetcher, _ = load_dataset(config, mean=None, srd=None)
+        print("Loaded all datasets successfully.")
+
+        train_prefetcher.reset()
+        batch_data = train_prefetcher.next()
+        lr = batch_data["lr"]
+        hr = batch_data["hr"]
+        print("lr: ", type(lr), lr.shape)
+        print("hr: ", type(hr), hr.shape)
+
+        # util.initialise_folders(config, overwrite=True)
+        # train(config, train_prefetcher)
 
     print("finished")
 

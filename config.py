@@ -36,12 +36,12 @@ class Config:
             # HPC data dirs
             self.data_dirs_path = '/rds/general/user/jl2622/home/HRTF-projection'
             self.raw_hrtf_dir = Path('/rds/general/project/sonicom/live/HRTF Datasets')
-            # self.amt_dir = '/rds/general/user/aos13/home/HRTF-GANs-27Sep22-prep-for-publication/thirdParty'
+            self.amt_dir = '/rds/general/user/jl2622/home/amt/thirdParty'
         else:
             # local data dirs
             self.data_dirs_path = '/home/aos13/HRTF-GANs-27Sep22-prep-for-publication'
             self.raw_hrtf_dir = Path('/home/aos13/HRTF_datasets')
-            # self.amt_dir = '/home/aos13/AMT/amt_code'
+            self.amt_dir = '/home/aos13/AMT/amt_code'
 
         self.runs_folder = '/runs-hpc'
         self.path = f'{self.data_dirs_path}{self.runs_folder}/{self.tag}'
