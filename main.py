@@ -115,7 +115,7 @@ def main(config, mode):
         print("device: ", device)
 
         # Trains the model, according to the parameters specified in Config
-        train_prefetcher, _ = load_dataset(config, mean=None, srd=None)
+        train_prefetcher, _ = load_dataset(config, mean=None, std=None)
         print("Loaded all datasets successfully.")
 
         train_prefetcher.reset()
