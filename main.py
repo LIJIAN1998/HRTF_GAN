@@ -16,6 +16,7 @@ from preprocessing.utils import interpolate_fft, generate_euclidean_cube, conver
 
 
 from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
+from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 
 PI_4 = np.pi / 4
 
@@ -129,18 +130,32 @@ def main(config, mode):
         print("lr: ", type(lr), lr.shape)
         print("hr: ", type(hr), hr.shape)
 
-        pad = CubeSpherePadding2D(1)
-        x = pad(lr)
-        print("padding: ", x.shape)
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                              'side': 'left', 'domain': 'time'}}, subject_ids='first')
+        # mask = torch.zeros((len(ds.row_angles), len(ds.column_angles), 1), dtype=bool)
+        # print("input mask: ", mask)
+        # SHTransform = SphericalHarmonicsTransform(max_degree=10, row_angles=sonicom_ds.row_angles, column_angles=sonicom_ds.column_angles,
+        #                                           radii=sonicom_ds.radii, selection_mask=mask, coordinate_system='spherical')
+        
+        SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii,
+                                          np.all(np.ma.getmask(ds[0]['features']), axis=3), dtype=bool)
+        sh_coeffs_list = []
+        for i in range(lr.size(0)):
+            sh_coeffs_list.append(SHT(lr[i]))
+        sh_coeffs = torch.stack(sh_coeffs_list, dim=0)
+        print("sh coef: ", sh_coeffs.shape)
+        # pad = CubeSpherePadding2D(1)
+        # x = pad(lr)
+        # print("padding: ", x.shape)
 
-        nbins = config.nbins_hrtf
-        if config.merge_flag:
-            nbins = config.nbins_hrtf * 2
+        # nbins = config.nbins_hrtf
+        # if config.merge_flag:
+        #     nbins = config.nbins_hrtf * 2
 
-        ngf = 512
-        conv = CubeSphereConv2D(nbins, ngf, (3, 3), (1, 1))
-        x = conv(x)
-        print("cube sphere conv: ", x.shape)
+        # ngf = 512
+        # conv = CubeSphereConv2D(nbins, ngf, (3, 3), (1, 1))
+        # x = conv(x)
+        # print("cube sphere conv: ", x.shape)
 
         # util.initialise_folders(config, overwrite=True)
         # train(config, train_prefetcher)

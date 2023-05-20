@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
 
 class Reshape(nn.Module):
     def __init__(self, *args):
@@ -18,26 +19,32 @@ class Trim(nn.Module):
         return x[:,:,:28,:28]
     
 class Encoder(nn.Module):
-    def __init__(self, latent_dim):
+    def __init__(self, nbins: int, latent_dim: int):
         super(Encoder, self).__init__()
 
+        self.nbins = nbins
+
         self.encode = nn.Sequential(
-            nn.Conv2d(3, 32, stride=1, kernel_size=3, padding=1),
-            nn.BatchNorm2d(32),
+            CubeSpherePadding2D(1),
+            CubeSphereConv2D(self.nbins, 256, (3, 3), (1, 1), bias=False),
+            nn.BatchNorm3d(256),
             nn.ReLU(),
-            nn.Conv2d(32, 64, stride=2, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
+            CubeSpherePadding2D(1),
+            CubeSphereConv2D(256, 256, (3, 3), (2, 2), bias=False),
+            nn.BatchNorm3d(256),
             nn.ReLU(),
+            CubeSpherePadding2D(1),
+            CubeSphereConv2D(256, 512, (3, 3), (1, 1), bias=False),
+            nn.BatchNorm3d(256),
             nn.ReLU(),
-            nn.Conv2d(64, 64, stride=2, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
+            CubeSpherePadding2D(1),
+            CubeSphereConv2D(512, 512, (3, 3), (2, 2), bias=False),
+            nn.BatchNorm3d(256),
             nn.ReLU(),
-            nn.Conv2d(64, 64, stride=1, kernel_size=3, padding=1),
-            nn.Flatten(),
         )
 
-        self.compute_mean = nn.Linear(64*7*7, latent_dim)
-        self.compute_log_var = nn.Linear(64*7*7, latent_dim)
+        self.compute_mean = nn.Linear(512*2*2*5, latent_dim)
+        self.compute_log_var = nn.Linear(512*2*2*5, latent_dim)
     
     def reparametrize(self, mu, logvar):
         epsilon = torch.randn(mu.size(0), mu.size(1)).to(mu.get_device())
@@ -46,6 +53,7 @@ class Encoder(nn.Module):
 
     def forward(self, x):
         x = self.encode(x)
+        x = torch.flatten(x, 1)
         mu, log_var = self.compute_mean(x), self.compute_log_var(x)
         return self.reparametrize(mu, log_var)
     
