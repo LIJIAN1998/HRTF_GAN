@@ -129,10 +129,9 @@ def main(config, mode):
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                               'side': 'left', 'domain': 'time'}}, subject_ids='first')
         mask = torch.zeros((len(ds.row_angles), len(ds.column_angles), 1), dtype=bool)
-        # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii,
-        #                                   mask)
-        SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, 
-                                          np.all(np.ma.getmask(ds[0]['features']), axis=3, dtype=bool))
+        SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, mask)
+        # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, 
+        #                                   np.all(np.ma.getmask(ds[0]['features']), axis=3, dtype=bool))
         # perform SHT on each low resolution data, and stack them back into a batch
         sh_coeffs_list = []
         for i in range(lr.size(0)):
