@@ -132,12 +132,16 @@ def main(config, mode):
         SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, mask)
         # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, 
         #                                   np.all(np.ma.getmask(ds[0]['features']), axis=3, dtype=bool))
+        x = SHT(ds[0]['features'])
+        print('feature: ', ds[0]['features'].shape)
+        print('coef: ', x.shape)
+
         # perform SHT on each low resolution data, and stack them back into a batch
-        sh_coeffs_list = []
-        for i in range(lr.size(0)):
-            sh_coeffs_list.append(SHT(lr[i]))
-        sh_coeffs = torch.stack(sh_coeffs_list, dim=0)
-        print("sh coef: ", sh_coeffs.shape)
+        # sh_coeffs_list = []
+        # for i in range(lr.size(0)):
+        #     sh_coeffs_list.append(SHT(lr[i]))
+        # sh_coeffs = torch.stack(sh_coeffs_list, dim=0)
+        # print("sh coef: ", sh_coeffs.shape)
         # pad = CubeSpherePadding2D(1)
         # x = pad(lr)
         # print("padding: ", x.shape)
