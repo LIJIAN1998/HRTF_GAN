@@ -5,8 +5,9 @@ module load anaconda3/personal
 source activate hrtf_env
 
 cd $PBS_O_WORKDIR
+python model/model.py
 # python tut.py > output.txt
-python main.py train --hpc True --tag ari-upscale-4 > output.txt
+# python main.py train --hpc True --tag ari-upscale-4 > output.txt
 # cp output.txt $PBS_O_WORKDIR
 
 conda deactivate
