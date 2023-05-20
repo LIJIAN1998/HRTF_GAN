@@ -47,6 +47,7 @@ class UpsampleBlock(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out1 = self.upsample_block_1(x)
+        print("upsample 1:", out1.shape)
         out = self.upsample_block_2(torch.permute(out1, dims=(0, 2, 1, 3, 4)))
 
         return torch.permute(out, dims=(0, 2, 1, 3, 4))
@@ -159,13 +160,21 @@ class Generator(nn.Module):
 
     # Support torch.script function
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
+        print('input: ', x.shape)
         out1 = self.conv_block1(x)
+        print("conv1: ", out1.shape)
         out = self.trunk(out1)
+        print("trunk: ", out.shape)
         out2 = self.conv_block2(out)
+        print("conv2: ", out2.shape)
         out = torch.add(out1, out2)
+        print("add: ", out.shape)
         out = self.upsampling(out)
+        print("upsample: ", out.shape)
         out = self.conv_block3(out)
+        print("conv3: ", out.shape)
         out = self.classifier(out)
+        print("classifier: ", out.shape)
 
         return out
 
@@ -183,9 +192,12 @@ class Generator(nn.Module):
 
 if __name__ == '__main__':
     x = torch.randn(1, 512, 5, 8, 8)
-    print("input: ", x.shape)
-    upsample = UpsampleBlock(512)
-    y = upsample.upsample_block_1(x)
-    print("block 1: ", y.shape)
-    z = upsample.upsample_block_2(y)
-    print("block 2", z.shape)
+    # print("input: ", x.shape)
+    # upsample = UpsampleBlock(512)
+    # y = upsample.upsample_block_1(x)
+    # print("block 1: ", y.shape)
+    # z = upsample.upsample_block_2(y)
+    # print("block 2", z.shape)
+
+    G = Generator(upscale_factor=2, nbins=512)
+    out = G(x)
