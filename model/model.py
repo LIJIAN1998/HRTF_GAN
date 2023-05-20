@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
+# from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
+from custom_conv import CubeSpherePadding2D, CubeSphereConv2D
 
 # based on https://github.com/Lornatang/SRGAN-PyTorch/blob/main/model.py
 
