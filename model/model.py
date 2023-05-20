@@ -47,8 +47,11 @@ class UpsampleBlock(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out1 = self.upsample_block_1(x)
-        print("upsample 1:", out1.shape)
+        print("upsample 1: ", out1.shape)
         out = self.upsample_block_2(torch.permute(out1, dims=(0, 2, 1, 3, 4)))
+        print("upsample 2: ", out.shape)
+        x = torch.permute(out, dims=(0, 2, 1, 3, 4))
+        print("permute: ", x.shape)
 
         return torch.permute(out, dims=(0, 2, 1, 3, 4))
 
