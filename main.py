@@ -115,17 +115,13 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        print("device: ", device)
-
         # Trains the model, according to the parameters specified in Config
         train_prefetcher, _ = load_dataset(config, mean=None, std=None)
         print("Loaded all datasets successfully.")
 
         train_prefetcher.reset()
         batch_data = train_prefetcher.next()
-        lr = batch_data["lr"].to(device=device, memory_format=torch.contiguous_format,
-                                 non_blocking=True, dtype=torch.float)
+        lr = batch_data["lr"]
         hr = batch_data["hr"]
         print("lr: ", type(lr), lr.shape)
         print("hr: ", type(hr), hr.shape)
