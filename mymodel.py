@@ -58,7 +58,7 @@ class Encoder(nn.Module):
         return self.reparametrize(mu, log_var)
     
 class Decoder(nn.Module):
-    def __init__(self, latent_dim):
+    def __init__(self, latent_dim: int):
         super(Decoder, self).__init__()
 
         self.decode = nn.Sequential(

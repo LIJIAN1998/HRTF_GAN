@@ -178,3 +178,13 @@ class Generator(nn.Module):
                     nn.init.constant_(module.polar_bias, 0)
             elif isinstance(module, nn.BatchNorm3d):
                 nn.init.constant_(module.weight, 1)
+
+
+if __name__ == '__main__':
+    x = torch.randn(1, 512, 5, 8, 8)
+    print("input: ", x.shape)
+    upsample = UpsampleBlock(512)
+    y = upsample.upsample_block_1(x)
+    print("block 1: ", y.shape)
+    z = upsample.upsample_block_2(y)
+    print("block 2", z.shape)
