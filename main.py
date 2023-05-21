@@ -130,7 +130,8 @@ def main(config, mode):
         # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, mask)
         # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, 
         #                                   np.all(np.ma.getmask(ds[0]['features']), axis=3, dtype=bool))
-        maskarray = np.ma.getmaskarray(ds[0]['features'][:, :, 0, 0])
+        maskarray = np.ma.getmaskarray(ds[0]['features'][:, :, 0])
+        print('feature shape: ', ds[0]['features'][:, :, 0].shape)
         print("mask array: ", maskarray.shape)
         print(maskarray)
         print("np.all: ", np.all(np.ma.getmaskarray(ds[0]['features'][:, :, 0, 0]), axis=3))
