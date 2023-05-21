@@ -144,7 +144,7 @@ def main(config, mode):
         print('coef: ', x.shape)
         print('inverse: ', SHT.inverse(x).shape)
 
-        lr_permuted = lr[0].permute(2, 3, 1, 0)
+        lr_permuted = lr[0].permute(2, 3, 1, 0).numpy()
         SHT_lr = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii,
                                              np.all(np.ma.getmaskarray(lr_permuted), axis=3))
         sh_lr = SHT_lr(lr_permuted)
