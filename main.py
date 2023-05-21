@@ -14,8 +14,6 @@ from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories
 
-
-from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 
 PI_4 = np.pi / 4
