@@ -144,6 +144,13 @@ def main(config, mode):
         print('coef: ', x.shape)
         print('inverse: ', SHT.inverse(x).shape)
 
+        lr_permuted = lr[0].permute(2, 3, 1, 0)
+        SHT_lr = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii,
+                                             np.all(np.ma.getmaskarray(lr_permuted), axis=3))
+        sh_lr = SHT_lr(lr_permuted)
+        print("permuted lr: ", lr_permuted.shape)
+        print("lr coef: ", sh_lr.shape)
+
         # perform SHT on each low resolution data, and stack them back into a batch
         # sh_coeffs_list = []
         # for i in range(lr.size(0)):
