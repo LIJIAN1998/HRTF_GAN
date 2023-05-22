@@ -125,12 +125,33 @@ def main(config, mode):
         print("lr: ", type(lr), lr.shape)
         print("hr: ", type(hr), hr.shape)
 
+        # extract lr on one side from the cube
+        # lr_one_side = lr[0, :, 0, :, :].unsqueeze(1) # [256, 1, 8, 8]
+        # print("one side lr: ", lr_one_side.shape)
+        # # interpolate to 16x16
+        # interpolated_size = (16, 16)
+        # interpolated_tensor = torch.nn.functional.interpolate(lr_one_side, size=interpolated_size, mode='nearest') # [256, 1, 16, 16]
+        # print("interpolated_tensor: ", interpolated_tensor.shape)
+        # lr_permuted = torch.permute(lr_one_side, dims=(2, 3, 1, 0)).numpy() # [16, 16, 1, 256]
+        # print("lr permute: ", lr_permuted.shape)
+        # lr_mask = np.all(np.ma.getmaskarray(lr_permuted), axis=3) # [8, 8, 1]
+        # print("lr mask: ", lr_mask.shape)
+        # mask = np.ones((16, 16, 1), dtype=bool)
+        # for i in range(8):
+        #     for j in range(8):
+        #         mask[2*i, 2*j, :] = lr_mask[i, j, :]
+
+        # print("mask: ", mask.shape)
+
+        # SHT_lr = SphericalHarmonicsTransform(10, [16 row_angles], [16 column_angles], ds.radii, mask)
+        # sh_lr = SHT_lr(lr_permuted)
+        # print("lr coef: ", sh_lr.shape)
+        # inverse = SHT_lr.inverse(sh_lr)
+        # print("lr sh inverse: ", inverse.shape)
+
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                              'side': 'left', 'domain': 'time'}}, subject_ids='first')
-        mask = torch.zeros((len(ds.row_angles), len(ds.column_angles), 1), dtype=bool)
-        # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, mask)
-        # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, 
-        #                                   np.all(np.ma.getmask(ds[0]['features']), axis=3, dtype=bool))
+                                                              'side': 'left', 'domain': 'frequency'}}, subject_ids='first')
+
         maskarray = np.ma.getmaskarray(ds[0]['features'])
         print('feature shape: ', ds[0]['features'].shape)
         print("mask array: ", maskarray.shape)
@@ -139,33 +160,18 @@ def main(config, mode):
         print("np.all: ", np.all(np.ma.getmaskarray(ds[0]['features']), axis=3).shape)
         SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, 
                                           np.all(np.ma.getmaskarray(ds[0]['features']), axis=3))
-        
+        original_mask = np.all(np.ma.getmaskarray(ds[0]['features']), axis=3)
+        mask = np.ones((72, 12, 1), dtype=bool)
+        for i in range(36):
+            for j in range(6):
+                mask[2*i, 2*j, :] = original_mask[2*i, 2*j, :]
+        SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, mask)
         x = SHT(ds[0]['features'])
         print('feature: ', ds[0]['features'].shape)
         print('coef: ', x.shape)
         print('inverse: ', SHT.inverse(x).shape)
 
-        lr_one_side = lr[0, :, 0, :, :].unsqueeze(1) # [256, 1, 8, 8]
-        print("one side lr: ", lr_one_side.shape)
-        interpolated_size = (16, 16)
-        interpolated_tensor = torch.nn.functional.interpolate(lr_one_side, size=interpolated_size, mode='nearest')
-        print("interpolated_tensor: ", interpolated_tensor.shape)
-        lr_permuted = torch.permute(lr_one_side, dims=(2, 3, 1, 0)).numpy()
-        print("lr permute: ", lr_permuted.shape)
-        lr_mask = np.all(np.ma.getmaskarray(lr_permuted), axis=3)
-        print("lr mask: ", lr_mask.shape)
-        mask = np.ones((16, 16, 1), dtype=bool)
-        for i in range(8):
-            for j in range(8):
-                mask[2*i, 2*j, :] = lr_mask[i, j, :]
-
-        print("mask: ", mask.shape)
-
-        SHT_lr = SphericalHarmonicsTransform(10, 16, 16, ds.radii, mask)
-        sh_lr = SHT_lr(lr_permuted)
-        print("lr coef: ", sh_lr.shape)
-        inverse = SHT_lr.inverse(sh_lr)
-        print("lr sh inverse: ", inverse.shape)
+        
 
         # perform SHT on each low resolution data, and stack them back into a batch
         # sh_coeffs_list = []
