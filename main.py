@@ -150,7 +150,7 @@ def main(config, mode):
         # print("lr sh inverse: ", inverse.shape)
 
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                              'side': 'left', 'domain': 'frequency'}}, subject_ids='first')
+                                                              'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
 
         maskarray = np.ma.getmaskarray(ds[0]['features'])
         print('feature shape: ', ds[0]['features'].shape)
