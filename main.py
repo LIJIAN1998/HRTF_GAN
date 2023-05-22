@@ -151,13 +151,13 @@ def main(config, mode):
         interpolated_tensor = torch.nn.functional.interpolate(lr_one_side, size=interpolated_size, mode='nearest')
         print("interpolated_tensor: ", interpolated_tensor.shape)
         lr_permuted = torch.permute(lr_one_side, dims=(2, 3, 1, 0)).numpy()
-        print("lr permute: ", lr_permuted)
+        print("lr permute: ", lr_permuted.shape)
         lr_mask = np.all(np.ma.getmaskarray(lr_permuted), axis=3)
         print("lr mask: ", lr_mask.shape)
         mask = np.ones((16, 16, 1), dtype=bool)
         for i in range(8):
             for j in range(8):
-                mask[2*i, 2*j, :, :] = lr_mask[i, j, :, :]
+                mask[2*i, 2*j, :] = lr_mask[i, j, :]
 
         print("mask: ", mask.shape)
 
