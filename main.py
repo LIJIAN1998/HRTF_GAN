@@ -161,13 +161,11 @@ def main(config, mode):
 
         print("mask: ", mask.shape)
 
-
-        # dialated_size = (16, 16)
-        # dilated_array = binary_dilation(lr_permuted, iterations=(dialated_size[0] - 1) // 2)
-        # SHT_lr = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii,
-        #                                      np.all(np.ma.getmaskarray(lr_permuted), axis=3))
-        # sh_lr = SHT_lr(lr_permuted)
-        # print("lr coef: ", sh_lr.shape)
+        SHT_lr = SphericalHarmonicsTransform(10, 16, 16, ds.radii, mask)
+        sh_lr = SHT_lr(lr_permuted)
+        print("lr coef: ", sh_lr.shape)
+        inverse = SHT_lr.inverse(sh_lr)
+        print("lr sh inverse: ", inverse.shape)
 
         # perform SHT on each low resolution data, and stack them back into a batch
         # sh_coeffs_list = []
