@@ -15,6 +15,7 @@ from preprocessing.utils import interpolate_fft, generate_euclidean_cube, conver
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
+from scipy.ndimage import binary_dilation
 
 PI_4 = np.pi / 4
 
@@ -144,12 +145,17 @@ def main(config, mode):
         print('coef: ', x.shape)
         print('inverse: ', SHT.inverse(x).shape)
 
-        lr_permuted = lr[0].permute(2, 3, 1, 0).numpy()
-        SHT_lr = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii,
-                                             np.all(np.ma.getmaskarray(lr_permuted), axis=3))
-        sh_lr = SHT_lr(lr_permuted)
-        print("permuted lr: ", lr_permuted.shape)
-        print("lr coef: ", sh_lr.shape)
+        lr_one_side = lr[0, :, 0, :, :] # [512, 1, 8, 8]
+        print("one side lr: ", lr_one_side.shape)
+        interpolated_size = (16, 16)
+        interpolated_tensor = torch.nn.functional.interpolate(lr_one_side, size=interpolated_size, mode='nearest')
+        print("interpolated_tensor: ", interpolated_tensor.shape)
+        # dialated_size = (16, 16)
+        # dilated_array = binary_dilation(lr_permuted, iterations=(dialated_size[0] - 1) // 2)
+        # SHT_lr = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii,
+        #                                      np.all(np.ma.getmaskarray(lr_permuted), axis=3))
+        # sh_lr = SHT_lr(lr_permuted)
+        # print("lr coef: ", sh_lr.shape)
 
         # perform SHT on each low resolution data, and stack them back into a batch
         # sh_coeffs_list = []
