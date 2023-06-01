@@ -24,11 +24,12 @@ class CustomHRTFDataset(Dataset):
 
     def __getitem__(self, index: int):
         hrir = self.original_hrtf_dataset[index]['features'][:, :, :, 1:]
-        SHT = SphericalHarmonicsTransform(10, self.original_hrtf_dataset.row_angles, self.original_hrtf_dataset.column_angles,
+        SHT = SphericalHarmonicsTransform(6, self.original_hrtf_dataset.row_angles, self.original_hrtf_dataset.column_angles,
                                           self.original_hrtf_dataset.radii, 
                                           np.all(np.ma.getmaskarray(hrir), axis=3))
+        sh_coefficient = SHT(hrir)
 
-        return hrir
+        return sh_coefficient, hrir
 
 
 class TrainValidHRTFDataset(Dataset):
