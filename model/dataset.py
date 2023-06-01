@@ -18,19 +18,41 @@ def downsample_hrtf(hr_hrtf, hrtf_size, upscale_factor):
     return lr_hrtf
 
 class CustomHRTFDataset(Dataset):
-    def __init__(self, original_hrtf_dataset) -> None:
+    def __init__(self, original_hrtf_dataset, degree) -> None:
         super(CustomHRTFDataset, self).__init__()
         self.original_hrtf_dataset = original_hrtf_dataset
+        self.degree = degree
 
     def __getitem__(self, index: int):
         hrir = self.original_hrtf_dataset[index]['features'][:, :, :, 1:]
-        SHT = SphericalHarmonicsTransform(6, self.original_hrtf_dataset.row_angles, self.original_hrtf_dataset.column_angles,
+        SHT = SphericalHarmonicsTransform(self.degree, self.original_hrtf_dataset.row_angles, self.original_hrtf_dataset.column_angles,
                                           self.original_hrtf_dataset.radii, 
                                           np.all(np.ma.getmaskarray(hrir), axis=3))
-        sh_coefficient = SHT(hrir)
-        sh_coefficient = sh_coefficient.T
+        sh_coefficient = SHT(hrir).T
 
         return {"sh_coefficient": sh_coefficient, "original_hrir": hrir}
+    
+    def __len__(self):
+        return len(self.original_hrtf_dataset)
+    
+class MergeHRTFDataset(Dataset):
+    def __init__(self, left_hrtf, right_hrtf, degree) -> None:
+        super(MergeHRTFDataset, self).__init__()
+        self.left_hrtf = left_hrtf
+        self.right_hrtf = right_hrtf
+        self.degree = degree
+
+    def __getitem__(self, index: int):
+        left = self.left_hrtf[index]['features'][:, :, :, 1:]
+        right = self.right_hrtf[index]['features'][:, :, :, 1:]
+        merge = torch.cat([left, right], dim=3)
+
+        SHT = SphericalHarmonicsTransform(self.degree, self.left_hrtf.row_angles, self.left_hrtf.column_angles,
+                                          self.left_hrtf.radii,
+                                          np.all(np.ma.getmaskarray(left), axis=3))
+        sh_coefficient = SHT(merge).T
+        return {"sh_coefficient": sh_coefficient, "original_hrir": merge}
+
 
 
 class TrainValidHRTFDataset(Dataset):

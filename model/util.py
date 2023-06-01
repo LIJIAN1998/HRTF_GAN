@@ -6,7 +6,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
 
-from model.dataset import CUDAPrefetcher, TrainValidHRTFDataset, CPUPrefetcher, CustomHRTFDataset
+from model.dataset import CUDAPrefetcher, TrainValidHRTFDataset, CPUPrefetcher, CustomHRTFDataset, MergeHRTFDataset
 
 import importlib
 from torch.utils.data._utils.collate import default_collate
@@ -24,8 +24,20 @@ def initialise_folders(config, overwrite):
         shutil.rmtree(Path(config.path), ignore_errors=True)
         Path(config.path).mkdir(parents=True, exist_ok=True)
 
-def test_dataset(ds):
-    custom_dataset = CustomHRTFDataset(ds)
+def check_dataset(config):
+    data_dir = config.raw_hrtf_dir / config.dataset
+    imp = importlib.import_module('hrtfdata.full')
+    load_function = getattr(imp, config.dataset)
+
+    if config.merge:
+        left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}})
+        right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}})
+        degree = int(torch.sqrt(len(left.row_angles)*len(right.column_angles)/config.upscale_factor) - 1) # 6, 9, 13, 19
+        custom_dataset = MergeHRTFDataset(left, right, degree)
+    else:
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
+        degree = int(torch.sqrt(len(left.row_angles)*len(right.column_angles)/config.upscale_factor) - 1) # 6, 9, 13, 19
+        custom_dataset = CustomHRTFDataset(ds, degree)
     return custom_dataset
 
 # class HRTFDataLoader(DataLoader):

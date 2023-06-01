@@ -8,7 +8,7 @@ import importlib
 from config import Config
 from model.train import train
 from model.test import test
-from model.util import load_dataset, test_dataset
+from model.util import load_dataset, check_dataset
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
@@ -116,19 +116,7 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
-        # left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}})
-        # right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}})
-        # merge = ConcatDataset([left, right])
-        # print("left: ", len(left))
-        # print("right: ", len(right))
-        # print("merge: ", len(merge))
-        # p = merge[0]['features']
-        # print("merge shape: ", p.shape)
-
-
-        # print("ds: ", type(ds))
-        cus_ds = test_dataset(ds)
+        cus_ds = check_dataset(config)
         print("cus_ds: ", type(ds))
         data = cus_ds[0]
         shc = data['sh_coefficient']
