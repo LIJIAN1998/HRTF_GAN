@@ -21,7 +21,7 @@ class CustomHRTFDataset(Dataset):
         self.original_hrtf_dataset = original_hrtf_dataset
 
     def __getitem__(self, index: int):
-        hrir = self.original_hrtf_dataset[index]
+        hrir = self.original_hrtf_dataset[index]['features'][:, :, :, 1:]
         return hrir
 
 

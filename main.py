@@ -120,6 +120,7 @@ def main(config, mode):
         print("cus_ds: ", type(ds))
         hrir = cus_ds[0]
         print("hrir: ", type(hrir))
+        print("shape: ", hrir.shape)
 
         # Trains the model, according to the parameters specified in Config
         # train_prefetcher, _ = load_dataset(config, mean=None, std=None)
