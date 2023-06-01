@@ -28,6 +28,7 @@ class CustomHRTFDataset(Dataset):
                                           self.original_hrtf_dataset.radii, 
                                           np.all(np.ma.getmaskarray(hrir), axis=3))
         sh_coefficient = SHT(hrir)
+        sh_coefficient = sh_coefficient.T
 
         return {"sh_coefficient": sh_coefficient, "original_hrir": hrir}
 
