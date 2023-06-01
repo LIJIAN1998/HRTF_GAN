@@ -8,7 +8,7 @@ import importlib
 from config import Config
 from model.train import train
 from model.test import test
-from model.util import load_dataset
+from model.util import load_dataset, test_dataset
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
@@ -114,62 +114,47 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
+        print("ds: ", type(ds))
+        cus_ds = test_dataset(ds)
+        print("cus_ds: ", type(ds))
+        hrir = cus_ds[0]
+        print("hrir: ", type(hrir))
+
         # Trains the model, according to the parameters specified in Config
-        train_prefetcher, _ = load_dataset(config, mean=None, std=None)
-        print("Loaded all datasets successfully.")
+        # train_prefetcher, _ = load_dataset(config, mean=None, std=None)
+        # print("Loaded all datasets successfully.")
 
-        train_prefetcher.reset()
-        batch_data = train_prefetcher.next()
-        lr = batch_data["lr"]
-        hr = batch_data["hr"]
-        print("lr: ", type(lr), lr.shape)
-        print("hr: ", type(hr), hr.shape)
+        # train_prefetcher.reset()
+        # batch_data = train_prefetcher.next()
+        # lr = batch_data["lr"]
+        # hr = batch_data["hr"]
+        # print("lr: ", type(lr), lr.shape)
+        # print("hr: ", type(hr), hr.shape)
 
-        # extract lr on one side from the cube
-        # lr_one_side = lr[0, :, 0, :, :].unsqueeze(1) # [256, 1, 8, 8]
-        # print("one side lr: ", lr_one_side.shape)
-        # # interpolate to 16x16
-        # interpolated_size = (16, 16)
-        # interpolated_tensor = torch.nn.functional.interpolate(lr_one_side, size=interpolated_size, mode='nearest') # [256, 1, 16, 16]
-        # print("interpolated_tensor: ", interpolated_tensor.shape)
-        # lr_permuted = torch.permute(lr_one_side, dims=(2, 3, 1, 0)).numpy() # [16, 16, 1, 256]
-        # print("lr permute: ", lr_permuted.shape)
-        # lr_mask = np.all(np.ma.getmaskarray(lr_permuted), axis=3) # [8, 8, 1]
-        # print("lr mask: ", lr_mask.shape)
-        # mask = np.ones((16, 16, 1), dtype=bool)
-        # for i in range(8):
-        #     for j in range(8):
-        #         mask[2*i, 2*j, :] = lr_mask[i, j, :]
-
-        # print("mask: ", mask.shape)
-
-        # SHT_lr = SphericalHarmonicsTransform(10, [16 row_angles], [16 column_angles], ds.radii, mask)
-        # sh_lr = SHT_lr(lr_permuted)
-        # print("lr coef: ", sh_lr.shape)
-        # inverse = SHT_lr.inverse(sh_lr)
-        # print("lr sh inverse: ", inverse.shape)
-
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                              'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
-
-        maskarray = np.ma.getmaskarray(ds[0]['features'])
-        print('feature shape: ', ds[0]['features'].shape)
-        print("mask array: ", maskarray.shape)
-        print("all false: ", np.all(maskarray == False).shape)
-        # print(maskarray)
-        print("np.all: ", np.all(np.ma.getmaskarray(ds[0]['features']), axis=3).shape)
-        SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, 
-                                          np.all(np.ma.getmaskarray(ds[0]['features']), axis=3))
-        original_mask = np.all(np.ma.getmaskarray(ds[0]['features']), axis=3)
-        mask = np.ones((72, 12, 1), dtype=bool)
-        for i in range(36):
-            for j in range(6):
-                mask[2*i, 2*j, :] = original_mask[2*i, 2*j, :]
-        SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, mask)
-        x = SHT(ds[0]['features'])
-        print('feature: ', ds[0]['features'].shape)
-        print('coef: ', x.shape)
-        print('inverse: ', SHT.inverse(x).shape)
+        # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+        #                                                       'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+        # # remove the dc component
+        # p = ds[0]['features'][:, :, :, 1:]
+        # maskarray = np.ma.getmaskarray(ds[0]['features'])
+        # print('feature shape: ', ds[0]['features'].shape)
+        # print("mask array: ", maskarray.shape)
+        # print("all false: ", np.all(maskarray == False).shape)
+        # # print(maskarray)
+        # print("np.all: ", np.all(np.ma.getmaskarray(ds[0]['features']), axis=3).shape)
+        # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, 
+        #                                   np.all(np.ma.getmaskarray(ds[0]['features']), axis=3))
+        
+        # original_mask = np.all(np.ma.getmaskarray(ds[0]['features']), axis=3)
+        # mask = np.ones((72, 12, 1), dtype=bool)
+        # for i in range(36):
+        #     for j in range(6):
+        #         mask[2*i, 2*j, :] = original_mask[2*i, 2*j, :]
+        # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, mask)
+        # x = SHT(ds[0]['features'])
+        # print('feature: ', ds[0]['features'].shape)
+        # print('coef: ', x.shape)
+        # print('inverse: ', SHT.inverse(x).shape)
 
         
 
@@ -179,22 +164,6 @@ def main(config, mode):
         #     sh_coeffs_list.append(SHT(lr[i]))
         # sh_coeffs = torch.stack(sh_coeffs_list, dim=0)
         # print("sh coef: ", sh_coeffs.shape)
-        # pad = CubeSpherePadding2D(1)
-        # x = pad(lr)
-        # print("padding: ", x.shape)
-
-        # nbins = config.nbins_hrtf
-        # if config.merge_flag:
-        #     nbins = config.nbins_hrtf * 2
-
-        # ngf = 512
-        # conv = CubeSphereConv2D(nbins, ngf, (3, 3), (1, 1))
-        # x = conv(x)
-        # print("cube sphere conv: ", x.shape)
-
-        # util.initialise_folders(config, overwrite=True)
-        # train(config, train_prefetcher)
-
     print("finished")
 
 if __name__ == '__main__':

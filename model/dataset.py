@@ -4,7 +4,6 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
-
 # based on https://github.com/Lornatang/SRGAN-PyTorch/blob/7292452634137d8f5d4478e44727ec1166a89125/dataset.py
 def downsample_hrtf(hr_hrtf, hrtf_size, upscale_factor):
     # downsample hrtf
@@ -15,6 +14,17 @@ def downsample_hrtf(hr_hrtf, hrtf_size, upscale_factor):
         lr_hrtf = torch.nn.functional.interpolate(hr_hrtf, scale_factor=1 / upscale_factor)
 
     return lr_hrtf
+
+class CustomHRTFDataset(Dataset):
+    def __init__(self, original_hrtf_dataset) -> None:
+        super(CustomHRTFDataset, self).__init__()
+        self.original_hrtf_dataset = original_hrtf_dataset
+
+    def __getitem__(self, index: int):
+        # hrir = self.original_hrtf_dataset[index]
+        hrir = super().__getitem__(index)
+        return hrir
+
 
 class TrainValidHRTFDataset(Dataset):
     """Define training/valid dataset loading methods.

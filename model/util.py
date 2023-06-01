@@ -6,8 +6,13 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
 
-from model.dataset import CUDAPrefetcher, TrainValidHRTFDataset, CPUPrefetcher
+from model.dataset import CUDAPrefetcher, TrainValidHRTFDataset, CPUPrefetcher, CustomHRTFDataset
 
+import importlib
+from torch.utils.data._utils.collate import default_collate
+
+def collate_dict_dataset(batch, features_key_name='features', target_key_name='target'):
+    return [default_collate(x) for x in zip(*((d[features_key_name], d[target_key_name]) for d in batch))]
 
 def initialise_folders(config, overwrite):
     """Set up folders for given tag
@@ -19,50 +24,66 @@ def initialise_folders(config, overwrite):
         shutil.rmtree(Path(config.path), ignore_errors=True)
         Path(config.path).mkdir(parents=True, exist_ok=True)
 
+def test_dataset(ds):
+    custom_dataset = CustomHRTFDataset(ds)
+    return custom_dataset
 
-def load_dataset(config, mean=None, std=None) -> [CUDAPrefetcher, CUDAPrefetcher, CUDAPrefetcher]:
-    """Based on https://github.com/Lornatang/SRGAN-PyTorch/blob/main/train_srgan.py"""
+# class HRTFDataLoader(DataLoader):
+#     def __init__(self, dataset, batch_size=1, shuffle=False,  num_workers=0, **kwargs):
+#         super(HRTFDataLoader, self).__init__(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, **kwargs)
 
-    # define transforms
-    if mean is None or std is None:
-        transform = None
-    else:
-        transform = transforms.Normalize(mean=mean, std=std)
+#         def __iter__(self):
+#             batch_data = super().__iter__()
 
-    # Load train, test and valid datasets
-    if config.merge_flag:
-        train_datasets = TrainValidHRTFDataset(config.train_hrtf_merge_dir, config.hrtf_size, config.upscale_factor, transform)
-        valid_datasets = TrainValidHRTFDataset(config.valid_hrtf_merge_dir, config.hrtf_size, config.upscale_factor, transform)
-    else:
-        train_datasets = TrainValidHRTFDataset(config.train_hrtf_dir, config.hrtf_size, config.upscale_factor, transform)
-        valid_datasets = TrainValidHRTFDataset(config.valid_hrtf_dir, config.hrtf_size, config.upscale_factor, transform)
+#             shc_list = []
+#             for hrir in batch_data:
+#                 hrir
 
-    # Generator all dataloader
-    train_dataloader = DataLoader(train_datasets,
-                                  batch_size=config.batch_size,
-                                  shuffle=True,
-                                  num_workers=config.num_workers,
-                                  pin_memory=True,
-                                  drop_last=True,
-                                  persistent_workers=True)
-    valid_dataloader = DataLoader(valid_datasets,
-                                  batch_size=1,
-                                  shuffle=False,
-                                  num_workers=1,
-                                  pin_memory=True,
-                                  drop_last=False,
-                                  persistent_workers=True)
+# def load_dataset(config):
 
-    # Place all data on the preprocessing data loader
-    if torch.cuda.is_available() and config.ngpu > 0:
-        device = torch.device(config.device_name)
-        train_prefetcher = CUDAPrefetcher(train_dataloader, device)
-        valid_prefetcher = CUDAPrefetcher(valid_dataloader, device)
-    else:
-        train_prefetcher = CPUPrefetcher(train_dataloader)
-        valid_prefetcher = CPUPrefetcher(valid_dataloader)
+# def load_dataset(config, mean=None, std=None) -> [CUDAPrefetcher, CUDAPrefetcher, CUDAPrefetcher]:
+#     """Based on https://github.com/Lornatang/SRGAN-PyTorch/blob/main/train_srgan.py"""
 
-    return train_prefetcher, valid_prefetcher
+#     # define transforms
+#     if mean is None or std is None:
+#         transform = None
+#     else:
+#         transform = transforms.Normalize(mean=mean, std=std)
+
+#     # Load train, test and valid datasets
+#     if config.merge_flag:
+#         train_datasets = TrainValidHRTFDataset(config.train_hrtf_merge_dir, config.hrtf_size, config.upscale_factor, transform)
+#         valid_datasets = TrainValidHRTFDataset(config.valid_hrtf_merge_dir, config.hrtf_size, config.upscale_factor, transform)
+#     else:
+#         train_datasets = TrainValidHRTFDataset(config.train_hrtf_dir, config.hrtf_size, config.upscale_factor, transform)
+#         valid_datasets = TrainValidHRTFDataset(config.valid_hrtf_dir, config.hrtf_size, config.upscale_factor, transform)
+
+#     # Generator all dataloader
+#     train_dataloader = DataLoader(train_datasets,
+#                                   batch_size=config.batch_size,
+#                                   shuffle=True,
+#                                   num_workers=config.num_workers,
+#                                   pin_memory=True,
+#                                   drop_last=True,
+#                                   persistent_workers=True)
+#     valid_dataloader = DataLoader(valid_datasets,
+#                                   batch_size=1,
+#                                   shuffle=False,
+#                                   num_workers=1,
+#                                   pin_memory=True,
+#                                   drop_last=False,
+#                                   persistent_workers=True)
+
+#     # Place all data on the preprocessing data loader
+#     if torch.cuda.is_available() and config.ngpu > 0:
+#         device = torch.device(config.device_name)
+#         train_prefetcher = CUDAPrefetcher(train_dataloader, device)
+#         valid_prefetcher = CUDAPrefetcher(valid_dataloader, device)
+#     else:
+#         train_prefetcher = CPUPrefetcher(train_dataloader)
+#         valid_prefetcher = CPUPrefetcher(valid_dataloader)
+
+#     return train_prefetcher, valid_prefetcher
 
 
 def progress(i, batches, n, num_epochs, timed):
