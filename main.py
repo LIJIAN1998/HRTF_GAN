@@ -117,23 +117,25 @@ def main(config, mode):
 
     elif mode == 'train':
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
-        left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}})
-        right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}})
-        merge = ConcatDataset([left, right])
-        print("left: ", len(left))
-        print("right: ", len(right))
-        print("merge: ", len(merge))
-        p = merge[0]['features']
-        print("merge shape: ", p.shape)
+        # left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}})
+        # right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}})
+        # merge = ConcatDataset([left, right])
+        # print("left: ", len(left))
+        # print("right: ", len(right))
+        # print("merge: ", len(merge))
+        # p = merge[0]['features']
+        # print("merge shape: ", p.shape)
 
 
         # print("ds: ", type(ds))
-        # cus_ds = test_dataset(ds)
-        # print("cus_ds: ", type(ds))
-        # shc, hrir = cus_ds[0]
-        # print("hrir: ", type(hrir))
-        # print("shape: ", hrir.shape)
-        # print("coef: ", shc.shape)
+        cus_ds = test_dataset(ds)
+        print("cus_ds: ", type(ds))
+        data = cus_ds[0]
+        shc = data['sh_coefficient']
+        hrir = data['original_hrir']
+        print("hrir: ", type(hrir))
+        print("shape: ", hrir.shape)
+        print("coef: ", shc.shape)
 
         # Trains the model, according to the parameters specified in Config
         # train_prefetcher, _ = load_dataset(config, mean=None, std=None)

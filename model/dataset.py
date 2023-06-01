@@ -29,7 +29,7 @@ class CustomHRTFDataset(Dataset):
                                           np.all(np.ma.getmaskarray(hrir), axis=3))
         sh_coefficient = SHT(hrir)
 
-        return sh_coefficient, hrir
+        return {"sh_coefficient": sh_coefficient, "original_hrir": hrir}
 
 
 class TrainValidHRTFDataset(Dataset):
