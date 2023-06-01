@@ -41,49 +41,49 @@ def test_dataset(ds):
 
 # def load_dataset(config):
 
-# def load_dataset(config, mean=None, std=None) -> [CUDAPrefetcher, CUDAPrefetcher, CUDAPrefetcher]:
-#     """Based on https://github.com/Lornatang/SRGAN-PyTorch/blob/main/train_srgan.py"""
+def load_dataset(config, mean=None, std=None) -> [CUDAPrefetcher, CUDAPrefetcher, CUDAPrefetcher]:
+    """Based on https://github.com/Lornatang/SRGAN-PyTorch/blob/main/train_srgan.py"""
 
-#     # define transforms
-#     if mean is None or std is None:
-#         transform = None
-#     else:
-#         transform = transforms.Normalize(mean=mean, std=std)
+    # define transforms
+    if mean is None or std is None:
+        transform = None
+    else:
+        transform = transforms.Normalize(mean=mean, std=std)
 
-#     # Load train, test and valid datasets
-#     if config.merge_flag:
-#         train_datasets = TrainValidHRTFDataset(config.train_hrtf_merge_dir, config.hrtf_size, config.upscale_factor, transform)
-#         valid_datasets = TrainValidHRTFDataset(config.valid_hrtf_merge_dir, config.hrtf_size, config.upscale_factor, transform)
-#     else:
-#         train_datasets = TrainValidHRTFDataset(config.train_hrtf_dir, config.hrtf_size, config.upscale_factor, transform)
-#         valid_datasets = TrainValidHRTFDataset(config.valid_hrtf_dir, config.hrtf_size, config.upscale_factor, transform)
+    # Load train, test and valid datasets
+    if config.merge_flag:
+        train_datasets = TrainValidHRTFDataset(config.train_hrtf_merge_dir, config.hrtf_size, config.upscale_factor, transform)
+        valid_datasets = TrainValidHRTFDataset(config.valid_hrtf_merge_dir, config.hrtf_size, config.upscale_factor, transform)
+    else:
+        train_datasets = TrainValidHRTFDataset(config.train_hrtf_dir, config.hrtf_size, config.upscale_factor, transform)
+        valid_datasets = TrainValidHRTFDataset(config.valid_hrtf_dir, config.hrtf_size, config.upscale_factor, transform)
 
-#     # Generator all dataloader
-#     train_dataloader = DataLoader(train_datasets,
-#                                   batch_size=config.batch_size,
-#                                   shuffle=True,
-#                                   num_workers=config.num_workers,
-#                                   pin_memory=True,
-#                                   drop_last=True,
-#                                   persistent_workers=True)
-#     valid_dataloader = DataLoader(valid_datasets,
-#                                   batch_size=1,
-#                                   shuffle=False,
-#                                   num_workers=1,
-#                                   pin_memory=True,
-#                                   drop_last=False,
-#                                   persistent_workers=True)
+    # Generator all dataloader
+    train_dataloader = DataLoader(train_datasets,
+                                  batch_size=config.batch_size,
+                                  shuffle=True,
+                                  num_workers=config.num_workers,
+                                  pin_memory=True,
+                                  drop_last=True,
+                                  persistent_workers=True)
+    valid_dataloader = DataLoader(valid_datasets,
+                                  batch_size=1,
+                                  shuffle=False,
+                                  num_workers=1,
+                                  pin_memory=True,
+                                  drop_last=False,
+                                  persistent_workers=True)
 
-#     # Place all data on the preprocessing data loader
-#     if torch.cuda.is_available() and config.ngpu > 0:
-#         device = torch.device(config.device_name)
-#         train_prefetcher = CUDAPrefetcher(train_dataloader, device)
-#         valid_prefetcher = CUDAPrefetcher(valid_dataloader, device)
-#     else:
-#         train_prefetcher = CPUPrefetcher(train_dataloader)
-#         valid_prefetcher = CPUPrefetcher(valid_dataloader)
+    # Place all data on the preprocessing data loader
+    if torch.cuda.is_available() and config.ngpu > 0:
+        device = torch.device(config.device_name)
+        train_prefetcher = CUDAPrefetcher(train_dataloader, device)
+        valid_prefetcher = CUDAPrefetcher(valid_dataloader, device)
+    else:
+        train_prefetcher = CPUPrefetcher(train_dataloader)
+        valid_prefetcher = CPUPrefetcher(valid_dataloader)
 
-#     return train_prefetcher, valid_prefetcher
+    return train_prefetcher, valid_prefetcher
 
 
 def progress(i, batches, n, num_epochs, timed):
