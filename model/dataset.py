@@ -4,6 +4,8 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
+from /hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
+
 # based on https://github.com/Lornatang/SRGAN-PyTorch/blob/7292452634137d8f5d4478e44727ec1166a89125/dataset.py
 def downsample_hrtf(hr_hrtf, hrtf_size, upscale_factor):
     # downsample hrtf
@@ -21,7 +23,11 @@ class CustomHRTFDataset(Dataset):
         self.original_hrtf_dataset = original_hrtf_dataset
 
     def __getitem__(self, index: int):
-        hrir = self.original_hrtf_dataset[index]['features']
+        hrir = self.original_hrtf_dataset[index]['features'][:, :, :, 1:]
+        SHT = SphericalHarmonicsTransform(10, self.original_hrtf_dataset.row_angles, self.original_hrtf_dataset.column_angles,
+                                          self.original_hrtf_dataset.radii, 
+                                          np.all(np.ma.getmaskarray(hrir), axis=3))
+
         return hrir
 
 
