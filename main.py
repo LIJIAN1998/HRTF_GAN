@@ -116,6 +116,10 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                              'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+        p = ds[0]['features'][:, :, :, 1:]
+        print("data type: ", type(p))
         print("merge?: ", config.merge_flag)
         cus_ds = check_dataset(config)
         print("cus_ds: ", type(cus_ds))
