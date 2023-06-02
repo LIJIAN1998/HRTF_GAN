@@ -2,6 +2,7 @@
 #PBS -lselect=1:ncpus=1:mem=8gb:ngpus=1:gpu_type=RTX6000
 
 module load anaconda3/personal
+module load cuda/11.2.2
 source activate hrtf_env
 
 cd $PBS_O_WORKDIR
