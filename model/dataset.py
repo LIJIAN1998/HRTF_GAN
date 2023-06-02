@@ -45,11 +45,12 @@ class MergeHRTFDataset(Dataset):
     def __getitem__(self, index: int):
         left = self.left_hrtf[index]['features'][:, :, :, 1:]
         right = self.right_hrtf[index]['features'][:, :, :, 1:]
-        merge = torch.cat([left, right], dim=3)
+        merge = np.ma.concatenate([left, right], axis=3)
+        # merge = torch.cat([left, right], dim=3)
 
         SHT = SphericalHarmonicsTransform(self.degree, self.left_hrtf.row_angles, self.left_hrtf.column_angles,
                                           self.left_hrtf.radii,
-                                          np.all(np.ma.getmaskarray(left), axis=3))
+                                          np.all(np.ma.getmaskarray(merge), axis=3))
         sh_coefficient = SHT(merge).T
         return {"sh_coefficient": sh_coefficient, "original_hrir": merge}
 
