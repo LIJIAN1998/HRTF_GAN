@@ -122,7 +122,7 @@ def main(config, mode):
         print("Loaded all datasets successfully.")
         print("train fetcher: ", len(train_prefetcher))
         print("val: ", len(valid_prefetcher))
-        data = next(iter(train_prefetcher))
+        data = train_prefetcher.next()
         coef = data['sh_coefficient']
         print("coef: ", coef.shape)
         hrir = data['original_hrir']
