@@ -8,7 +8,7 @@ import importlib
 from config import Config
 from model.train import train
 from model.test import test
-from model.util import load_dataset, check_dataset
+from model.util import load_dataset, load_hrtf
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
@@ -116,19 +116,17 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                              'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
-        p = ds[0]['features'][:, :, :, 1:]
-        print("data type: ", type(p))
+        
         print("merge?: ", config.merge_flag)
-        cus_ds = check_dataset(config)
-        print("cus_ds: ", type(cus_ds))
-        data = cus_ds[0]
-        shc = data['sh_coefficient']
+        train_prefetcher, valid_prefetcher, _ = load_hrtf(config)
+        print("Loaded all datasets successfully.")
+        print("train fetcher: ", len(train_prefetcher))
+        print("val: ", len(valid_prefetcher))
+        data = next(iter(train_prefetcher))
+        coef = data['sh_coefficient']
+        print("coef: ", coef.shape)
         hrir = data['original_hrir']
-        print("hrir: ", type(hrir))
-        print("shape: ", hrir.shape)
-        print("coef: ", shc.shape)
+        print("hrir:", hrir.shape)
 
         # Trains the model, according to the parameters specified in Config
         # train_prefetcher, _ = load_dataset(config, mean=None, std=None)

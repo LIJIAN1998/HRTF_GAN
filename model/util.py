@@ -6,6 +6,7 @@ import numpy as np
 
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
+from torch.utils.data import random_split
 
 from model.dataset import CUDAPrefetcher, TrainValidHRTFDataset, CPUPrefetcher, CustomHRTFDataset, MergeHRTFDataset
 
@@ -25,7 +26,15 @@ def initialise_folders(config, overwrite):
         shutil.rmtree(Path(config.path), ignore_errors=True)
         Path(config.path).mkdir(parents=True, exist_ok=True)
 
-def check_dataset(config):
+def split_dataset(dataset, train_ratio=0.6, val_ratio=0.1):
+    total_len = len(dataset)
+    train_len = int(total_len * train_ratio)
+    val_len = int(total_len * val_ratio)
+    test_len = total_len - train_len - val_len
+
+    return random_split(dataset, lengths=[train_len, val_len, test_len])
+
+def load_hrtf(config):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
@@ -39,20 +48,43 @@ def check_dataset(config):
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
         degree = int(torch.sqrt(len(left.row_angles)*len(right.column_angles)/config.upscale_factor) - 1) # 6, 9, 13, 19
         custom_dataset = CustomHRTFDataset(ds, degree)
-    return custom_dataset
 
-# class HRTFDataLoader(DataLoader):
-#     def __init__(self, dataset, batch_size=1, shuffle=False,  num_workers=0, **kwargs):
-#         super(HRTFDataLoader, self).__init__(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, **kwargs)
+    train_dataset, valid_dataset, test_dataset = split_dataset(custom_dataset, config.train_samples_ratio, (1-config.train_samples_ratio)/2)
 
-#         def __iter__(self):
-#             batch_data = super().__iter__()
+    train_dataloader = DataLoader(train_dataset,
+                                  batch_size=config.batch_size,
+                                  shuffle=True,
+                                  num_workers=config.num_workers,
+                                  pin_memory=True,
+                                  drop_last=True,
+                                  persistent_workers=True)
+    valid_dataloader = DataLoader(valid_dataset,
+                                  batch_size=1,
+                                  shuffle=False,
+                                  num_workers=1,
+                                  pin_memory=True,
+                                  drop_last=False,
+                                  persistent_workers=True)
+    test_dataloader = DataLoader(test_dataset,
+                                  batch_size=1,
+                                  shuffle=False,
+                                  num_workers=1,
+                                  pin_memory=True,
+                                  drop_last=False,
+                                  persistent_workers=True)
+    
+    # Place all data on the preprocessing data loader
+    if torch.cuda.is_available() and config.ngpu > 0:
+        device = torch.device(config.device_name)
+        train_prefetcher = CUDAPrefetcher(train_dataloader, device)
+        valid_prefetcher = CUDAPrefetcher(valid_dataloader, device)
+        test_prefetcher = CUDAPrefetcher(test_dataloader, device)
+    else:
+        train_prefetcher = CPUPrefetcher(train_dataloader)
+        valid_prefetcher = CPUPrefetcher(valid_dataloader)
+        test_prefetcher = CUDAPrefetcher(test_dataloader)
+    return train_prefetcher, valid_prefetcher, test_prefetcher
 
-#             shc_list = []
-#             for hrir in batch_data:
-#                 hrir
-
-# def load_dataset(config):
 
 def load_dataset(config, mean=None, std=None) -> [CUDAPrefetcher, CUDAPrefetcher, CUDAPrefetcher]:
     """Based on https://github.com/Lornatang/SRGAN-PyTorch/blob/main/train_srgan.py"""
