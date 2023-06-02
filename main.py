@@ -116,7 +116,8 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
-        
+        x = torch.randn(1,3).to(device=config.device_name)
+        print("device: ", x.device.type)
         print("merge?: ", config.merge_flag)
         train_prefetcher, valid_prefetcher, _ = load_hrtf(config)
         print("Loaded all datasets successfully.")
