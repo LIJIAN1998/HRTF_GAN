@@ -116,6 +116,7 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
+        print("merge?: ", config.merge_flag)
         cus_ds = check_dataset(config)
         print("cus_ds: ", type(ds))
         data = cus_ds[0]

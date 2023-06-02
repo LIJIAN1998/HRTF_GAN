@@ -29,7 +29,7 @@ def check_dataset(config):
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
 
-    if config.merge:
+    if config.merge_flag:
         left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}})
         right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}})
         degree = int(torch.sqrt(len(left.row_angles)*len(right.column_angles)/config.upscale_factor) - 1) # 6, 9, 13, 19
