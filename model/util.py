@@ -2,6 +2,7 @@ import torch
 import os
 import shutil
 from pathlib import Path
+import numpy as np
 
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
@@ -32,7 +33,7 @@ def check_dataset(config):
     if config.merge_flag:
         left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}})
         right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}})
-        degree = int(torch.sqrt(len(left.row_angles)*len(right.column_angles)/config.upscale_factor) - 1) # 6, 9, 13, 19
+        degree = int(np.sqrt(len(left.row_angles)*len(right.column_angles)/config.upscale_factor) - 1) # 6, 9, 13, 19
         custom_dataset = MergeHRTFDataset(left, right, degree)
     else:
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
