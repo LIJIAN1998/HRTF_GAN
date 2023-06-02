@@ -118,7 +118,7 @@ def main(config, mode):
     elif mode == 'train':
         print("merge?: ", config.merge_flag)
         cus_ds = check_dataset(config)
-        print("cus_ds: ", type(ds))
+        print("cus_ds: ", type(cus_ds))
         data = cus_ds[0]
         shc = data['sh_coefficient']
         hrir = data['original_hrir']
