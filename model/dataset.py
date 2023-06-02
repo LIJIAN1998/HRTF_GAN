@@ -53,6 +53,9 @@ class MergeHRTFDataset(Dataset):
                                           np.all(np.ma.getmaskarray(merge), axis=3))
         sh_coefficient = SHT(merge).T
         return {"sh_coefficient": sh_coefficient, "original_hrir": merge}
+    
+    def __len__(self):
+        return len(self.left_hrtf)
 
 
 
