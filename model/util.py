@@ -80,10 +80,9 @@ def load_hrtf(config):
         valid_prefetcher = CUDAPrefetcher(valid_dataloader, device)
         test_prefetcher = CUDAPrefetcher(test_dataloader, device)
     else:
-        device = torch.device(config.device_name)
-        train_prefetcher = CPUPrefetcher(train_dataloader, device)
-        valid_prefetcher = CPUPrefetcher(valid_dataloader, device)
-        test_prefetcher = CUDAPrefetcher(test_dataloader, device)
+        train_prefetcher = CPUPrefetcher(train_dataloader)
+        valid_prefetcher = CPUPrefetcher(valid_dataloader)
+        test_prefetcher = CPUPrefetcher(test_dataloader)
     return train_prefetcher, valid_prefetcher, test_prefetcher
 
 
