@@ -116,18 +116,20 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
+        print("cuda available: ", torch.cuda.is_available())
         x = torch.randn(1,3).to(device=config.device_name)
         print("device: ", x.device.type)
-        print("merge?: ", config.merge_flag)
-        train_prefetcher, valid_prefetcher, _ = load_hrtf(config)
-        print("Loaded all datasets successfully.")
-        print("train fetcher: ", len(train_prefetcher))
-        print("val: ", len(valid_prefetcher))
-        data = train_prefetcher.next()
-        coef = data['sh_coefficient']
-        print("coef: ", coef.shape)
-        hrir = data['original_hrir']
-        print("hrir:", hrir.shape)
+        # print("merge?: ", config.merge_flag)
+
+        # train_prefetcher, valid_prefetcher, _ = load_hrtf(config)
+        # print("Loaded all datasets successfully.")
+        # print("train fetcher: ", len(train_prefetcher))
+        # print("val: ", len(valid_prefetcher))
+        # data = train_prefetcher.next()
+        # coef = data['sh_coefficient']
+        # print("coef: ", coef.shape, torch.is_tensor(coef))
+        # hrir = data['original_hrir']
+        # print("hrir:", hrir.shape, torch.is_tensor(hrir))
 
         # Trains the model, according to the parameters specified in Config
         # train_prefetcher, _ = load_dataset(config, mean=None, std=None)
