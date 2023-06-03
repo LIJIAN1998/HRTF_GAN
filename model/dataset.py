@@ -17,17 +17,36 @@ def downsample_hrtf(hr_hrtf, hrtf_size, upscale_factor):
 
     return lr_hrtf
 
+def get_sample_ratio(upscale_factor):
+    if upscale_factor == 16:
+        return 8, 2
+    if upscale_factor == 8:
+        return 4, 2
+    if upscale_factor == 4:
+        return 2, 2
+    if upscale_factor == 2:
+        return 2, 1
+
 class CustomHRTFDataset(Dataset):
-    def __init__(self, original_hrtf_dataset, degree) -> None:
+    def __init__(self, original_hrtf_dataset, upscale_factor) -> None:
         super(CustomHRTFDataset, self).__init__()
         self.original_hrtf_dataset = original_hrtf_dataset
-        self.degree = degree
+        self.upscale_factor = upscale_factor
+        self.num_row_angles, self.num_col_angles = len(self.original_hrtf_dataset.row_angles), len(self.original_hrtf_dataset.column_angles)
+        self.num_radii = len(self.original_hrtf_dataset.radii)
+        self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles/upscale_factor) - 1)
 
     def __getitem__(self, index: int):
         hrir = self.original_hrtf_dataset[index]['features'][:, :, :, 1:]
+        original_mask = np.all(np.ma.getmaskarray(hrir), axis=3)
+        mask = np.ones((self.num_row_angles, self.num_col_angles, self.num_radii), dtype=bool)
+        row_ratio, col_ratio = get_sample_ratio(self.upscale_factor)
+        for i in range(self.num_row_angles // row_ratio):
+            for j in range(self.num_col_angles // col_ratio):
+                mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
         SHT = SphericalHarmonicsTransform(self.degree, self.original_hrtf_dataset.row_angles, self.original_hrtf_dataset.column_angles,
                                           self.original_hrtf_dataset.radii, 
-                                          np.all(np.ma.getmaskarray(hrir), axis=3))
+                                          mask)
         sh_coefficient = SHT(hrir).T
 
         return {"sh_coefficient": sh_coefficient, "original_hrir": hrir}
@@ -36,18 +55,24 @@ class CustomHRTFDataset(Dataset):
         return len(self.original_hrtf_dataset)
     
 class MergeHRTFDataset(Dataset):
-    def __init__(self, left_hrtf, right_hrtf, degree) -> None:
+    def __init__(self, left_hrtf, right_hrtf, upscale_factor, degree) -> None:
         super(MergeHRTFDataset, self).__init__()
         self.left_hrtf = left_hrtf
         self.right_hrtf = right_hrtf
-        self.degree = degree
+        self.upscale_factor = upscale_factor
+        self.num_row_angles, self.num_col_angles = len(self.original_hrtf_dataset.row_angles), len(self.original_hrtf_dataset.column_angles)
+        self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles/upscale_factor) - 1)
 
     def __getitem__(self, index: int):
         left = self.left_hrtf[index]['features'][:, :, :, 1:]
         right = self.right_hrtf[index]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
-        # merge = torch.cat([left, right], dim=3)
-
+        original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
+        mask = np.ones((self.num_row_angles, self.num_col_angles, self.num_radii), dtype=bool)
+        row_ratio, col_ratio = get_sample_ratio(self.upscale_factor)
+        for i in range(self.num_row_angles // row_ratio):
+            for j in range(self.num_col_angles // col_ratio):
+                mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
         SHT = SphericalHarmonicsTransform(self.degree, self.left_hrtf.row_angles, self.left_hrtf.column_angles,
                                           self.left_hrtf.radii,
                                           np.all(np.ma.getmaskarray(merge), axis=3))
