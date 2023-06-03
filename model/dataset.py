@@ -60,7 +60,7 @@ class MergeHRTFDataset(Dataset):
         self.left_hrtf = left_hrtf
         self.right_hrtf = right_hrtf
         self.upscale_factor = upscale_factor
-        self.num_row_angles, self.num_col_angles = len(self.original_hrtf_dataset.row_angles), len(self.original_hrtf_dataset.column_angles)
+        self.num_row_angles, self.num_col_angles = len(self.left_hrtf.row_angles), len(self.left_hrtf.column_angles)
         self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles/upscale_factor) - 1)
 
     def __getitem__(self, index: int):
