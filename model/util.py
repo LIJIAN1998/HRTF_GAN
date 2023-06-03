@@ -42,12 +42,10 @@ def load_hrtf(config):
     if config.merge_flag:
         left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}})
         right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}})
-        degree = int(np.sqrt(len(left.row_angles)*len(right.column_angles)/config.upscale_factor) - 1) # 6, 9, 13, 19
-        custom_dataset = MergeHRTFDataset(left, right, degree)
+        custom_dataset = MergeHRTFDataset(left, right, config.upscale_factor)
     else:
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
-        degree = int(torch.sqrt(len(left.row_angles)*len(right.column_angles)/config.upscale_factor) - 1) # 6, 9, 13, 19
-        custom_dataset = CustomHRTFDataset(ds, degree)
+        custom_dataset = CustomHRTFDataset(ds, config.upscale_factor)
 
     train_dataset, valid_dataset, test_dataset = split_dataset(custom_dataset, config.train_samples_ratio, (1-config.train_samples_ratio)/2)
 

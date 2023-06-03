@@ -55,7 +55,7 @@ class CustomHRTFDataset(Dataset):
         return len(self.original_hrtf_dataset)
     
 class MergeHRTFDataset(Dataset):
-    def __init__(self, left_hrtf, right_hrtf, upscale_factor, degree) -> None:
+    def __init__(self, left_hrtf, right_hrtf, upscale_factor) -> None:
         super(MergeHRTFDataset, self).__init__()
         self.left_hrtf = left_hrtf
         self.right_hrtf = right_hrtf
