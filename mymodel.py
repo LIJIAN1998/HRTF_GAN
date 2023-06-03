@@ -252,12 +252,12 @@ class Discriminator(nn.Module):
     
 
 if __name__ == '__main__':
-    # x1 = torch.randn(1, 128, 49)
-    # x2 = torch.randn(1, 128, 100)
-    # x3 = torch.randn(1, 128, 196)
-    # x4 = torch.randn(1, 128, 400)
-    # inputs = [x1, x2, x3, x4]
-    # degrees = [6, 9, 13, 19]
+    x1 = torch.randn(1, 128, 49)
+    x2 = torch.randn(1, 128, 100)
+    x3 = torch.randn(1, 128, 196)
+    x4 = torch.randn(1, 128, 400)
+    inputs = [x1, x2, x3, x4]
+    degrees = [6, 9, 13, 19]
     # for i, d in enumerate(degrees):
     #     model = Encoder(128, d, 10)
     #     x = inputs[i]
@@ -268,11 +268,16 @@ if __name__ == '__main__':
     # z = torch.randn(1, 10)
     # out = model(z)
     # print(out.shape)
+    for i, d in enumerate(degrees):
+        model = VAE(128, d, 10)
+        x = inputs[i]
+        out = model(x)
+        print("out: ", out.shape)
 
-    x = torch.randn(1, 128, 841)
-    D = Discriminator(28, 128)
-    out = D(x)
-    print(out.shape)
+    # x = torch.randn(1, 128, 841)
+    # D = Discriminator(28, 128)
+    # out = D(x)
+    # print(out.shape)
 
 
 # class Encoder(nn.Module):
