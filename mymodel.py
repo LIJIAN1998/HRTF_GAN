@@ -103,8 +103,8 @@ class Encoder(nn.Module):
     def forward(self, x):
         x = self.encode(x)
         mu, log_var = self.compute_mean(x), self.compute_log_var(x)
-        print('mu: ', mu.shape)
-        print('log_var: ', log_var.shape)
+        # print('mu: ', mu.shape)
+        # print('log_var: ', log_var.shape)
         z = self.reparametrize(mu, log_var)
         return z
     
