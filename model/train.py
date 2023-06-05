@@ -39,22 +39,27 @@ def train(config, train_prefetcher):
     cudnn.benchmark = True
 
     # Get train params
-    batch_size, beta1, beta2, num_epochs, lr_gen, lr_dis, critic_iters = config.get_train_params()
+    batch_size, beta1, beta2, num_epochs, lr_encoder, lr_decoder, lr_dis, critic_iters = config.get_train_params()
 
     # get list of positive frequencies of HRTF for plotting magnitude spectrum
     all_freqs = scipy.fft.fftfreq(256, 1 / config.hrir_samplerate)
     pos_freqs = all_freqs[all_freqs >= 0]
 
     # Define Generator network and transfer to CUDA
-    netG = Generator(upscale_factor=config.upscale_factor, nbins=nbins).to(device)
+    degree = int(np.sqrt(72*12)/config.upscale_factor - 1)
+    vae = VAE(nbins=nbins, max_degree=degree, latent_dim=10).to(device)
+    # netG = Generator(upscale_factor=config.upscale_factor, nbins=nbins).to(device)
     netD = Discriminator(nbins=nbins).to(device)
     if ('cuda' in str(device)) and (ngpu > 1):
         netD = (nn.DataParallel(netD, list(range(ngpu)))).to(device)
-        netG = nn.DataParallel(netG, list(range(ngpu))).to(device)
+        vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
+        # netG = nn.DataParallel(netG, list(range(ngpu))).to(device)
 
     # Define optimizers
     optD = optim.Adam(netD.parameters(), lr=lr_dis, betas=(beta1, beta2))
-    optG = optim.Adam(netG.parameters(), lr=lr_gen, betas=(beta1, beta2))
+    optEncoder = optim.Adam(vae.encoder.parameters(), lr=lr_encoder, betas=(beta1, beta2))
+    optDecoder = optim.Adam(vae.decoder.parameters(), lr=lr_decoder, betas=(beta1, beta2))
+    # optG = optim.Adam(netG.parameters(), lr=lr_gen, betas=(beta1, beta2))
 
     # Define loss functions
     adversarial_criterion = nn.BCEWithLogitsLoss()
@@ -70,7 +75,7 @@ def train(config, train_prefetcher):
 
     if config.start_with_existing_model:
         print(f'Initialized weights using an existing model - {config.existing_model_path}')
-        netG.load_state_dict(torch.load(f'{config.existing_model_path}/Gen.pt'))
+        vae.load_state_dict(torch.load(f'{config.existing_model_path}/Vae.pt'))
         netD.load_state_dict(torch.load(f'{config.existing_model_path}/Disc.pt'))
 
     train_losses_G = []
@@ -90,6 +95,9 @@ def train(config, train_prefetcher):
         train_loss_D = 0.
         train_loss_D_hr = 0.
         train_loss_D_sr = 0.
+
+        prior_los_list, vae_loss_list, recon_loss_list = [], [], []
+        dis_real_list, dis_fake_list, dis_prior_list = [], [], []
 
         # Initialize the number of data batches to print logs on the terminal
         batch_index = 0
@@ -111,6 +119,15 @@ def train(config, train_prefetcher):
                                      non_blocking=True, dtype=torch.float)
             hr = batch_data["hr"].to(device=device, memory_format=torch.contiguous_format,
                                      non_blocking=True, dtype=torch.float)
+            
+            lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
+                                                             non_blocking=True, dtype=torch.float)
+            hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
+                                                             non_blocking=True, dtype=torch.float)
+            hrir = batch_data["hrir"].to(device=device, memory_format=torch.contiguous_format,
+                                         non_blocking=True, dtype=torch.float)
+            mask = batch_data["mask"].to(device=device, memory_format=torch.contiguous_format,
+                                         non_blocking=True, dtype=torch.float)
 
             # during every 25th epoch and last epoch, save filename for mag spectrum plot
             if epoch % 25 == 0 or epoch == (num_epochs - 1):
@@ -121,7 +138,7 @@ def train(config, train_prefetcher):
             netD.zero_grad()
 
             # Use the generator model to generate fake samples
-            sr = netG(lr)
+            sr = vae(lr)
 
             # Calculate the classification score of the discriminator model for real samples
             label = torch.full((batch_size, ), 1., dtype=hr.dtype, device=device)

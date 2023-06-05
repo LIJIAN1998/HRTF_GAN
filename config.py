@@ -71,8 +71,11 @@ class Config:
         self.batch_size = 1
         self.num_workers = 1
         self.num_epochs = 300  # was originally 250
-        self.lr_gen = 0.0002
+        self.lr_encoder = 0.0002
+        self.lr_decoder = 0.0002
         self.lr_dis = 0.0000015
+        self.lr_decay_vae = 0.80
+        self.lr_decay_dis = 0.85
         # how often to train the generator
         self.critic_iters = 4
 
@@ -104,4 +107,4 @@ class Config:
                 setattr(self, k, v)
 
     def get_train_params(self):
-        return self.batch_size, self.beta1, self.beta2, self.num_epochs, self.lr_gen, self.lr_dis, self.critic_iters
+        return self.batch_size, self.beta1, self.beta2, self.num_epochs, self.lr_encoder, self.lr_decoder, self.lr_dis, self.critic_iters

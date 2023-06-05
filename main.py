@@ -126,10 +126,15 @@ def main(config, mode):
         print("train fetcher: ", len(train_prefetcher))
         print("val: ", len(valid_prefetcher))
         data = train_prefetcher.next()
-        coef = data['sh_coefficient']
-        print("coef: ", coef.shape, torch.is_tensor(coef), coef.device.type)
-        hrir = data['original_hrir']
+        lr = data['lr_coefficient']
+        print("coef: ", lr.shape, torch.is_tensor(lr), lr.device.type)
+        hr = data['hr_coefficient']
+        print("hr: ", hr.shape)
+        hrir = data['hrir']
         print("hrir:", hrir.shape, torch.is_tensor(hrir), hrir.device.type)
+        mask = data['mask']
+        print("mask: ", mask.shape, type(mask))
+
 
         # Trains the model, according to the parameters specified in Config
         # train_prefetcher, _ = load_dataset(config, mean=None, std=None)
