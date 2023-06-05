@@ -56,7 +56,7 @@ class CustomHRTFDataset(Dataset):
                                              original_mask)
         hr_coefficient = hr_SHT(hrir).T
 
-        hrir = torch.permute(hrir, (3, 2, 0, 1))
+        hrir = torch.from_numpy(hrir.data).permute(3, 2, 0, 1)
 
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient, 
                 "hrir": hrir, "mask": original_mask}
@@ -96,7 +96,7 @@ class MergeHRTFDataset(Dataset):
                                              np.all(np.ma.getmaskarray(merge), axis=3))
         hr_coefficient = hr_SHT(merge).T
 
-        merge = torch.permute(merge, (3, 2, 0, 1))
+        merge = torch.from_numpy(merge.data).permute(3, 2, 0, 1)
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient,
                 "hrir": merge, "mask": original_mask}
     
