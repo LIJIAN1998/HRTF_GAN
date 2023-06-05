@@ -7,7 +7,7 @@ import importlib
 
 from config import Config
 from model.train import train
-from model.test import test
+# from model.test import test
 from model.util import load_dataset, load_hrtf
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
