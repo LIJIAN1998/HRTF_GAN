@@ -141,10 +141,10 @@ def main(config, mode):
         recon_coef_list = []
         for i, mask in enumerate(masks):
             SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, mask[i])
-            h = torch.from_numpy(SHT.inverse(hr[i].T))
+            h = SHT.inverse(hr[i].T)
             recon_coef_list.append(h)
         recons = torch.stack(recon_coef_list)
-        print("recons:", recons.shape)
+        print("recons:", recons.shape, recons.device.type)
 
 
         # Trains the model, according to the parameters specified in Config
