@@ -133,7 +133,7 @@ def main(config, mode):
         hrir = data['hrir']
         print("hrir:", hrir.shape, torch.is_tensor(hrir), hrir.device.type)
         masks = data['mask']
-        print("mask: ", mask.shape, type(mask))
+        print("mask: ", masks.shape, type(masks))
 
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                               'side': 'left', 'domain': 'time'}}, subject_ids='first')
