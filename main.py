@@ -140,7 +140,7 @@ def main(config, mode):
 
         recon_coef_list = []
         for i, mask in enumerate(masks):
-            SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, mask[i].detach().cpu().numpy)
+            SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, mask[i].detach().cpu().numpy.astype(bool))
             h = SHT.inverse(hr[i].T.detach().cpu().numpy())
             print(h.type)
             recon_coef_list.append(h)
