@@ -143,7 +143,7 @@ def main(config, mode):
         for i in range(masks.size(0)):
             SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
             h = SHT.inverse(hr[i].T.detach().cpu().numpy())
-            print(h.type)
+            print(h.shape)
             recon_coef_list.append(h)
         recons = torch.stack(recon_coef_list)
         print("recons:", recons.shape, recons.device.type)
