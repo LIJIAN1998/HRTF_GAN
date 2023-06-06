@@ -2,11 +2,14 @@ import pickle
 
 import scipy
 
+import importlib
+
 from model.util import *
 from model.model import *
 
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
+from torch.autograd import Variable
 import numpy as np
 import torch
 import torch.nn as nn
@@ -14,6 +17,7 @@ import time
 
 from plot import plot_losses, plot_magnitude_spectrums
 
+from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 
 def train(config, train_prefetcher):
     """ Train the generator and discriminator models
@@ -21,6 +25,11 @@ def train(config, train_prefetcher):
     :param config: Config object containing model hyperparameters
     :param train_prefetcher: prefetcher for training data
     """
+    data_dir = config.raw_hrtf_dir / config.dataset
+    imp = importlib.import_module('hrtfdata.full')
+    load_function = getattr(imp, config.dataset)
+    ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                         'side': 'left', 'domain': 'time'}}, subject_ids='first')
     # Calculate how many batches of data are in each Epoch
     batches = len(train_prefetcher)
 
@@ -94,7 +103,7 @@ def train(config, train_prefetcher):
         train_loss_G_content = 0.
         train_loss_D = 0.
         train_loss_D_hr = 0.
-        train_loss_D_sr = 0.
+        train_loss_D_recon = 0.
 
         prior_los_list, vae_loss_list, recon_loss_list = [], [], []
         dis_real_list, dis_fake_list, dis_prior_list = [], [], []
@@ -115,19 +124,21 @@ def train(config, train_prefetcher):
                 start_overall = time.time()
 
             # Transfer in-memory data to CUDA devices to speed up training
-            lr = batch_data["lr"].to(device=device, memory_format=torch.contiguous_format,
-                                     non_blocking=True, dtype=torch.float)
-            hr = batch_data["hr"].to(device=device, memory_format=torch.contiguous_format,
-                                     non_blocking=True, dtype=torch.float)
-            
             lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                              non_blocking=True, dtype=torch.float)
             hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                              non_blocking=True, dtype=torch.float)
             hrir = batch_data["hrir"].to(device=device, memory_format=torch.contiguous_format,
                                          non_blocking=True, dtype=torch.float)
-            mask = batch_data["mask"].to(device=device, memory_format=torch.contiguous_format,
+            masks = batch_data["mask"].to(device=device, memory_format=torch.contiguous_format,
                                          non_blocking=True, dtype=torch.float)
+            
+            bs = lr_coefficient.size(0)
+            ones_label = Variable(torch.ones(bs,1)).to(device) # labels for real data
+            zeros_label = Variable(torch.zeros(bs,1)).to(device) # labels for generated data
+
+            # Generate fake samples using VAE
+            mu, log_var, recon = vae(lr_coefficient)
 
             # during every 25th epoch and last epoch, save filename for mag spectrum plot
             if epoch % 25 == 0 or epoch == (num_epochs - 1):
@@ -135,31 +146,40 @@ def train(config, train_prefetcher):
 
             # Discriminator Training
             # Initialize the discriminator model gradients
-            netD.zero_grad()
-
-            # Use the generator model to generate fake samples
-            sr = vae(lr)
-
-            # Calculate the classification score of the discriminator model for real samples
-            label = torch.full((batch_size, ), 1., dtype=hr.dtype, device=device)
-            output = netD(hr).view(-1)
-            loss_D_hr = adversarial_criterion(output, label)
-            loss_D_hr.backward()
-
-            # train on SR hrtfs
-            label.fill_(0.)
-            output = netD(sr.detach().clone()).view(-1)
-            loss_D_sr = adversarial_criterion(output, label)
-            loss_D_sr.backward()
-
+            
+            # train on real coefficient
+            pred_real = netD(hr_coefficient)[0]
+            loss_D_hr = adversarial_criterion(pred_real, ones_label)
+            # train on reconstructed coefficient 
+            pred_recon = netD(recon.detach().clone())[0]
+            loss_D_recon = adversarial_criterion(pred_recon, zeros_label)
             # Compute the discriminator loss
-            loss_D = loss_D_hr + loss_D_sr
+            gan_loss = loss_D_hr + loss_D_recon
+            # Update D
+            netD.zero_grad()
+            gan_loss.backward(retain_graph=True)
+            optD.step()
+            
+            loss_D = loss_D_hr + loss_D_recon
             train_loss_D += loss_D.item()
             train_loss_D_hr += loss_D_hr.item()
-            train_loss_D_sr += loss_D_sr.item()
+            train_loss_D_recon += loss_D_recon.item()
 
-            # Update D
-            optD.step()
+            # train decoder
+            pred_real, feature_real = netD(hr_coefficient)
+            errD_real = adversarial_criterion(output, ones_label)
+            pred_recon, feature_recon = netD(recon)
+            errD_recon = adversarial_criterion(pred_recon, zeros_label)
+            gan_loss = errD_real + errD_recon
+            feature_sim_loss = ((feature_recon - feature_real) ** 2).mean()
+            # convert reconstructed coefficient back to hrir
+            recon_coef_list = []
+            for i, mask in enumerate(masks):
+                SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, mask[i])
+                recon_coef_list.append(torch.from_numpy(SHT.inverse(recon[i].T)))
+            recons = torch.stack(recon_coef_list)
+            unweighted_content_loss = content_criterion(config)
+
 
             # Generator training
             if batch_index % int(critic_iters) == 0:

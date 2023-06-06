@@ -228,8 +228,9 @@ class Discriminator(nn.Module):
     def forward(self,  x: torch.Tensor) -> torch.Tensor:
         x = self.features(x)
         x = x.view(x.size(0), -1)
+        x1 = x
         out = self.classifier(x)
-        return out
+        return out, x1
 
 class VAE(nn.Module):
     def __init__(self, nbins: int, max_degree: int, latent_dim: int, out_degree: int=28) -> None:

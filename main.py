@@ -132,8 +132,19 @@ def main(config, mode):
         print("hr: ", hr.shape)
         hrir = data['hrir']
         print("hrir:", hrir.shape, torch.is_tensor(hrir), hrir.device.type)
-        mask = data['mask']
+        masks = data['mask']
         print("mask: ", mask.shape, type(mask))
+
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                              'side': 'left', 'domain': 'time'}}, subject_ids='first')
+
+        recon_coef_list = []
+        for i, mask in enumerate(masks):
+            SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, mask[i])
+            h = torch.from_numpy(SHT.inverse(hr[i].T))
+            recon_coef_list.append(h)
+        recons = torch.stack(recon_coef_list)
+        print("recons:", recons.shape)
 
 
         # Trains the model, according to the parameters specified in Config
