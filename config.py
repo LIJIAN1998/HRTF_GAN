@@ -83,6 +83,7 @@ class Config:
         self.content_weight = 0.01
         self.adversarial_weight = 0.01
         self.gamma = 0.15
+        self.beta = 0.5
 
         # betas for Adam optimizer
         self.beta1 = 0.9
