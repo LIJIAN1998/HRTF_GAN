@@ -134,14 +134,14 @@ def main(config, mode):
         print("hrir:", hrir.shape, torch.is_tensor(hrir), hrir.device.type)
         masks = data['mask']
         print("mask: ", masks.shape, type(masks))
-        print(mask[0].detach().cpu().numpy().astype(bool).shape)
+        print(masks[0].detach().cpu().numpy().astype(bool).shape)
 
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                               'side': 'left', 'domain': 'time'}}, subject_ids='first')
 
         recon_coef_list = []
-        for i, mask in enumerate(masks):
-            SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, mask[i].detach().cpu().numpy().astype(bool))
+        for i in range(masks.size(0)):
+            SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
             h = SHT.inverse(hr[i].T.detach().cpu().numpy())
             print(h.type)
             recon_coef_list.append(h)
