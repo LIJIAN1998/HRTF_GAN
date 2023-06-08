@@ -145,7 +145,7 @@ def main(config, mode):
         recon_coef_list = []
         for i in range(masks.size(0)):
             SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
-            h = SHT.inverse(hr[i].T.detach().cpu().numpy())
+            h = SHT.inverse(hr[i].T)
             print(h.shape)
             h = torch.from_numpy(h.T).reshape(256, num_radii, num_row_angles, num_col_angles)
             recon_coef_list.append(h)
