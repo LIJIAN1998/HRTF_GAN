@@ -311,9 +311,8 @@ def plot_panel(lr, sr, hr, batch_index, epoch, path, ncol, freq_index):
     plt.close(fig)
 
 
-def plot_losses(train_losses_1, train_losses_2, label_1, label_2, color_1, color_2,
-                path, filename, title="Loss Curves"):
-    """Plot the discriminator and generator loss over time"""
+def plot_losses(losses, labels, colors, path, filename, title="Loss Curves"):
+    """Plot loss curves"""
     params = {
         'axes.labelsize': 10,
         'font.size': 10,
@@ -323,16 +322,10 @@ def plot_losses(train_losses_1, train_losses_2, label_1, label_2, color_1, color
         'figure.figsize': [6, 4.5]
     }
     plt.rcParams.update(params)
-
     plt.figure()
     plt.grid(ls='dashed', axis='y', color='0.8')
-
-    # loss_1 = [x for x in train_losses_1]
-    # loss_2 = [x for x in train_losses_2]
-    plt.plot(train_losses_1, label=label_1, linewidth=2, color=color_1)
-    plt.plot(train_losses_2, label=label_2, linewidth=2, color=color_2)
-    # plt.ylim(bottom=0)
-
+    for i in range(len(losses)):
+        plt.plot(losses[i], label=labels[i], linewidth=2, color=colors[i])
     plt.title(title)
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
@@ -341,6 +334,37 @@ def plot_losses(train_losses_1, train_losses_2, label_1, label_2, color_1, color
     frame.set_facecolor('0.9')
     frame.set_edgecolor('0.9')
     plt.savefig(f'{path}/{filename}.png')
+
+# def plot_losses(train_losses_1, train_losses_2, label_1, label_2, color_1, color_2,
+#                 path, filename, title="Loss Curves"):
+#     """Plot the discriminator and generator loss over time"""
+#     params = {
+#         'axes.labelsize': 10,
+#         'font.size': 10,
+#         'legend.fontsize': 10,
+#         'xtick.labelsize': 8,
+#         'ytick.labelsize': 8,
+#         'figure.figsize': [6, 4.5]
+#     }
+#     plt.rcParams.update(params)
+
+#     plt.figure()
+#     plt.grid(ls='dashed', axis='y', color='0.8')
+
+#     # loss_1 = [x for x in train_losses_1]
+#     # loss_2 = [x for x in train_losses_2]
+#     plt.plot(train_losses_1, label=label_1, linewidth=2, color=color_1)
+#     plt.plot(train_losses_2, label=label_2, linewidth=2, color=color_2)
+#     # plt.ylim(bottom=0)
+
+#     plt.title(title)
+#     plt.xlabel("Epochs")
+#     plt.ylabel("Loss")
+#     plt_legend = plt.legend()
+#     frame = plt_legend.get_frame()
+#     frame.set_facecolor('0.9')
+#     frame.set_edgecolor('0.9')
+#     plt.savefig(f'{path}/{filename}.png')
 
 
 def plot_magnitude_spectrums(frequencies, magnitudes_real, magnitudes_interpolated, ear, mode, label, path,

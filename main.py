@@ -125,32 +125,41 @@ def main(config, mode):
         print("Loaded all datasets successfully.")
         print("train fetcher: ", len(train_prefetcher))
         print("val: ", len(valid_prefetcher))
-        data = train_prefetcher.next()
-        lr = data['lr_coefficient']
-        print("coef: ", lr.shape, torch.is_tensor(lr), lr.device.type)
-        hr = data['hr_coefficient']
-        print("hr: ", hr.shape)
-        hrir = data['hrir']
-        print("hrir:", hrir.shape, torch.is_tensor(hrir), hrir.device.type)
-        masks = data['mask']
-        print("mask: ", masks.shape, type(masks))
-        print(masks[0].detach().cpu().numpy().astype(bool).shape)
+        
+        for epoch in range(3):
+            train_prefetcher.reset()
+            data = train_prefetcher.next()
+            batch_index = 0
+            while data is not None:
+                if batch_index % 50 == 0:
+                    print(f"{batch_index+1}/{len(train_prefetcher)}")
+                batch_index += 1
 
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                              'side': 'left', 'domain': 'time'}}, subject_ids='first')
+        # lr = data['lr_coefficient']
+        # print("coef: ", lr.shape, torch.is_tensor(lr), lr.device.type)
+        # hr = data['hr_coefficient']
+        # print("hr: ", hr.shape)
+        # hrir = data['hrir']
+        # print("hrir:", hrir.shape, torch.is_tensor(hrir), hrir.device.type)
+        # masks = data['mask']
+        # print("mask: ", masks.shape, type(masks))
+        # print(masks[0].detach().cpu().numpy().astype(bool).shape)
 
-        num_row_angles = len(ds.row_angles)
-        num_col_angles = len(ds.column_angles)
-        num_radii = len(ds.radii)
-        recon_coef_list = []
-        for i in range(masks.size(0)):
-            SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
-            h = SHT.inverse(hr[i].T)
-            print(h.shape)
-            h = torch.from_numpy(h.T).reshape(256, num_radii, num_row_angles, num_col_angles)
-            recon_coef_list.append(h)
-        recons = torch.stack(recon_coef_list)
-        print("recons:", recons.shape, recons.device.type)
+        # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+        #                                                       'side': 'left', 'domain': 'time'}}, subject_ids='first')
+
+        # num_row_angles = len(ds.row_angles)
+        # num_col_angles = len(ds.column_angles)
+        # num_radii = len(ds.radii)
+        # recon_coef_list = []
+        # for i in range(masks.size(0)):
+        #     SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
+        #     h = SHT.inverse(hr[i].T.detach().cpu().numpy())
+        #     print(h.shape)
+        #     h = torch.from_numpy(h.T).reshape(256, num_radii, num_row_angles, num_col_angles)
+        #     recon_coef_list.append(h)
+        # recons = torch.stack(recon_coef_list)
+        # print("recons:", recons.shape, recons.device.type)
 
 
         # Trains the model, according to the parameters specified in Config
