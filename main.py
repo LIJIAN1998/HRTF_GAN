@@ -126,17 +126,8 @@ def main(config, mode):
         print("train fetcher: ", len(train_prefetcher))
         print("val: ", len(valid_prefetcher))
         # Trains the model, according to the parameters specified in Config
-        
-        for epoch in range(3):
-            train_prefetcher.reset()
-            data = train_prefetcher.next()
-            batch_index = 0
-            while data is not None:
-                if batch_index % 50 == 0:
-                    with open("log.txt", "a") as f:
-                        f.write(f"{batch_index}/{len(train_prefetcher)}\n")
-                data = train_prefetcher.next()
-                batch_index += 1
+        util.initialise_folders(config, overwrite=True)
+        train(config, train_prefetcher)
 
         # lr = data['lr_coefficient']
         # print("coef: ", lr.shape, torch.is_tensor(lr), lr.device.type)

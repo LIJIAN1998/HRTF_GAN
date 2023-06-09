@@ -25,6 +25,8 @@ def train(config, train_prefetcher):
     :param config: Config object containing model hyperparameters
     :param train_prefetcher: prefetcher for training data
     """
+    print("inside training function")
+    return
     # load the dataset to get the row, column angles info
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
