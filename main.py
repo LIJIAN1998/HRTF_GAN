@@ -125,6 +125,7 @@ def main(config, mode):
         print("Loaded all datasets successfully.")
         print("train fetcher: ", len(train_prefetcher))
         print("val: ", len(valid_prefetcher))
+        # Trains the model, according to the parameters specified in Config
         
         for epoch in range(3):
             train_prefetcher.reset()
@@ -132,7 +133,9 @@ def main(config, mode):
             batch_index = 0
             while data is not None:
                 if batch_index % 50 == 0:
-                    print(f"{batch_index+1}/{len(train_prefetcher)}")
+                    with open("log.txt", "a") as f:
+                        f.write(f"{batch_index+1}/{len(train_prefetcher)}")
+                    # print(f"{batch_index+1}/{len(train_prefetcher)}")
                 data = train_prefetcher.next()
                 batch_index += 1
 
@@ -163,49 +166,10 @@ def main(config, mode):
         # print("recons:", recons.shape, recons.device.type)
 
 
-        # Trains the model, according to the parameters specified in Config
+        
         # train_prefetcher, _ = load_dataset(config, mean=None, std=None)
         # print("Loaded all datasets successfully.")
 
-        # train_prefetcher.reset()
-        # batch_data = train_prefetcher.next()
-        # lr = batch_data["lr"]
-        # hr = batch_data["hr"]
-        # print("lr: ", type(lr), lr.shape)
-        # print("hr: ", type(hr), hr.shape)
-
-        # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-        #                                                       'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
-        # # remove the dc component
-        # p = ds[0]['features'][:, :, :, 1:]
-        # maskarray = np.ma.getmaskarray(ds[0]['features'])
-        # print('feature shape: ', ds[0]['features'].shape)
-        # print("mask array: ", maskarray.shape)
-        # print("all false: ", np.all(maskarray == False).shape)
-        # # print(maskarray)
-        # print("np.all: ", np.all(np.ma.getmaskarray(ds[0]['features']), axis=3).shape)
-        # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, 
-        #                                   np.all(np.ma.getmaskarray(ds[0]['features']), axis=3))
-        
-        # original_mask = np.all(np.ma.getmaskarray(ds[0]['features']), axis=3)
-        # mask = np.ones((72, 12, 1), dtype=bool)
-        # for i in range(36):
-        #     for j in range(6):
-        #         mask[2*i, 2*j, :] = original_mask[2*i, 2*j, :]
-        # SHT = SphericalHarmonicsTransform(10, ds.row_angles, ds.column_angles, ds.radii, mask)
-        # x = SHT(ds[0]['features'])
-        # print('feature: ', ds[0]['features'].shape)
-        # print('coef: ', x.shape)
-        # print('inverse: ', SHT.inverse(x).shape)
-
-        
-
-        # perform SHT on each low resolution data, and stack them back into a batch
-        # sh_coeffs_list = []
-        # for i in range(lr.size(0)):
-        #     sh_coeffs_list.append(SHT(lr[i]))
-        # sh_coeffs = torch.stack(sh_coeffs_list, dim=0)
-        # print("sh coef: ", sh_coeffs.shape)
     print("finished")
 
 if __name__ == '__main__':
