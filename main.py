@@ -133,6 +133,7 @@ def main(config, mode):
             while data is not None:
                 if batch_index % 50 == 0:
                     print(f"{batch_index+1}/{len(train_prefetcher)}")
+                data = train_prefetcher.next()
                 batch_index += 1
 
         # lr = data['lr_coefficient']
