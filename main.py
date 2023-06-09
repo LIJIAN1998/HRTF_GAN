@@ -134,8 +134,7 @@ def main(config, mode):
             while data is not None:
                 if batch_index % 50 == 0:
                     with open("log.txt", "a") as f:
-                        f.write(f"{batch_index+1}/{len(train_prefetcher)}")
-                    # print(f"{batch_index+1}/{len(train_prefetcher)}")
+                        f.write(f"{batch_index}/{len(train_prefetcher)}\n")
                 data = train_prefetcher.next()
                 batch_index += 1
 
