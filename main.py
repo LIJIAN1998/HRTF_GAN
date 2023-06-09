@@ -116,15 +116,10 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
-        print("cuda available: ", torch.cuda.is_available())
-        x = torch.randn(1,3).to(device=config.device_name)
-        print("device: ", x.device.type)
-        print("merge?: ", config.merge_flag)
-
-        train_prefetcher, valid_prefetcher, _ = load_hrtf(config)
+        train_prefetcher, test_prefetcher = load_hrtf(config)
         print("Loaded all datasets successfully.")
         print("train fetcher: ", len(train_prefetcher))
-        print("val: ", len(valid_prefetcher))
+        print("test: ", len(test_prefetcher))
         # Trains the model, according to the parameters specified in Config
         util.initialise_folders(config, overwrite=True)
         train(config, train_prefetcher)

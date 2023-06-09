@@ -26,13 +26,12 @@ def initialise_folders(config, overwrite):
         shutil.rmtree(Path(config.path), ignore_errors=True)
         Path(config.path).mkdir(parents=True, exist_ok=True)
 
-def split_dataset(dataset, train_ratio=0.6, val_ratio=0.1):
+def split_dataset(dataset, train_ratio=0.8):
     total_len = len(dataset)
     train_len = int(total_len * train_ratio)
-    val_len = int(total_len * val_ratio)
-    test_len = total_len - train_len - val_len
+    test_len = total_len - train_len
 
-    return random_split(dataset, lengths=[train_len, val_len, test_len])
+    return random_split(dataset, lengths=[train_len, test_len])
 
 def load_hrtf(config):
     data_dir = config.raw_hrtf_dir / config.dataset
@@ -47,7 +46,7 @@ def load_hrtf(config):
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
         custom_dataset = CustomHRTFDataset(ds, config.upscale_factor)
 
-    train_dataset, valid_dataset, test_dataset = split_dataset(custom_dataset, config.train_samples_ratio, (1-config.train_samples_ratio)/2)
+    train_dataset, test_dataset = split_dataset(custom_dataset, config.train_samples_ratio)
 
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=config.batch_size,
@@ -55,13 +54,6 @@ def load_hrtf(config):
                                   num_workers=config.num_workers,
                                   pin_memory=True,
                                   drop_last=True,
-                                  persistent_workers=True)
-    valid_dataloader = DataLoader(valid_dataset,
-                                  batch_size=1,
-                                  shuffle=False,
-                                  num_workers=1,
-                                  pin_memory=True,
-                                  drop_last=False,
                                   persistent_workers=True)
     test_dataloader = DataLoader(test_dataset,
                                   batch_size=1,
@@ -75,13 +67,11 @@ def load_hrtf(config):
     if torch.cuda.is_available() and config.ngpu > 0:
         device = torch.device(config.device_name)
         train_prefetcher = CUDAPrefetcher(train_dataloader, device)
-        valid_prefetcher = CUDAPrefetcher(valid_dataloader, device)
         test_prefetcher = CUDAPrefetcher(test_dataloader, device)
     else:
         train_prefetcher = CPUPrefetcher(train_dataloader)
-        valid_prefetcher = CPUPrefetcher(valid_dataloader)
         test_prefetcher = CPUPrefetcher(test_dataloader)
-    return train_prefetcher, valid_prefetcher, test_prefetcher
+    return train_prefetcher, test_prefetcher
 
 
 def load_dataset(config, mean=None, std=None) -> [CUDAPrefetcher, CUDAPrefetcher, CUDAPrefetcher]:
