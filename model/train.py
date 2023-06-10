@@ -176,7 +176,7 @@ def train(config, train_prefetcher):
             # train on reconstructed coefficient 
             pred_recon = netD(recon.detach().clone())[0]
             loss_D_recon = adversarial_criterion(pred_recon, zeros_label)
-            train_loss_D_recon += loss_D_recon.item()
+            train_loss_Dis_recon += loss_D_recon.item()
             # Compute the discriminator loss
             gan_loss = loss_D_hr + loss_D_recon
             train_loss_Dis += gan_loss.item()
