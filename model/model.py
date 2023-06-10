@@ -177,7 +177,7 @@ class Decoder(nn.Module):
 
     def forward(self,  x: torch.Tensor) -> torch.Tensor:
         x = self.decoder(x)
-        print(x.shape)
+        # print(x.shape)
         out = self.classifier(x)
         return out
 
