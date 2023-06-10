@@ -116,13 +116,13 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
-        train_prefetcher, test_prefetcher = load_hrtf(config)
-        print("Loaded all datasets successfully.")
-        print("train fetcher: ", len(train_prefetcher))
-        print("test: ", len(test_prefetcher))
-        # Trains the model, according to the parameters specified in Config
-        util.initialise_folders(config, overwrite=True)
-        train(config, train_prefetcher)
+        # train_prefetcher, test_prefetcher = load_hrtf(config)
+        # print("Loaded all datasets successfully.")
+        # print("train fetcher: ", len(train_prefetcher))
+        # print("test: ", len(test_prefetcher))
+        # # Trains the model, according to the parameters specified in Config
+        # util.initialise_folders(config, overwrite=True)
+        # train(config, train_prefetcher)
 
         # lr = data['lr_coefficient']
         # print("coef: ", lr.shape, torch.is_tensor(lr), lr.device.type)
@@ -134,8 +134,12 @@ def main(config, mode):
         # print("mask: ", masks.shape, type(masks))
         # print(masks[0].detach().cpu().numpy().astype(bool).shape)
 
-        # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-        #                                                       'side': 'left', 'domain': 'time'}}, subject_ids='first')
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                              'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+        data = ds[0]['features'][:, :, :, 1:]
+        SHT = SphericalHarmonicsTransform(13, ds.row_angles, ds.column_angles, ds.radii, np.all(np.ma.getmaskarray(data), axis=3))
+        c = SHT(data)
+        print("coef: ", c.shape)
 
         # num_row_angles = len(ds.row_angles)
         # num_col_angles = len(ds.column_angles)
