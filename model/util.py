@@ -53,7 +53,7 @@ def load_hrtf(config):
                                   shuffle=True,
                                   num_workers=config.num_workers,
                                   pin_memory=True,
-                                  drop_last=True,
+                                  drop_last=False,
                                   persistent_workers=True)
     test_dataloader = DataLoader(test_dataset,
                                   batch_size=1,

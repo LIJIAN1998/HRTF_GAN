@@ -25,14 +25,15 @@ def train(config, train_prefetcher):
     :param config: Config object containing model hyperparameters
     :param train_prefetcher: prefetcher for training data
     """
-    print("inside training function")
-    return
     # load the dataset to get the row, column angles info
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
     ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
                                                          'side': 'left', 'domain': 'time'}}, subject_ids='first')
+    num_row_angles = len(ds.row_angles)
+    num_col_angles = len(ds.column_angles)
+    num_radii = len(ds.radii)
     
     # Calculate how many batches of data are in each Epoch
     batches = len(train_prefetcher)
@@ -54,25 +55,22 @@ def train(config, train_prefetcher):
     # Get train params
     batch_size, beta1, beta2, num_epochs, lr_encoder, lr_decoder, lr_dis, critic_iters = config.get_train_params()
 
-    # get list of positive frequencies of HRTF for plotting magnitude spectrum
-    all_freqs = scipy.fft.fftfreq(256, 1 / config.hrir_samplerate)
-    pos_freqs = all_freqs[all_freqs >= 0]
+    # # get list of positive frequencies of HRTF for plotting magnitude spectrum
+    # all_freqs = scipy.fft.fftfreq(256, 1 / config.hrir_samplerate)
+    # pos_freqs = all_freqs[all_freqs >= 0]
 
-    # Define Generator network and transfer to CUDA
-    degree = int(np.sqrt(72*12)/config.upscale_factor - 1)
+    # Define VAE and transfer to CUDA
+    degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii)/config.upscale_factor - 1)
     vae = VAE(nbins=nbins, max_degree=degree, latent_dim=10).to(device)
-    # netG = Generator(upscale_factor=config.upscale_factor, nbins=nbins).to(device)
     netD = Discriminator(nbins=nbins).to(device)
     if ('cuda' in str(device)) and (ngpu > 1):
         netD = (nn.DataParallel(netD, list(range(ngpu)))).to(device)
         vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
-        # netG = nn.DataParallel(netG, list(range(ngpu))).to(device)
 
     # Define optimizers
     optD = optim.Adam(netD.parameters(), lr=lr_dis, betas=(beta1, beta2))
     optEncoder = optim.Adam(vae.encoder.parameters(), lr=lr_encoder, betas=(beta1, beta2))
     optDecoder = optim.Adam(vae.decoder.parameters(), lr=lr_decoder, betas=(beta1, beta2))
-    # optG = optim.Adam(netG.parameters(), lr=lr_gen, betas=(beta1, beta2))
 
     # Define loss functions
     adversarial_criterion = nn.BCEWithLogitsLoss()
@@ -195,9 +193,6 @@ def train(config, train_prefetcher):
             train_loss_Dec_sim += feature_sim_loss_D.item()
             # convert reconstructed coefficient back to hrir
             recon_coef_list = []
-            num_row_angles = len(ds.row_angles)
-            num_col_angles = len(ds.column_angles)
-            num_radii = len(ds.radii)
             for i in range(masks.size(0)):
                 SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
                 recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse

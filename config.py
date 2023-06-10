@@ -68,7 +68,7 @@ class Config:
         self.hrtf_selection_dir = self.data_dirs_path + self.baseline_dir + '/hrtf_selection/valid'
 
         # Training hyperparams
-        self.batch_size = 1
+        self.batch_size = 8
         self.num_workers = 1
         self.num_epochs = 300  # was originally 250
         self.lr_encoder = 0.0002
@@ -80,10 +80,10 @@ class Config:
         self.critic_iters = 4
 
         # Loss function weight
-        self.content_weight = 0.01
+        self.content_weight = 1
         self.adversarial_weight = 0.01
-        self.gamma = 0.15
-        self.beta = 0.5
+        self.gamma = 15
+        self.beta = 5
 
         # betas for Adam optimizer
         self.beta1 = 0.9
