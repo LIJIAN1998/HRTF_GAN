@@ -101,8 +101,10 @@ class Encoder(nn.Module):
         return z
 
     def forward(self, x):
+        print("input: ", x.shape)
         print("num encode block: ", self.num_encode_blocks)
         x = self.encode(x)
+        print("encoded: ", x.shape)
         mu, log_var = self.compute_mean(x), self.compute_log_var(x)
         # print('mu: ', mu.shape)
         # print('log_var: ', log_var.shape)
