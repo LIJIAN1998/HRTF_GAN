@@ -110,6 +110,8 @@ def train(config, train_prefetcher):
     train_loss_Enc_sim_list = []
 
     for epoch in range(num_epochs):
+        with open("log.txt", "a") as f:
+            f.write(f"Epoch: {epoch}\n")
         times = []
         # train_loss_G = 0.
         # train_loss_G_adversarial = 0.
@@ -224,6 +226,11 @@ def train(config, train_prefetcher):
             err_enc.backward(retain_graph=True)
             optEncoder.step()
 
+            if batch_index % 10 == 0:
+                with open("log.txt", "a") as f:
+                    f.write(f"{batch_index}/{len(train_prefetcher)}\n")
+                    f.write(f"dis: {train_loss_Dis}\t dec: {train_loss_Dec}\t enc: {train_loss_Enc}\n")
+
             # # Generator training
             # if batch_index % int(critic_iters) == 0:
             #     # Initialize generator model gradients
@@ -288,15 +295,15 @@ def train(config, train_prefetcher):
         print(f"Average prior loss: {train_loss_Enc_prior_list[-1]}, encoder similarity loss: {train_loss_Enc_sim_list[-1]}")
 
 
-        train_losses_D.append(train_loss_D / len(train_prefetcher))
-        train_losses_D_hr.append(train_loss_D_hr / len(train_prefetcher))
-        train_losses_D_sr.append(train_loss_D_sr / len(train_prefetcher))
-        train_losses_G.append(train_loss_G / len(train_prefetcher))
-        train_losses_G_adversarial.append(train_loss_G_adversarial / len(train_prefetcher))
-        train_losses_G_content.append(train_loss_G_content / len(train_prefetcher))
-        print(f"Average epoch loss, discriminator: {train_losses_D[-1]}, generator: {train_losses_G[-1]}")
-        print(f"Average epoch loss, D_real: {train_losses_D_hr[-1]}, D_fake: {train_losses_D_sr[-1]}")
-        print(f"Average epoch loss, G_adv: {train_losses_G_adversarial[-1]}, train_losses_G_content: {train_losses_G_content[-1]}")
+        # train_losses_D.append(train_loss_D / len(train_prefetcher))
+        # train_losses_D_hr.append(train_loss_D_hr / len(train_prefetcher))
+        # train_losses_D_sr.append(train_loss_D_sr / len(train_prefetcher))
+        # train_losses_G.append(train_loss_G / len(train_prefetcher))
+        # train_losses_G_adversarial.append(train_loss_G_adversarial / len(train_prefetcher))
+        # train_losses_G_content.append(train_loss_G_content / len(train_prefetcher))
+        # print(f"Average epoch loss, discriminator: {train_losses_D[-1]}, generator: {train_losses_G[-1]}")
+        # print(f"Average epoch loss, D_real: {train_losses_D_hr[-1]}, D_fake: {train_losses_D_sr[-1]}")
+        # print(f"Average epoch loss, G_adv: {train_losses_G_adversarial[-1]}, train_losses_G_content: {train_losses_G_content[-1]}")
 
         # # create magnitude spectrum plot every 25 epochs and last epoch
         # if epoch % 25 == 0 or epoch == (num_epochs - 1):
