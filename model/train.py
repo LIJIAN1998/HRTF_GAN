@@ -164,9 +164,9 @@ def train(config, train_prefetcher):
             # Generate fake samples using VAE
             mu, log_var, recon = vae(lr_coefficient)
 
-            # during every 25th epoch and last epoch, save filename for mag spectrum plot
-            if epoch % 25 == 0 or epoch == (num_epochs - 1):
-                filename = batch_data["filename"]
+            # # during every 25th epoch and last epoch, save filename for mag spectrum plot
+            # if epoch % 25 == 0 or epoch == (num_epochs - 1):
+            #     filename = batch_data["filename"]
 
             # Discriminator Training
             # train on real coefficient
