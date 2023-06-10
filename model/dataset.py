@@ -34,7 +34,7 @@ class CustomHRTFDataset(Dataset):
         self.upscale_factor = upscale_factor
         self.num_row_angles, self.num_col_angles = len(self.original_hrtf_dataset.row_angles), len(self.original_hrtf_dataset.column_angles)
         self.num_radii = len(self.original_hrtf_dataset.radii)
-        self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles/upscale_factor) - 1)
+        self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
         self.max_dgree = max_degree
 
     def __getitem__(self, index: int):
@@ -72,7 +72,7 @@ class MergeHRTFDataset(Dataset):
         self.upscale_factor = upscale_factor
         self.num_row_angles, self.num_col_angles = len(self.left_hrtf.row_angles), len(self.left_hrtf.column_angles)
         self.num_radii = len(self.left_hrtf.radii)
-        self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles/upscale_factor) - 1)
+        self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
         self.max_degree = max_degree
 
     def __getitem__(self, index: int):
