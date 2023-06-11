@@ -196,15 +196,16 @@ def train(config, train_prefetcher):
                 f.write(f"sim loss D: {feature_sim_loss_D}\n")
             train_loss_Dec_sim += feature_sim_loss_D.item()
             # convert reconstructed coefficient back to hrir
-            recon_coef_list = []
+            harmonics_list = []
             for i in range(masks.size(0)):
                 SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
-                harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
-                recon_hrir = harmonics @ recon[i].T
+                harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+                harmonics_list.append(harmonics)
                 # recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse
                 # recon_hrir_tensor = torch.from_numpy(recon_hrir.T).reshape(nbins, num_radii, num_row_angles, num_col_angles)
-                recon_coef_list.append(recon_hrir.reshape(nbins, num_radii, num_row_angles, num_col_angles))
-            recons = torch.stack(recon_coef_list).to(device)
+            harmonics_tensor = torch.stack(harmonics_list).to(device)
+            recons = harmonics_tensor @ recon
+            recons = recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)
             unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
             with open('log.txt', "a") as f:
                 f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
