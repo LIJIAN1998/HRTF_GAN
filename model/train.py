@@ -181,7 +181,7 @@ def train(config, train_prefetcher):
             train_loss_Dis += gan_loss.item()
             # Update D
             netD.zero_grad()
-            gan_loss.backward(retain_graph=True)
+            gan_loss.backward()
             optD.step()
 
             # train decoder
@@ -214,7 +214,7 @@ def train(config, train_prefetcher):
             train_loss_Dec += err_dec
             # Update decoder
             optDecoder.zero_grad()
-            err_dec.backward(retain_graph=True)
+            err_dec.backward()
             optDecoder.step()
 
             # train encoder
@@ -231,7 +231,7 @@ def train(config, train_prefetcher):
             train_loss_Enc += err_enc.item()
             # Update encoder
             optEncoder.zero_grad()
-            err_enc.backward(retain_graph=True)
+            err_enc.backward()
             optEncoder.step()
 
             if batch_index % 10 == 0:
