@@ -192,7 +192,8 @@ def train(config, train_prefetcher):
             gan_loss_dec = err_dec_real + err_dec_recon
             train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
             feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
-            f.write(f"sim loss D: {feature_sim_loss_D}\n")
+            with open('log.txt', "a") as f:
+                f.write(f"sim loss D: {feature_sim_loss_D}\n")
             train_loss_Dec_sim += feature_sim_loss_D.item()
             # convert reconstructed coefficient back to hrir
             recon_coef_list = []
