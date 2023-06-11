@@ -225,7 +225,8 @@ def train(config, train_prefetcher):
             feature_recon = netD(recon)[1]
             feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
             with open('log.txt', 'a') as f:
-                f.write(f"sim loss E: {feature_sim_loss_E}")
+                f.write(f"feature recon: {type(feature_recon)}, feature real: {type(feature_real)}\n")
+                f.write(f"sim loss E: {feature_sim_loss_E}\n")
             train_loss_Enc_sim += feature_sim_loss_E.item()
             err_enc = prior_loss + feature_sim_loss_E
             train_loss_Enc += err_enc.item()
