@@ -233,6 +233,11 @@ def train(config, train_prefetcher):
                     f.write(f"{batch_index}/{len(train_prefetcher)}\n")
                     f.write(f"dis: {train_loss_Dis}\t dec: {train_loss_Dec}\t enc: {train_loss_Enc}\n")
 
+                    f.write(f"D_real: {train_loss_Dis_hr}, D_fake: {train_loss_Dis_recon}\n")
+                    f.write(f"content loss: {train_loss_Dec_content}, sim_D: {train_loss_Dec_sim}, gan loss: {train_loss_Dec_gan}\n")
+                    f.write(f"")
+                    f.write(f"prior: {train_loss_Enc_prior}, sim_E: {train_loss_Enc_sim}\n")
+
             # # Generator training
             # if batch_index % int(critic_iters) == 0:
             #     # Initialize generator model gradients
@@ -270,11 +275,6 @@ def train(config, train_prefetcher):
                 with torch.no_grad():
                     torch.save(vae.state_dict(), f'{path}/vae.pt')
                     torch.save(netD.state_dict(), f'{path}/Disc.pt')
-
-                    with open("log.txt", "a") as f:
-                        f.write(f"D_real: {train_loss_Dis_hr}, D_fake: {train_loss_Dis_recon}\n")
-                        f.write(f"content loss: {train_loss_Dec_content}, sim_D: {train_loss_Dec_sim}, gan loss: {train_loss_Dec_gan}\n")
-                        f.write(f"prior: {train_loss_Enc_prior}, sim_E: {train_loss_Enc_sim}\n")
 
                     progress(batch_index, batches, epoch, num_epochs, timed=np.mean(times))
                     times = []
