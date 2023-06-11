@@ -154,8 +154,7 @@ def train(config, train_prefetcher):
                                                              non_blocking=True, dtype=torch.float)
             hrir = batch_data["hrir"].to(device=device, memory_format=torch.contiguous_format,
                                          non_blocking=True, dtype=torch.float)
-            masks = batch_data["mask"].to(device=device, memory_format=torch.contiguous_format,
-                                         non_blocking=True, dtype=torch.float)
+            masks = batch_data["mask"]
             
             bs = lr_coefficient.size(0)
             ones_label = Variable(torch.ones(bs,1)).to(device) # labels for real data
@@ -271,6 +270,11 @@ def train(config, train_prefetcher):
                 with torch.no_grad():
                     torch.save(vae.state_dict(), f'{path}/vae.pt')
                     torch.save(netD.state_dict(), f'{path}/Disc.pt')
+
+                    with open("log.txt", "a") as f:
+                        f.write(f"D_real: {train_loss_Dis_hr}, D_fake: {train_loss_Dis_recon}\n")
+                        f.write(f"content loss: {train_loss_Dec_content}, sim_D: {train_loss_Dec_sim}, gan loss: {train_loss_Dec_gan}\n")
+                        f.write(f"prior: {train_loss_Enc_prior}, sim_E: {train_loss_Enc_sim}\n")
 
                     progress(batch_index, batches, epoch, num_epochs, timed=np.mean(times))
                     times = []

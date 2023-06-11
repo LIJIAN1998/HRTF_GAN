@@ -208,7 +208,7 @@ class CUDAPrefetcher:
 
         with torch.cuda.stream(self.stream):
             for k, v in self.batch_data.items():
-                if torch.is_tensor(v):
+                if torch.is_tensor(v) and k != 'mask':
                     self.batch_data[k] = self.batch_data[k].to(self.device, non_blocking=True)
 
     def next(self):
