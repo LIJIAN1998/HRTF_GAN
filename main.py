@@ -122,9 +122,9 @@ def main(config, mode):
         print("test: ", len(test_prefetcher))
         # Trains the model, according to the parameters specified in Config
         util.initialise_folders(config, overwrite=True)
-        # train(config, train_prefetcher)
+        train(config, train_prefetcher)
 
-        data = train_prefetcher.next()
+        # data = train_prefetcher.next()
 
         # lr = data['lr_coefficient']
         # print("coef: ", lr.shape, torch.is_tensor(lr), lr.device.type)
@@ -132,8 +132,8 @@ def main(config, mode):
         # print("hr: ", hr.shape)
         # hrir = data['hrir']
         # print("hrir:", hrir.shape, torch.is_tensor(hrir), hrir.device.type)
-        masks = data['mask']
-        print("mask: ", masks.shape, type(masks), masks.device.type)
+        # masks = data['mask']
+        # print("mask: ", masks.shape, type(masks), masks.device.type)
         # print(masks[0].detach().cpu().numpy().astype(bool).shape)
 
         # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
