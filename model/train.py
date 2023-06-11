@@ -199,10 +199,10 @@ def train(config, train_prefetcher):
             for i in range(masks.size(0)):
                 SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
                 harmonics = torch.from_numpy(SHT.get_harmonics()).to(device)
-                recon_hrir = harmonics @ recon[i]
+                recon_hrir = harmonics @ recon[i].T
                 # recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse
                 # recon_hrir_tensor = torch.from_numpy(recon_hrir.T).reshape(nbins, num_radii, num_row_angles, num_col_angles)
-                recon_coef_list.append(recon_hrir)
+                recon_coef_list.append(recon_hrir.reshape(nbins, num_radii, num_row_angles, num_col_angles))
             recons = torch.stack(recon_coef_list).to(device)
             unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
             content_loss = config.content_weight * unweighted_content_loss
