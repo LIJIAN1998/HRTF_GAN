@@ -192,11 +192,12 @@ def train(config, train_prefetcher):
             gan_loss_dec = err_dec_real + err_dec_recon
             train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
             feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
+            f.write(f"sim loss D: {feature_sim_loss_D}\n")
             train_loss_Dec_sim += feature_sim_loss_D.item()
             # convert reconstructed coefficient back to hrir
             recon_coef_list = []
             for i in range(masks.size(0)):
-                SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
+                SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
                 harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
                 recon_hrir = harmonics @ recon[i].T
                 # recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse
@@ -204,6 +205,8 @@ def train(config, train_prefetcher):
                 recon_coef_list.append(recon_hrir.reshape(nbins, num_radii, num_row_angles, num_col_angles))
             recons = torch.stack(recon_coef_list).to(device)
             unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
+            with open('log.txt', "a") as f:
+                f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
             content_loss = config.content_weight * unweighted_content_loss
             train_loss_Dec_content += content_loss
             err_dec = feature_sim_loss_D + content_loss - gan_loss_dec
@@ -220,6 +223,8 @@ def train(config, train_prefetcher):
             train_loss_Enc_prior += prior_loss.item()
             feature_recon = netD(recon)[1]
             feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
+            with open('log.txt', 'a') as f:
+                f.write(f"sim loss E: {feature_sim_loss_E}")
             train_loss_Enc_sim += feature_sim_loss_E.item()
             err_enc = prior_loss + feature_sim_loss_E
             train_loss_Enc += err_enc.item()
