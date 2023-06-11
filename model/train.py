@@ -181,7 +181,7 @@ def train(config, train_prefetcher):
             train_loss_Dis += gan_loss.item()
             # Update D
             netD.zero_grad()
-            gan_loss.backward()
+            gan_loss.backward(retain_graph=True)
             optD.step()
 
             # train decoder
@@ -215,7 +215,7 @@ def train(config, train_prefetcher):
             train_loss_Dec += err_dec
             # Update decoder
             optDecoder.zero_grad()
-            err_dec.backward()
+            err_dec.backward(retain_graph=True)
             optDecoder.step()
 
             # train encoder
