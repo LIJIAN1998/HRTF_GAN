@@ -354,3 +354,6 @@ class SphericalHarmonicsTransform:
 
     def inverse(self, coefficients):
         return self._harmonics @ coefficients
+    
+    def get_harmonics(self):
+        return self._harmonics

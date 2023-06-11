@@ -191,16 +191,18 @@ def train(config, train_prefetcher):
             pred_recon, feature_recon = netD(recon)
             err_dec_recon = adversarial_criterion(pred_recon, zeros_label)
             gan_loss_dec = err_dec_real + err_dec_recon
-            train_loss_Dec_gan += gan_loss_dec.item()
+            train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
             feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
             train_loss_Dec_sim += feature_sim_loss_D.item()
             # convert reconstructed coefficient back to hrir
             recon_coef_list = []
             for i in range(masks.size(0)):
                 SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
-                recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse
-                recon_hrir_tensor = torch.from_numpy(recon_hrir.T).reshape(nbins, num_radii, num_row_angles, num_col_angles)
-                recon_coef_list.append(recon_hrir_tensor)
+                harmonics = torch.from_numpy(SHT.get_harmonics()).to(device)
+                recon_hrir = harmonics @ recon[i]
+                # recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse
+                # recon_hrir_tensor = torch.from_numpy(recon_hrir.T).reshape(nbins, num_radii, num_row_angles, num_col_angles)
+                recon_coef_list.append(recon_hrir)
             recons = torch.stack(recon_coef_list).to(device)
             unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
             content_loss = config.content_weight * unweighted_content_loss
@@ -293,7 +295,7 @@ def train(config, train_prefetcher):
         print(f"Avearge epoch loss, discriminator: {train_loss_Dis_list[-1]}, decoder: {train_loss_Dec_list[-1]}, encoder: {train_loss_Enc_list[-1]}")
         print(f"Avearge epoch loss, D_real: {train_loss_Dis_hr_list[-1]}, D_fake: {train_loss_Dis_recon_list[-1]}")
         print(f"Avearge content loss: {train_loss_Dec_content_list[-1]},  decoder similarity loss: {train_loss_Dec_sim_list[-1]}, gan loss: {train_loss_Dec_gan_list[-1]}")
-        print(f"Average prior loss: {train_loss_Enc_prior_list[-1]}, encoder similarity loss: {train_loss_Enc_sim_list[-1]}")
+        print(f"Average prior loss: {train_loss_Enc_prior_list[-1]}, encoder similarity loss: {train_loss_Enc_sim_list[-1]}\n")
 
 
         # train_losses_D.append(train_loss_D / len(train_prefetcher))
