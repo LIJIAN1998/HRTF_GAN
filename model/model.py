@@ -173,7 +173,7 @@ class Decoder(nn.Module):
             Trim(self.num_coefficient)
         )
 
-        self.classifier = nn.Softplus()
+        self.classifier = nn.Tanh()
 
     def forward(self,  x: torch.Tensor) -> torch.Tensor:
         x = self.decoder(x)
