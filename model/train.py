@@ -19,6 +19,139 @@ from plot import plot_losses, plot_magnitude_spectrums
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 
+def test_train(config, train_prefetcher):
+    # load the dataset to get the row, column angles info
+    data_dir = config.raw_hrtf_dir / config.dataset
+    imp = importlib.import_module('hrtfdata.full')
+    load_function = getattr(imp, config.dataset)
+    ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                         'side': 'left', 'domain': 'time'}}, subject_ids='first')
+    num_row_angles = len(ds.row_angles)
+    num_col_angles = len(ds.column_angles)
+    num_radii = len(ds.radii)
+    
+    # Calculate how many batches of data are in each Epoch
+    batches = len(train_prefetcher)
+
+    # Assign torch device
+    ngpu = config.ngpu
+    path = config.path
+
+    nbins = config.nbins_hrtf
+    if config.merge_flag:
+        nbins = config.nbins_hrtf * 2
+
+    device = torch.device(config.device_name if (
+            torch.cuda.is_available() and ngpu > 0) else "cpu")
+    print(f'Using {ngpu} GPUs')
+    print(device, " will be used.\n")
+    cudnn.benchmark = True
+
+    # Get train params
+    batch_size, beta1, beta2, num_epochs, lr_encoder, lr_decoder, lr_dis, critic_iters = config.get_train_params()
+
+    # # get list of positive frequencies of HRTF for plotting magnitude spectrum
+    # all_freqs = scipy.fft.fftfreq(256, 1 / config.hrir_samplerate)
+    # pos_freqs = all_freqs[all_freqs >= 0]
+
+    # Define VAE and transfer to CUDA
+    degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
+    vae = VAE(nbins=nbins, max_degree=degree, latent_dim=10).to(device)
+    netD = Discriminator(nbins=nbins).to(device)
+    if ('cuda' in str(device)) and (ngpu > 1):
+        netD = (nn.DataParallel(netD, list(range(ngpu)))).to(device)
+        vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
+
+    # Define optimizers
+    optD = optim.Adam(netD.parameters(), lr=lr_dis, betas=(beta1, beta2))
+    optEncoder = optim.Adam(vae.encoder.parameters(), lr=lr_encoder, betas=(beta1, beta2))
+    optDecoder = optim.Adam(vae.decoder.parameters(), lr=lr_decoder, betas=(beta1, beta2))
+
+    # Define loss functions
+    adversarial_criterion = nn.BCEWithLogitsLoss()
+    content_criterion = sd_ild_loss
+
+    # mean and std for ILD and SD, which are used for normalization
+    # computed based on average ILD and SD for training data, when comparing each individual
+    # to every other individual in the training data
+    sd_mean = 7.387559253346883
+    sd_std = 0.577364154400081
+    ild_mean = 3.6508303231127868
+    ild_std = 0.5261339271318863
+
+    train_loss_Dec = 0.
+    train_loss_Dec_gan = 0.
+    train_loss_Dec_sim = 0.
+    train_loss_Dec_content = 0.
+
+    batch_data = train_prefetcher.next()
+
+    lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
+                                                             non_blocking=True, dtype=torch.float)
+    hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
+                                                        non_blocking=True, dtype=torch.float)
+    hrir = batch_data["hrir"].to(device=device, memory_format=torch.contiguous_format,
+                                    non_blocking=True, dtype=torch.float)
+    masks = batch_data["mask"]
+    
+    bs = lr_coefficient.size(0)
+    ones_label = Variable(torch.ones(bs,1)).to(device) # labels for real data
+    zeros_label = Variable(torch.zeros(bs,1)).to(device) # labels for generated data
+
+    mu, log_var, recon = vae(lr_coefficient)
+
+    # train decoder
+    pred_real, feature_real = netD(hr_coefficient)
+    err_dec_real = adversarial_criterion(pred_real, ones_label)
+    pred_recon, feature_recon = netD(recon)
+    err_dec_recon = adversarial_criterion(pred_recon, zeros_label)
+    gan_loss_dec = err_dec_real + err_dec_recon
+    train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
+    feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
+    with open('log.txt', "a") as f:
+        f.write(f"sim loss D: {feature_sim_loss_D}\n")
+        if torch.isnan(feature_recon).all():
+            f.write("all feature recon is nan\n")
+        elif torch.isnan(feature_recon).any():
+            f.write("feature recon has some nan\n")
+        if torch.isnan(feature_real).all():
+            f.write("all feature real is nan\n")
+        elif torch.isnan(feature_real).any():
+            f.write("feature real has some nan\n")
+    train_loss_Dec_sim += feature_sim_loss_D.item()
+    # convert reconstructed coefficient back to hrir
+    harmonics_list = []
+    for i in range(masks.size(0)):
+        SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        harmonics_list.append(harmonics)
+        # recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse
+        # recon_hrir_tensor = torch.from_numpy(recon_hrir.T).reshape(nbins, num_radii, num_row_angles, num_col_angles)
+    harmonics_tensor = torch.stack(harmonics_list).to(device)
+    recons = harmonics_tensor @ recon.permute(0, 2, 1)
+    recons = recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)
+    with open('log.txt', 'a') as f:
+        if torch.isnan(recons).all():
+            f.write("all recons are nan\n")
+        elif torch.isnan(recons).any():
+            f.write("recons has nan\n")
+        if torch.isnan(hrir).all():
+            f.write("all hrir are nan\n")
+        elif torch.isnan(hrir).any():
+            f.write("hrir has nan\n")
+    unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
+    with open('log.txt', "a") as f:
+        f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
+    content_loss = config.content_weight * unweighted_content_loss
+    train_loss_Dec_content += content_loss
+    err_dec = feature_sim_loss_D - gan_loss_dec
+    train_loss_Dec += err_dec
+    # Update decoder
+    optDecoder.zero_grad()
+    err_dec.backward()
+    optDecoder.step()
+
+
 def train(config, train_prefetcher):
     """ Train the generator and discriminator models
 
@@ -151,11 +284,6 @@ def train(config, train_prefetcher):
                                                              non_blocking=True, dtype=torch.float)
             hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                              non_blocking=True, dtype=torch.float)
-            with open('log.txt', 'a') as f:
-                if torch.isnan(lr_coefficient).any():
-                    f.write("lr has nan\n")
-                if torch.isnan(hr_coefficient).any():
-                    f.write("hr has nan\n")
             hrir = batch_data["hrir"].to(device=device, memory_format=torch.contiguous_format,
                                          non_blocking=True, dtype=torch.float)
             masks = batch_data["mask"]
