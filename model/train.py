@@ -61,7 +61,6 @@ def train(config, train_prefetcher):
 
     # Define VAE and transfer to CUDA
     degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
-    print("degree: ", degree)
     vae = VAE(nbins=nbins, max_degree=degree, latent_dim=10).to(device)
     netD = Discriminator(nbins=nbins).to(device)
     if ('cuda' in str(device)) and (ngpu > 1):
@@ -233,7 +232,7 @@ def train(config, train_prefetcher):
                 f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
             content_loss = config.content_weight * unweighted_content_loss
             train_loss_Dec_content += content_loss
-            err_dec = feature_sim_loss_D + content_loss - gan_loss_dec
+            err_dec = feature_sim_loss_D - gan_loss_dec
             train_loss_Dec += err_dec
             # Update decoder
             optDecoder.zero_grad()
