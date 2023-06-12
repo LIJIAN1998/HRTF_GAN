@@ -246,6 +246,8 @@ def sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std):
     Computes the mean over every HRTF in the batch"""
 
     # calculate SD and ILD metrics
+    print("generated: ", generated)
+    print("target: ", target)
     sd_metric = spectral_distortion_metric(generated, target)
     print("sd_metric: ", sd_metric)
     ild_metric = ILD_metric(config, generated, target)
