@@ -162,6 +162,9 @@ def spectral_distortion_metric(generated, target, reduction='mean'):
         sd_metric = total_all_positions / total_positions
         total_sd_metric += sd_metric
 
+    print("total_sd_metric nan? ", torch.isnan(total_sd_metric))
+    print("all nan? ", torch.isnan(total_sd_metric).all())
+    print("any nan? ", torch.isnan(total_sd_metric).any())
     if reduction == 'mean':
         output_loss = total_sd_metric / batch_size
     elif reduction == 'sum':
@@ -214,6 +217,10 @@ def ILD_metric(config, generated, target, reduction="mean"):
                     total_all_positions += average_over_frequencies
         ILD_metric_batch = total_all_positions / total_positions
         total_ILD_metric += ILD_metric_batch
+    print("total_ILD_metric nan? ", torch.isnan(total_ILD_metric))
+    print("all nan? ", torch.isnan(total_ILD_metric).all())
+    print("any nan? ", torch.isnan(total_ILD_metric).any())
+
     if reduction == 'mean':
         output_loss = total_ILD_metric / batch_size
     elif reduction == 'sum':
@@ -246,8 +253,6 @@ def sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std):
     Computes the mean over every HRTF in the batch"""
 
     # calculate SD and ILD metrics
-    print("generated: ", generated)
-    print("target: ", target)
     sd_metric = spectral_distortion_metric(generated, target)
     print("sd_metric: ", sd_metric)
     ild_metric = ILD_metric(config, generated, target)
