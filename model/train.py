@@ -206,6 +206,11 @@ def train(config, train_prefetcher):
             harmonics_tensor = torch.stack(harmonics_list).to(device)
             recons = harmonics_tensor @ recon.permute(0, 2, 1)
             recons = recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)
+            with open('log.txt', 'a') as f:
+                if torch.isnan(recons).any():
+                    f.write("recons has nan\n")
+                if torch.isnan(hrir).any():
+                    f.write("hrir has nan\n")
             unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
             with open('log.txt', "a") as f:
                 f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
@@ -227,7 +232,11 @@ def train(config, train_prefetcher):
             feature_real = netD(hr_coefficient)[1]
             feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
             with open('log.txt', 'a') as f:
-                # f.write(f"feature recon: {type(feature_recon)}, feature real: {type(feature_real)}\n")
+                if torch.isnan(feature_recon).any():
+                    f.write("feature recon has nan\n")
+                if torch.isnan(feature_real).any():
+                    f.write("feature real has nan\n")
+                # f.write(f"feature recon: {feature_recon},\n feature real: {feature_real}\n")
                 f.write(f"sim loss E: {feature_sim_loss_E}\n")
             train_loss_Enc_sim += feature_sim_loss_E.item()
             err_enc = prior_loss + feature_sim_loss_E
