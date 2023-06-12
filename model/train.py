@@ -152,6 +152,11 @@ def train(config, train_prefetcher):
                                                              non_blocking=True, dtype=torch.float)
             hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                              non_blocking=True, dtype=torch.float)
+            with open('log.txt', 'a') as f:
+                if torch.isnan(lr_coefficient).any():
+                    f.write("lr has nan\n")
+                if torch.isnan(hr_coefficient).any():
+                    f.write("hr has nan\n")
             hrir = batch_data["hrir"].to(device=device, memory_format=torch.contiguous_format,
                                          non_blocking=True, dtype=torch.float)
             masks = batch_data["mask"]
@@ -194,6 +199,14 @@ def train(config, train_prefetcher):
             feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
             with open('log.txt', "a") as f:
                 f.write(f"sim loss D: {feature_sim_loss_D}\n")
+                if torch.isnan(feature_recon).all():
+                    f.write("all feature recon is nan\n")
+                elif torch.isnan(feature_recon).any():
+                    f.write("feature recon has some nan\n")
+                if torch.isnan(feature_real).all():
+                    f.write("all feature real is nan\n")
+                elif torch.isnan(feature_real).any():
+                    f.write("feature real has some nan\n")
             train_loss_Dec_sim += feature_sim_loss_D.item()
             # convert reconstructed coefficient back to hrir
             harmonics_list = []
@@ -207,9 +220,13 @@ def train(config, train_prefetcher):
             recons = harmonics_tensor @ recon.permute(0, 2, 1)
             recons = recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)
             with open('log.txt', 'a') as f:
-                if torch.isnan(recons).any():
+                if torch.isnan(recons).all():
+                    f.write("all recons are nan\n")
+                elif torch.isnan(recons).any():
                     f.write("recons has nan\n")
-                if torch.isnan(hrir).any():
+                if torch.isnan(hrir).all():
+                    f.write("all hrir are nan\n")
+                elif torch.isnan(hrir).any():
                     f.write("hrir has nan\n")
             unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
             with open('log.txt', "a") as f:
@@ -232,10 +249,14 @@ def train(config, train_prefetcher):
             feature_real = netD(hr_coefficient)[1]
             feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
             with open('log.txt', 'a') as f:
-                if torch.isnan(feature_recon).any():
+                if torch.isnan(feature_recon).all():
+                    f.write("Ecoder all feature recon nan\n")
+                elif torch.isnan(feature_recon).any():
                     f.write("feature recon has nan\n")
-                if torch.isnan(feature_real).any():
-                    f.write("feature real has nan\n")
+                if torch.isnan(feature_real).all():
+                    f.write("Encoder all feature real nan\n")
+                elif torch.isnan(feature_real).any():
+                    f.write("feature real has nan")
                 # f.write(f"feature recon: {feature_recon},\n feature real: {feature_real}\n")
                 f.write(f"sim loss E: {feature_sim_loss_E}\n")
             train_loss_Enc_sim += feature_sim_loss_E.item()
