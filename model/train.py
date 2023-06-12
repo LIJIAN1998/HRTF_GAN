@@ -181,7 +181,7 @@ def train(config, train_prefetcher):
             train_loss_Dis += gan_loss.item()
             # Update D
             netD.zero_grad()
-            gan_loss.backward(retain_graph=True)
+            gan_loss.backward()
             optD.step()
 
             # train decoder
@@ -215,7 +215,7 @@ def train(config, train_prefetcher):
             train_loss_Dec += err_dec
             # Update decoder
             optDecoder.zero_grad()
-            err_dec.backward(retain_graph=True)
+            err_dec.backward()
             optDecoder.step()
 
             # train encoder
@@ -224,9 +224,10 @@ def train(config, train_prefetcher):
             prior_loss = (-0.5 * torch.sum(prior_loss))/torch.numel(mu.data) # prior loss
             train_loss_Enc_prior += prior_loss.item()
             feature_recon = netD(recon)[1]
+            feature_real = netD(hr_coefficient)[1]
             feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
             with open('log.txt', 'a') as f:
-                f.write(f"feature recon: {type(feature_recon)}, feature real: {type(feature_real)}\n")
+                # f.write(f"feature recon: {type(feature_recon)}, feature real: {type(feature_real)}\n")
                 f.write(f"sim loss E: {feature_sim_loss_E}\n")
             train_loss_Enc_sim += feature_sim_loss_E.item()
             err_enc = prior_loss + feature_sim_loss_E
