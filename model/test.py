@@ -3,15 +3,32 @@ import pickle
 
 import scipy
 import torch
+import numpy as np
 
-from model.model import Generator
+from model.model import VAE
 import shutil
 from pathlib import Path
+
+import importlib
+
+from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 
 
 def test(config, val_prefetcher):
     # source: https://github.com/Lornatang/SRGAN-PyTorch/blob/main/test.py
     # Initialize super-resolution model
+
+    # load the dataset to get the row, column angles info
+    data_dir = config.raw_hrtf_dir / config.dataset
+    imp = importlib.import_module('hrtfdata.full')
+    load_function = getattr(imp, config.dataset)
+    ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                         'side': 'left', 'domain': 'time'}}, subject_ids='first')
+    num_row_angles = len(ds.row_angles)
+    num_col_angles = len(ds.column_angles)
+    num_radii = len(ds.radii)
+    degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
+
     ngpu = config.ngpu
     valid_dir = config.valid_path
 
@@ -21,12 +38,12 @@ def test(config, val_prefetcher):
 
     device = torch.device(config.device_name if (
             torch.cuda.is_available() and ngpu > 0) else "cpu")
-    model = Generator(upscale_factor=config.upscale_factor, nbins=nbins).to(device=device)
-    print("Build SRGAN model successfully.")
+    model = VAE(nbins=nbins, max_degree=degree, latent_dim=10).to(device)
+    print("Build VAE model successfully.")
 
-    # Load super-resolution model weights (always uses the CPU due to HPC having long wait times)
-    model.load_state_dict(torch.load(f"{config.model_path}/Gen.pt", map_location=torch.device('cpu')))
-    print(f"Load SRGAN model weights `{os.path.abspath(config.model_path)}` successfully.")
+    # Load vae model weights (always uses the CPU due to HPC having long wait times)
+    model.load_state_dict(torch.load(f"{config.model_path}/vae.pt", map_location=torch.device('cpu')))
+    print(f"Load VAE model weights `{os.path.abspath(config.model_path)}` successfully.")
 
     param_size = 0
     for param in model.parameters():
@@ -57,16 +74,23 @@ def test(config, val_prefetcher):
     shutil.rmtree(Path(valid_dir), ignore_errors=True)
     Path(valid_dir).mkdir(parents=True, exist_ok=True)
 
+    sample_index = 0
     while batch_data is not None:
         # Transfer in-memory data to CUDA devices to speed up validation
-        lr = batch_data["lr"].to(device=device, memory_format=torch.contiguous_format,
-                                 non_blocking=True, dtype=torch.float)
+        lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
+                                                         non_blocking=True, dtype=torch.float)
+        masks = batch_data["mask"]
 
         # Use the generator model to generate fake samples
         with torch.no_grad():
-            sr = model(lr)
+            _, _, recon = model(lr_coefficient)
 
-        file_name = '/' + os.path.basename(batch_data["filename"][0])
+        SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        sr = harmonics @ recon[0].T
+        sr = torch.abs(sr.reshape(-1, nbins, num_radii, num_row_angles, num_col_angles))
+        file_name = '/' + os.path.basename(f"val_sample_{sample_index}.pkl")
+        # file_name = '/' + os.path.basename(batch_data["filename"][0])
         with open(valid_dir + file_name, "wb") as file:
             pickle.dump(torch.permute(sr[0], (1, 2, 3, 0)).detach().cpu(), file)
 

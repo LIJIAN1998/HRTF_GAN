@@ -7,14 +7,14 @@ import importlib
 
 from config import Config
 from model.train import train
-# from model.test import test
+from model.test import test
 from model.util import load_dataset, load_hrtf
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories
 
-from torch.utils.data import ConcatDataset
+from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from scipy.ndimage import binary_dilation
@@ -125,7 +125,6 @@ def main(config, mode):
         train(config, train_prefetcher)
 
         # data = train_prefetcher.next()
-
         # lr = data['lr_coefficient']
         # print("coef: ", lr.shape, torch.is_tensor(lr), lr.device.type)
         # hr = data['hr_coefficient']
@@ -136,30 +135,14 @@ def main(config, mode):
         # print("mask: ", masks.shape, type(masks), masks.device.type)
         # print(masks[0].detach().cpu().numpy().astype(bool).shape)
 
-        # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-        #                                                       'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
-        # data = ds[0]['features'][:, :, :, 1:]
-        # SHT = SphericalHarmonicsTransform(13, ds.row_angles, ds.column_angles, ds.radii, np.all(np.ma.getmaskarray(data), axis=3))
-        # c = SHT(data)
-        # print("coef: ", c.shape)
+    elif mode == 'test':
+        _, test_prefetcher = load_dataset(config, mean=None, std=None)
+        print("Loaded all datasets successfully.")
 
-        # num_row_angles = len(ds.row_angles)
-        # num_col_angles = len(ds.column_angles)
-        # num_radii = len(ds.radii)
-        # recon_coef_list = []
-        # for i in range(masks.size(0)):
-        #     SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].detach().cpu().numpy().astype(bool))
-        #     h = SHT.inverse(hr[i].T.detach().cpu().numpy())
-        #     print(h.shape)
-        #     h = torch.from_numpy(h.T).reshape(256, num_radii, num_row_angles, num_col_angles)
-        #     recon_coef_list.append(h)
-        # recons = torch.stack(recon_coef_list)
-        # print("recons:", recons.shape, recons.device.type)
+        test(config, test_prefetcher)
 
-
-        
-        # train_prefetcher, _ = load_dataset(config, mean=None, std=None)
-        # print("Loaded all datasets successfully.")
+        run_lsd_evaluation(config, config.valid_path)
+        run_localisation_evaluation(config, config.valid_path)
 
     print("finished")
 
