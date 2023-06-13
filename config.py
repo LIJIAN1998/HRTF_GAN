@@ -68,7 +68,7 @@ class Config:
         self.hrtf_selection_dir = self.data_dirs_path + self.baseline_dir + '/hrtf_selection/valid'
 
         # Training hyperparams
-        self.batch_size = 4
+        self.batch_size = 2
         self.num_workers = 1
         self.num_epochs = 300  # was originally 250
         self.lr_encoder = 0.0002

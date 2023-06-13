@@ -135,6 +135,8 @@ def progress(i, batches, n, num_epochs, timed):
 def spectral_distortion_inner(input_spectrum, target_spectrum):
     numerator = target_spectrum
     denominator = input_spectrum
+    x = torch.log10(numerator / denominator)
+    print("spectral_distortion_inner nan?", torch.isnan(x), torch.isnan(x).all(), torch.isnan(x).any())
     return torch.mean((20 * torch.log10(numerator / denominator)) ** 2)
 
 
@@ -159,7 +161,6 @@ def spectral_distortion_metric(generated, target, reduction='mean'):
                     print(f"{b}, {i}, {j}, {k}")
                     average_over_frequencies = spectral_distortion_inner(generated[b, :, i, j, k],
                                                                          target[b, :, i, j, k])
-                    print("average_over_frequencies: ", average_over_frequencies)
                     total_all_positions += torch.sqrt(average_over_frequencies)
         sd_metric = total_all_positions / total_positions
         total_sd_metric += sd_metric
