@@ -129,16 +129,7 @@ def test_train(config, train_prefetcher):
         # recon_hrir_tensor = torch.from_numpy(recon_hrir.T).reshape(nbins, num_radii, num_row_angles, num_col_angles)
     harmonics_tensor = torch.stack(harmonics_list).to(device)
     recons = harmonics_tensor @ recon.permute(0, 2, 1)
-    recons = recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)
-    with open('log.txt', 'a') as f:
-        if torch.isnan(recons).all():
-            f.write("all recons are nan\n")
-        elif torch.isnan(recons).any():
-            f.write("recons has nan\n")
-        if torch.isnan(hrir).all():
-            f.write("all hrir are nan\n")
-        elif torch.isnan(hrir).any():
-            f.write("hrir has nan\n")
+    recons = torch.abs(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)) 
     unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
     with open('log.txt', "a") as f:
         f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
