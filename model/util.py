@@ -136,7 +136,7 @@ def spectral_distortion_inner(input_spectrum, target_spectrum):
     numerator = target_spectrum
     denominator = input_spectrum
     x = torch.log10(numerator / denominator)
-    print("spectral_distortion_inner nan?", torch.isnan(x), torch.isnan(x).all(), torch.isnan(x).any())
+    print("spectral_distortion_inner nan?", torch.isnan(x).any())
     return torch.mean((20 * torch.log10(numerator / denominator)) ** 2)
 
 
@@ -256,7 +256,9 @@ def sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std):
 
     # calculate SD and ILD metrics
     print("generated nan? ", torch.isnan(generated).any())
+    print("generated negative? ", (generated<0).any())
     print("target nan? ", torch.isnan(target).any())
+    print("target negative? ", (target<0).any())
     sd_metric = spectral_distortion_metric(generated, target)
     print("sd_metric: ", sd_metric)
     ild_metric = ILD_metric(config, generated, target)
