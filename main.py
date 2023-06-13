@@ -6,7 +6,7 @@ import numpy as np
 import importlib
 
 from config import Config
-from model.train import train, test_train
+from model.train import train
 # from model.test import test
 from model.util import load_dataset, load_hrtf
 from model import util
@@ -122,7 +122,7 @@ def main(config, mode):
         print("test: ", len(test_prefetcher))
         # Trains the model, according to the parameters specified in Config
         util.initialise_folders(config, overwrite=True)
-        test_train(config, train_prefetcher)
+        train(config, train_prefetcher)
 
         # data = train_prefetcher.next()
 
