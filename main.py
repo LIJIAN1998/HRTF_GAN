@@ -14,7 +14,7 @@ from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories
 
-from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation
+# from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from scipy.ndimage import binary_dilation
@@ -135,14 +135,14 @@ def main(config, mode):
         # print("mask: ", masks.shape, type(masks), masks.device.type)
         # print(masks[0].detach().cpu().numpy().astype(bool).shape)
 
-    elif mode == 'test':
-        _, test_prefetcher = load_dataset(config, mean=None, std=None)
-        print("Loaded all datasets successfully.")
+    # elif mode == 'test':
+    #     _, test_prefetcher = load_dataset(config, mean=None, std=None)
+    #     print("Loaded all datasets successfully.")
 
-        test(config, test_prefetcher)
+    #     test(config, test_prefetcher)
 
-        run_lsd_evaluation(config, config.valid_path)
-        run_localisation_evaluation(config, config.valid_path)
+    #     run_lsd_evaluation(config, config.valid_path)
+    #     run_localisation_evaluation(config, config.valid_path)
 
     print("finished")
 
