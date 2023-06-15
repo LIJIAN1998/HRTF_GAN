@@ -333,7 +333,7 @@ def train(config, train_prefetcher):
             content_loss = config.content_weight * unweighted_content_loss
             train_loss_Dec_content += content_loss.item()
             err_dec = feature_sim_loss_D + content_loss - gan_loss_dec
-            train_loss_Dec += err_dec
+            train_loss_Dec += err_dec.item()
             # Update decoder
             optDecoder.zero_grad()
             err_dec.backward()
