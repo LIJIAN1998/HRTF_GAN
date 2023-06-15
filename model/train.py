@@ -331,7 +331,7 @@ def train(config, train_prefetcher):
             # with open('log.txt', "a") as f:
             #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
             content_loss = config.content_weight * unweighted_content_loss
-            train_loss_Dec_content += content_loss
+            train_loss_Dec_content += content_loss.item()
             err_dec = feature_sim_loss_D + content_loss - gan_loss_dec
             train_loss_Dec += err_dec
             # Update decoder
