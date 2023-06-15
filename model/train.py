@@ -454,7 +454,7 @@ def train(config, train_prefetcher):
                 ['red', 'green', 'blue'], 
                 path=path, filename='loss_curves', title="Loss curves")
     plot_losses([train_loss_Dis_hr_list, train_loss_Dis_recon_list],
-                ['Discriminator loss real', 'Discriminator loss fake']
+                ['Discriminator loss real', 'Discriminator loss fake'],
                 ["#5ec962", "#440154"], 
                 path=path, filename='loss_curves_Dis', title="Discriminator loss curves")
     plot_losses([train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list],
