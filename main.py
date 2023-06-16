@@ -56,8 +56,8 @@ def main(config, mode):
         ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both',
                                                                    'domain': 'magnitude'}}, subject_ids=train_sample)
         print("train ds: ", len(ds_train))
-        result = np.array_equal(train_sample, list(set(ds_train.subject_ids)))
-        print(result)
+        # result = np.array_equal(train_sample, list(set(ds_train.subject_ids)))
+        print(set(train_sample) == set(ds_train.subject_ids))
 
 
 
