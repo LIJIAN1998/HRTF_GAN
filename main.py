@@ -49,15 +49,23 @@ def main(config, mode):
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
         train_size = int(len(set(ds.subject_ids)) * config.train_samples_ratio)
         print("train size: ", train_size)
-        train_sample = np.random.choice(list(set(ds.subject_ids)), train_size, replace=False)
-        print("sample: ", type(train_sample), len(train_sample))
-        print(train_sample)
+        train_ids = np.random.choice(list(set(ds.subject_ids)), train_size, replace=False)
+        print("sample: ", type(train_ids), len(train_ids))
+        print(train_ids)
+        val_ids = list(set(ds.subject_ids) - set(train_ids))
+        
+        
 
         ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both',
-                                                                   'domain': 'magnitude'}}, subject_ids=train_sample)
+                                                                   'domain': 'magnitude'}}, subject_ids=train_ids)
+        ds_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both',
+                                                                   'domain': 'magnitude'}}, subject_ids=val_ids)
         print("train ds: ", len(ds_train))
+        print("val ds: ", len(ds_val))
         # result = np.array_equal(train_sample, list(set(ds_train.subject_ids)))
-        print(set(train_sample) == set(ds_train.subject_ids))
+        print(set(train_ids) == set(ds_train.subject_ids))
+        print(set(val_ids) == set(ds_val.subject_ids))
+        
 
 
 
