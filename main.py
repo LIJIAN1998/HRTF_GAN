@@ -56,9 +56,10 @@ def main(config, mode):
         ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both',
                                                                    'domain': 'magnitude'}}, subject_ids=train_sample)
         print("train ds: ", len(ds_train))
-        print(ds_train.subject_ids == train_sample)
+        result = np.array_equal(train_sample, list(set(ds_train.subject_ids)))
+        print(result)
 
-        
+
 
         # Interpolates data to find HRIRs on cubed sphere, then FFT to obtain HRTF, finally splits data into train and
         # val sets and saves processed data
