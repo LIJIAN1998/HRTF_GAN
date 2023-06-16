@@ -53,6 +53,8 @@ class Config:
         self.projection_dir = f'{self.data_dirs_path}/projection_coordinates'
         self.baseline_dir = '/baseline_results/' + self.dataset
 
+        self.train_val_id_dir = self.data_dirs_path + self.data_dir + 'train_val_id'
+
         self.train_hrtf_dir = self.data_dirs_path + self.data_dir + '/hr/train'
         self.valid_hrtf_dir = self.data_dirs_path + self.data_dir + '/hr/valid'
         self.train_original_hrtf_dir = self.data_dirs_path + self.data_dir + '/original/train'
