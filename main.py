@@ -136,19 +136,19 @@ def main(config, mode):
         #     pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
-        id_file_dir = config.train_val_id_dir
-        id_filename = id_file_dir + '/train_val_id.pickle'
-        with open(id_filename, "rb") as file:
-            train_ids, val_ids = pickle.load(file)
-        print("train: ", len(train_ids))
-        print("val: ", len(val_ids))
-        # train_prefetcher, test_prefetcher = load_hrtf(config)
-        # print("Loaded all datasets successfully.")
-        # print("train fetcher: ", len(train_prefetcher))
-        # print("test: ", len(test_prefetcher))
-        # # Trains the model, according to the parameters specified in Config
-        # util.initialise_folders(config, overwrite=True)
-        # train(config, train_prefetcher)
+        # id_file_dir = config.train_val_id_dir
+        # id_filename = id_file_dir + '/train_val_id.pickle'
+        # with open(id_filename, "rb") as file:
+        #     train_ids, val_ids = pickle.load(file)
+        # print("train: ", len(train_ids))
+        # print("val: ", len(val_ids))
+        train_prefetcher, test_prefetcher = load_hrtf(config)
+        print("Loaded all datasets successfully.")
+        print("train fetcher: ", len(train_prefetcher))
+        print("test: ", len(test_prefetcher))
+        # Trains the model, according to the parameters specified in Config
+        util.initialise_folders(config, overwrite=True)
+        train(config, train_prefetcher)
 
         # data = train_prefetcher.next()
         # lr = data['lr_coefficient']
