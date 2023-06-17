@@ -213,15 +213,6 @@ def train(config, train_prefetcher):
         vae.load_state_dict(torch.load(f'{config.existing_model_path}/Vae.pt'))
         netD.load_state_dict(torch.load(f'{config.existing_model_path}/Disc.pt'))
 
-    # train_losses_G = []
-    # train_losses_G_adversarial = []
-    # train_losses_G_content = []
-    # train_losses_D = []
-    # train_losses_D_hr = []
-    # train_losses_D_sr = []
-
-    # train_SD_metric = []
-
     train_loss_Dis_list = []
     train_loss_Dis_hr_list = []
     train_loss_Dis_recon_list = []
@@ -237,12 +228,6 @@ def train(config, train_prefetcher):
         with open("log.txt", "a") as f:
             f.write(f"Epoch: {epoch}\n")
         times = []
-        # train_loss_G = 0.
-        # train_loss_G_adversarial = 0.
-        # train_loss_G_content = 0.
-        # train_loss_D = 0.
-        # train_loss_D_hr = 0.
-        # train_loss_D_recon = 0.
 
         train_loss_Dis = 0.
         train_loss_Dis_hr = 0.
@@ -307,87 +292,62 @@ def train(config, train_prefetcher):
             gan_loss.backward()
             optD.step()
 
-            # train decoder
-            pred_real, feature_real = netD(hr_coefficient)
-            err_dec_real = adversarial_criterion(pred_real, ones_label)
-            pred_recon, feature_recon = netD(recon)
-            err_dec_recon = adversarial_criterion(pred_recon, zeros_label)
-            gan_loss_dec = err_dec_real + err_dec_recon
-            train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
-            feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
-            train_loss_Dec_sim += feature_sim_loss_D.item()
-            # convert reconstructed coefficient back to hrir
-            harmonics_list = []
-            for i in range(masks.size(0)):
-                SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
-                harmonics = torch.from_numpy(SHT.get_harmonics()).float()
-                harmonics_list.append(harmonics)
-                # recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse
-                # recon_hrir_tensor = torch.from_numpy(recon_hrir.T).reshape(nbins, num_radii, num_row_angles, num_col_angles)
-            harmonics_tensor = torch.stack(harmonics_list).to(device)
-            recons = harmonics_tensor @ recon.permute(0, 2, 1)
-            recons = torch.abs(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles))
-            unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
-            # with open('log.txt', "a") as f:
-            #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
-            content_loss = config.content_weight * unweighted_content_loss
-            train_loss_Dec_content += content_loss.item()
-            err_dec = feature_sim_loss_D + content_loss - gan_loss_dec
-            train_loss_Dec += err_dec.item()
-            # Update decoder
-            optDecoder.zero_grad()
-            err_dec.backward()
-            optDecoder.step()
+            # training VAE
+            if batch_index % int(critic_iters) == 0:
+                # train decoder
+                pred_real, feature_real = netD(hr_coefficient)
+                err_dec_real = adversarial_criterion(pred_real, ones_label)
+                pred_recon, feature_recon = netD(recon)
+                err_dec_recon = adversarial_criterion(pred_recon, zeros_label)
+                gan_loss_dec = err_dec_real + err_dec_recon
+                train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
+                feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
+                train_loss_Dec_sim += feature_sim_loss_D.item()
+                # convert reconstructed coefficient back to hrir
+                harmonics_list = []
+                for i in range(masks.size(0)):
+                    SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
+                    harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+                    harmonics_list.append(harmonics)
+                harmonics_tensor = torch.stack(harmonics_list).to(device)
+                recons = harmonics_tensor @ recon.permute(0, 2, 1)
+                recons = torch.abs(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles))
+                unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
+                # with open('log.txt', "a") as f:
+                #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
+                content_loss = config.content_weight * unweighted_content_loss
+                train_loss_Dec_content += content_loss.item()
+                err_dec = feature_sim_loss_D + content_loss - gan_loss_dec
+                train_loss_Dec += err_dec.item()
+                # Update decoder
+                optDecoder.zero_grad()
+                err_dec.backward()
+                optDecoder.step()
 
-            # train encoder
-            mu, log_var, recon = vae(lr_coefficient)
-            prior_loss = 1 + log_var - mu.pow(2) - log_var.exp()
-            prior_loss = (-0.5 * torch.sum(prior_loss))/torch.numel(mu.data) # prior loss
-            train_loss_Enc_prior += prior_loss.item()
-            feature_recon = netD(recon)[1]
-            feature_real = netD(hr_coefficient)[1]
-            feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
-            train_loss_Enc_sim += feature_sim_loss_E.item()
-            err_enc = prior_loss + feature_sim_loss_E
-            train_loss_Enc += err_enc.item()
-            # Update encoder
-            optEncoder.zero_grad()
-            err_enc.backward()
-            optEncoder.step()
+                # train encoder
+                mu, log_var, recon = vae(lr_coefficient)
+                prior_loss = 1 + log_var - mu.pow(2) - log_var.exp()
+                prior_loss = (-0.5 * torch.sum(prior_loss))/torch.numel(mu.data) # prior loss
+                train_loss_Enc_prior += prior_loss.item()
+                feature_recon = netD(recon)[1]
+                feature_real = netD(hr_coefficient)[1]
+                feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
+                train_loss_Enc_sim += feature_sim_loss_E.item()
+                err_enc = prior_loss + feature_sim_loss_E
+                train_loss_Enc += err_enc.item()
+                # Update encoder
+                optEncoder.zero_grad()
+                err_enc.backward()
+                optEncoder.step()
 
-            if batch_index % 10 == 0:
-                with open("log.txt", "a") as f:
-                    f.write(f"{batch_index}/{len(train_prefetcher)}\n")
-                    f.write(f"dis: {train_loss_Dis}\t dec: {train_loss_Dec}\t enc: {train_loss_Enc}\n")
+                if batch_index % 10 == 0:
+                    with open("log.txt", "a") as f:
+                        f.write(f"{batch_index}/{len(train_prefetcher)}\n")
+                        f.write(f"dis: {train_loss_Dis}\t dec: {train_loss_Dec}\t enc: {train_loss_Enc}\n")
 
-                    f.write(f"D_real: {train_loss_Dis_hr}, D_fake: {train_loss_Dis_recon}\n")
-                    f.write(f"content loss: {train_loss_Dec_content}, sim_D: {train_loss_Dec_sim}, gan loss: {train_loss_Dec_gan}\n")
-                    f.write(f"")
-                    f.write(f"prior: {train_loss_Enc_prior}, sim_E: {train_loss_Enc_sim}\n")
-
-            # # Generator training
-            # if batch_index % int(critic_iters) == 0:
-            #     # Initialize generator model gradients
-            #     netG.zero_grad()
-            #     sr = netG(lr)
-            #     label.fill_(1.)
-            #     # Calculate adversarial loss
-            #     output = netD(sr).view(-1)
-
-            #     unweighted_content_loss_G = content_criterion(config, sr, hr, sd_mean, sd_std, ild_mean, ild_std)
-            #     content_loss_G = config.content_weight * unweighted_content_loss_G
-            #     adversarial_loss_G = config.adversarial_weight * adversarial_criterion(output, label)
-
-            #     # Calculate the generator total loss value and backprop
-            #     loss_G = content_loss_G + adversarial_loss_G
-            #     loss_G.backward()
-
-            #     train_loss_G += loss_G.item()
-            #     train_loss_G_adversarial += adversarial_loss_G.item()
-            #     train_loss_G_content += content_loss_G.item()
-            #     train_SD_metric.append(unweighted_content_loss_G.item())
-
-            #     optG.step()
+                        f.write(f"D_real: {train_loss_Dis_hr}, D_fake: {train_loss_Dis_recon}\n")
+                        f.write(f"content loss: {train_loss_Dec_content}, sim_D: {train_loss_Dec_sim}, gan loss: {train_loss_Dec_gan}\n")
+                        f.write(f"prior: {train_loss_Enc_prior}, sim_E: {train_loss_Enc_sim}\n\n")
 
             if ('cuda' in str(device)) and (ngpu > 1):
                 end_overall.record()

@@ -3,6 +3,7 @@ import os
 import shutil
 from pathlib import Path
 import numpy as np
+import pickle
 
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
@@ -38,15 +39,29 @@ def load_hrtf(config):
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
 
-    if config.merge_flag:
-        left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}})
-        right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}})
-        custom_dataset = MergeHRTFDataset(left, right, config.upscale_factor)
-    else:
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
-        custom_dataset = CustomHRTFDataset(ds, config.upscale_factor)
+    id_file_dir = config.train_val_id_dir
+    id_filename = id_file_dir + '/train_val_id.pickle'
+    with open(id_filename, "rb") as file:
+        train_ids, val_ids = pickle.load(file)
 
-    train_dataset, test_dataset = split_dataset(custom_dataset, config.train_samples_ratio)
+    if config.merge_flag:
+        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}},
+                                   subject_ids=train_ids)
+        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}},
+                                    subject_ids=train_ids)
+        left_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}},
+                                 subject_ids=val_ids)
+        right_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}},
+                                  subject_ids=val_ids)
+        train_dataset = MergeHRTFDataset(left_train, right_train, config.upscale_factor)
+        val_dataset = MergeHRTFDataset(left_val, right_val, config.upscale_factor)
+    else:
+        ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}},
+                                 subject_ids=train_ids)
+        ds_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}},
+                               subject_ids=val_ids)
+        train_dataset = CustomHRTFDataset(ds_train, config.upscale_factor)
+        test_dataset = CustomHRTFDataset(ds_val, config.upscale_factor)
 
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=config.batch_size,
@@ -55,7 +70,7 @@ def load_hrtf(config):
                                   pin_memory=True,
                                   drop_last=False,
                                   persistent_workers=True)
-    test_dataloader = DataLoader(test_dataset,
+    test_dataloader = DataLoader(val_dataset,
                                   batch_size=1,
                                   shuffle=False,
                                   num_workers=1,
