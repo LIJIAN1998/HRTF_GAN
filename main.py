@@ -63,10 +63,12 @@ def main(config, mode):
         # result = np.array_equal(train_sample, list(set(ds_train.subject_ids)))
         print(set(train_ids) == set(ds_train.subject_ids))
         print(set(val_ids) == set(ds_val.subject_ids))
-        id_filename = f'{config.train_val_id_dir}/train_val_id.pickle'
+        id_file_dir = config.train_val_id_dir
+        if not os.path.exists(id_file_dir):
+            os.makedirs(id_file_dir)
+        id_filename = id_file_dir + '/train_val_id.pickle'
         with open(id_filename, "wb") as file:
             pickle.dump((train_ids, val_ids), file)
-
 
         # Interpolates data to find HRIRs on cubed sphere, then FFT to obtain HRTF, finally splits data into train and
         # val sets and saves processed data
