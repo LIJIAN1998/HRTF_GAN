@@ -142,6 +142,7 @@ def main(config, mode):
         #     train_ids, val_ids = pickle.load(file)
         # print("train: ", len(train_ids))
         # print("val: ", len(val_ids))
+        print("using cuda? ", torch.cuda.is_available())
         train_prefetcher, test_prefetcher = load_hrtf(config)
         print("Loaded all datasets successfully.")
         print("train fetcher: ", len(train_prefetcher))
