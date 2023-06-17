@@ -53,8 +53,6 @@ def main(config, mode):
         print("sample: ", type(train_ids), len(train_ids))
         print(train_ids)
         val_ids = list(set(ds.subject_ids) - set(train_ids))
-        
-        
 
         ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both',
                                                                    'domain': 'magnitude'}}, subject_ids=train_ids)
@@ -65,8 +63,9 @@ def main(config, mode):
         # result = np.array_equal(train_sample, list(set(ds_train.subject_ids)))
         print(set(train_ids) == set(ds_train.subject_ids))
         print(set(val_ids) == set(ds_val.subject_ids))
-        
-
+        id_filename = f'{config.train_val_id_dir}/train_val_id.pickle'
+        with open(id_filename, "wb") as file:
+            pickle.dump((train_ids, val_ids), file)
 
 
         # Interpolates data to find HRIRs on cubed sphere, then FFT to obtain HRTF, finally splits data into train and
