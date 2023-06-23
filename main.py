@@ -45,26 +45,6 @@ def main(config, mode):
         generate_euclidean_cube(config, cs.get_sphere_coords(), edge_len=config.hrtf_size)
 
     elif mode == 'preprocess':
-        # saves train and val subject index
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
-        train_size = int(len(set(ds.subject_ids)) * config.train_samples_ratio)
-        print("train size: ", train_size)
-        train_ids = np.random.choice(list(set(ds.subject_ids)), train_size, replace=False)
-        val_ids = list(set(ds.subject_ids) - set(train_ids))
-        print("val size: ", len(val_ids))
-
-        ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both',
-                                                                   'domain': 'magnitude'}}, subject_ids=train_ids)
-        ds_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both',
-                                                                   'domain': 'magnitude'}}, subject_ids=val_ids)
-
-        id_file_dir = config.train_val_id_dir
-        if not os.path.exists(id_file_dir):
-            os.makedirs(id_file_dir)
-        id_filename = id_file_dir + '/train_val_id.pickle'
-        with open(id_filename, "wb") as file:
-            pickle.dump((train_ids, val_ids), file)
-
         # Interpolates data to find HRIRs on cubed sphere, then FFT to obtain HRTF, finally splits data into train and
         # val sets and saves processed data
         # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
@@ -78,9 +58,16 @@ def main(config, mode):
         # # Clear/Create directories
         # clear_create_directories(config)
 
-        # # Split data into train and test sets
-        # train_size = int(len(set(ds.subject_ids)) * config.train_samples_ratio)
-        # train_sample = np.random.choice(list(set(ds.subject_ids)), train_size, replace=False)
+        # Split data into train and test sets
+        train_size = int(len(set(ds.subject_ids)) * config.train_samples_ratio)
+        train_sample = np.random.choice(list(set(ds.subject_ids)), train_size, replace=False)
+        val_sample = list(set(ds.subject_ids) - set(train_sample))
+        id_file_dir = config.train_val_id_dir
+        if not os.path.exists(id_file_dir):
+            os.makedirs(id_file_dir)
+        id_filename = id_file_dir + '/train_val_id.pickle'
+        with open(id_filename, "wb") as file:
+            pickle.dump((train_sample, val_sample), file)
 
         # # collect all train_hrtfs to get mean and sd
         # train_hrtfs = torch.empty(size=(2 * train_size, 5, config.hrtf_size, config.hrtf_size, config.nbins_hrtf))
