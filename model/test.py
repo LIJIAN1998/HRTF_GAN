@@ -79,7 +79,9 @@ def test(config, val_prefetcher):
         # Transfer in-memory data to CUDA devices to speed up validation
         lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                          non_blocking=True, dtype=torch.float)
+        hrir = batch_data["hrir"]
         masks = batch_data["mask"]
+        val_sample = {}
 
         # Use the generator model to generate fake samples
         with torch.no_grad():
@@ -91,8 +93,11 @@ def test(config, val_prefetcher):
         sr = torch.abs(sr.reshape(-1, nbins, num_radii, num_row_angles, num_col_angles))
         file_name = '/' + os.path.basename(f"val_sample_{sample_index}.pkl")
         # file_name = '/' + os.path.basename(batch_data["filename"][0])
-        with open(valid_dir + file_name, "wb") as file:
-            pickle.dump(torch.permute(sr[0], (1, 2, 3, 0)).detach().cpu(), file)
+        val_sample['sr'] = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
+        val_sample['hr'] = hrir.detach().cpu()
 
+        with open(valid_dir + file_name, "wb") as file:
+            pickle.dump(val_sample, file)
+        
         # Preload the next batch of data
         batch_data = val_prefetcher.next()

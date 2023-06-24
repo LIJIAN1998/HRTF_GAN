@@ -56,7 +56,7 @@ class CustomHRTFDataset(Dataset):
                                              original_mask)
         hr_coefficient = hr_SHT(hrir).T
 
-        hrir = torch.from_numpy(hrir.data).permute(3, 2, 0, 1)
+        hrir = torch.from_numpy(hrir.data).permute(3, 2, 0, 1) # nbins x r x w x h 
 
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient, 
                 "hrir": hrir, "mask": original_mask}
