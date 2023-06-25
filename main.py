@@ -141,8 +141,8 @@ def main(config, mode):
         print("Loaded all datasets successfully.")
         id_list = [] 
         for _ in range(len(train_prefetcher)):
-            id_list.append(train_prefetcher.next()["id"].data)
-        print("id same? ", sorted(expected_train_ids) == id_list)
+            id_list.append(train_prefetcher.next()["id"].item())
+        print("id same? ", expected_train_ids == sorted(id_list))
         print("expected: ", expected_train_ids)
         print("id list: ", id_list)
         # print("train fetcher: ", len(train_prefetcher))
