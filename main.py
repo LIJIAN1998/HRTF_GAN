@@ -128,6 +128,7 @@ def main(config, mode):
         id_filename = id_file_dir + '/train_val_id.pickle'
         with open(id_filename, "rb") as file:
             train_ids, val_ids = pickle.load(file)
+        print("saved train ids: ", train_ids)
         left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}},
                                    subject_ids=train_ids)
         right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}},
@@ -140,7 +141,7 @@ def main(config, mode):
         id_list = [] 
         for _ in range(len(train_prefetcher)):
             id_list.append(train_prefetcher.next()["id"])
-        print("id same? ", expected_train_ids == id_list)
+        print("id same? ", sorted(expected_train_ids) == id_list)
         print("expected: ", expected_train_ids)
         print("id list: ", id_list)
         # print("train fetcher: ", len(train_prefetcher))
