@@ -78,7 +78,7 @@ class MergeHRTFDataset(Dataset):
     def __getitem__(self, index: int):
         left = self.left_hrtf[index]['features'][:, :, :, 1:]
         right = self.right_hrtf[index]['features'][:, :, :, 1:]
-        sample_id = self.left_hrtf[index].subject_ids[index]
+        sample_id = self.left_hrtf.subject_ids[index]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         mask = np.ones((self.num_row_angles, self.num_col_angles, self.num_radii), dtype=bool)
@@ -99,7 +99,7 @@ class MergeHRTFDataset(Dataset):
 
         merge = torch.from_numpy(merge.data).permute(3, 2, 0, 1)
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient,
-                "hrir": merge, "mask": original_mask}
+                "hrir": merge, "mask": original_mask, "id": sample_id}
     
     def __len__(self):
         return len(self.left_hrtf)

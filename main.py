@@ -132,9 +132,15 @@ def main(config, mode):
                                    subject_ids=train_ids)
         right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}},
                                     subject_ids=train_ids)
-        print("left right id same? ", left_train.subject_ids == right_train.subject_ids)
-        # train_prefetcher, test_prefetcher = load_hrtf(config)
-        # print("Loaded all datasets successfully.")
+        
+        # print("left right id same? ", left_train.subject_ids == right_train.subject_ids)
+        expected_train_ids = list(left_train.subject_ids)
+        train_prefetcher, test_prefetcher = load_hrtf(config)
+        print("Loaded all datasets successfully.")
+        id_list = [] 
+        for _ in range(len(train_prefetcher)):
+            id_list.append(train_prefetcher.next()["id"])
+        print("id same? ", expected_train_ids == id_list)
         # print("train fetcher: ", len(train_prefetcher))
         # print("test: ", len(test_prefetcher))
         # # Trains the model, according to the parameters specified in Config
