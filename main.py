@@ -141,6 +141,8 @@ def main(config, mode):
         for _ in range(len(train_prefetcher)):
             id_list.append(train_prefetcher.next()["id"])
         print("id same? ", expected_train_ids == id_list)
+        print("expected: ", expected_train_ids)
+        print("id list: ", id_list)
         # print("train fetcher: ", len(train_prefetcher))
         # print("test: ", len(test_prefetcher))
         # # Trains the model, according to the parameters specified in Config
