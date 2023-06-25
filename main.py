@@ -47,16 +47,16 @@ def main(config, mode):
     elif mode == 'preprocess':
         # Interpolates data to find HRIRs on cubed sphere, then FFT to obtain HRTF, finally splits data into train and
         # val sets and saves processed data
-        # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
-        # cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
+        cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
 
-        # # need to use protected member to get this data, no getters
-        # projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
-        # with open(projection_filename, "rb") as file:
-        #     cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
+        # need to use protected member to get this data, no getters
+        projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
+        with open(projection_filename, "rb") as file:
+            cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
 
-        # # Clear/Create directories
-        # clear_create_directories(config)
+        # Clear/Create directories
+        clear_create_directories(config)
 
         # Split data into train and test sets
         train_size = int(len(set(ds.subject_ids)) * config.train_samples_ratio)
@@ -69,64 +69,70 @@ def main(config, mode):
         with open(id_filename, "wb") as file:
             pickle.dump((train_sample, val_sample), file)
 
-        # # collect all train_hrtfs to get mean and sd
-        # train_hrtfs = torch.empty(size=(2 * train_size, 5, config.hrtf_size, config.hrtf_size, config.nbins_hrtf))
-        # j = 0
-        # for i in range(len(ds)):
-        #     if i % 10 == 0:
-        #         print(f"HRTF {i} out of {len(ds)} ({round(100 * i / len(ds))}%)")
+        # collect all train_hrtfs to get mean and sd
+        train_hrtfs = torch.empty(size=(2 * train_size, 5, config.hrtf_size, config.hrtf_size, config.nbins_hrtf))
+        j = 0
+        for i in range(len(ds)):
+            if i % 10 == 0:
+                print(f"HRTF {i} out of {len(ds)} ({round(100 * i / len(ds))}%)")
 
-        #     # Verification that HRTF is valid
-        #     if np.isnan(ds[i]['features']).any():
-        #         print(f'HRTF (Subject ID: {i}) contains nan values')
-        #         continue
+            # Verification that HRTF is valid
+            if np.isnan(ds[i]['features']).any():
+                print(f'HRTF (Subject ID: {i}) contains nan values')
+                continue
 
-        #     features = ds[i]['features'].data.reshape(*ds[i]['features'].shape[:-2], -1)
-        #     clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
-        #                                      cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
-        #     hrtf_original, phase_original, sphere_original = get_hrtf_from_ds(config, ds, i)
+            features = ds[i]['features'].data.reshape(*ds[i]['features'].shape[:-2], -1)
+            clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
+                                             cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
+            hrtf_original, phase_original, sphere_original = get_hrtf_from_ds(config, ds, i)
 
-        #     # save cleaned hrtfdata
-        #     if ds.subject_ids[i] in train_sample:
-        #         projected_dir = config.train_hrtf_dir
-        #         projected_dir_original = config.train_original_hrtf_dir
-        #         train_hrtfs[j] = clean_hrtf
-        #         j += 1
-        #     else:
-        #         projected_dir = config.valid_hrtf_dir
-        #         projected_dir_original = config.valid_original_hrtf_dir
+            # save cleaned hrtfdata
+            if ds.subject_ids[i] in train_sample:
+                projected_dir = config.train_hrtf_dir
+                projected_dir_original = config.train_original_hrtf_dir
+                train_hrtfs[j] = clean_hrtf
+                j += 1
+            else:
+                projected_dir = config.valid_hrtf_dir
+                projected_dir_original = config.valid_original_hrtf_dir
 
-        #     subject_id = str(ds.subject_ids[i])
-        #     side = ds.sides[i]
-        #     with open('%s/%s_mag_%s%s.pickle' % (projected_dir, config.dataset, subject_id, side), "wb") as file:
-        #         pickle.dump(clean_hrtf, file)
+            subject_id = str(ds.subject_ids[i])
+            side = ds.sides[i]
+            with open('%s/%s_mag_%s%s.pickle' % (projected_dir, config.dataset, subject_id, side), "wb") as file:
+                pickle.dump(clean_hrtf, file)
 
-        #     with open('%s/%s_mag_%s%s.pickle' % (projected_dir_original, config.dataset, subject_id, side), "wb") as file:
-        #         pickle.dump(hrtf_original, file)
+            with open('%s/%s_mag_%s%s.pickle' % (projected_dir_original, config.dataset, subject_id, side), "wb") as file:
+                pickle.dump(hrtf_original, file)
 
-        #     with open('%s/%s_phase_%s%s.pickle' % (projected_dir_original, config.dataset, subject_id, side), "wb") as file:
-        #         pickle.dump(phase_original, file)
+            with open('%s/%s_phase_%s%s.pickle' % (projected_dir_original, config.dataset, subject_id, side), "wb") as file:
+                pickle.dump(phase_original, file)
 
-        # if config.merge_flag:
-        #     merge_files(config)
+        if config.merge_flag:
+            merge_files(config)
 
-        # if config.gen_sofa_flag:
-        #     gen_sofa_preprocess(config, cube, sphere, sphere_original)
+        if config.gen_sofa_flag:
+            gen_sofa_preprocess(config, cube, sphere, sphere_original)
 
-        # # save dataset mean and standard deviation for each channel, across all HRTFs in the training data
-        # mean = torch.mean(train_hrtfs, [0, 1, 2, 3])
-        # std = torch.std(train_hrtfs, [0, 1, 2, 3])
-        # min_hrtf = torch.min(train_hrtfs)
-        # max_hrtf = torch.max(train_hrtfs)
-        # mean_std_filename = config.mean_std_filename
-        # with open(mean_std_filename, "wb") as file:
-        #     pickle.dump((mean, std, min_hrtf, max_hrtf), file)
+        # save dataset mean and standard deviation for each channel, across all HRTFs in the training data
+        mean = torch.mean(train_hrtfs, [0, 1, 2, 3])
+        std = torch.std(train_hrtfs, [0, 1, 2, 3])
+        min_hrtf = torch.min(train_hrtfs)
+        max_hrtf = torch.max(train_hrtfs)
+        mean_std_filename = config.mean_std_filename
+        with open(mean_std_filename, "wb") as file:
+            pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
-        print("using cuda? ", torch.cuda.is_available())
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                              'side': 'left', 'domain': 'magnitude'}})
-        print(ds[0].keys())
+        # print("using cuda? ", torch.cuda.is_available())
+        id_file_dir = config.train_val_id_dir
+        id_filename = id_file_dir + '/train_val_id.pickle'
+        with open(id_filename, "rb") as file:
+            train_ids, val_ids = pickle.load(file)
+        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}},
+                                   subject_ids=train_ids)
+        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}},
+                                    subject_ids=train_ids)
+        print("left right id same? ", left_train.subject_ids == right_train.subject_ids)
         # train_prefetcher, test_prefetcher = load_hrtf(config)
         # print("Loaded all datasets successfully.")
         # print("train fetcher: ", len(train_prefetcher))

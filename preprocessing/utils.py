@@ -223,7 +223,7 @@ def convert_to_sofa(hrtf_dir, config, cube, sphere, phase_ext='_phase', use_phas
 
     for f in hrtf_file_names:
         with open(os.path.join(hrtf_dir, f), "rb") as hrtf_file:
-            hrtf = pickle.load(hrtf_file)
+            hrtf = pickle.load(hrtf_file)  # r x w x h x nbins
             sofa_filename_output = os.path.basename(hrtf_file.name).replace('.pickle', '.sofa').replace(mag_ext,'')
             sofa_output = sofa_path_output + sofa_filename_output
 

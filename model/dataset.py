@@ -78,6 +78,7 @@ class MergeHRTFDataset(Dataset):
     def __getitem__(self, index: int):
         left = self.left_hrtf[index]['features'][:, :, :, 1:]
         right = self.right_hrtf[index]['features'][:, :, :, 1:]
+        sample_id = self.left_hrtf[index].subject_ids[index]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         mask = np.ones((self.num_row_angles, self.num_col_angles, self.num_radii), dtype=bool)
