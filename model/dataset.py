@@ -78,7 +78,7 @@ class MergeHRTFDataset(Dataset):
     def __getitem__(self, index: int):
         left = self.left_hrtf[index]['features'][:, :, :, 1:]
         right = self.right_hrtf[index]['features'][:, :, :, 1:]
-        sample_id = self.left_hrtf.subject_ids[index]
+        sample_id = self.left_hrtf.subject_ids[index].data
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         mask = np.ones((self.num_row_angles, self.num_col_angles, self.num_radii), dtype=bool)
@@ -209,7 +209,7 @@ class CUDAPrefetcher:
 
         with torch.cuda.stream(self.stream):
             for k, v in self.batch_data.items():
-                if torch.is_tensor(v) and k != 'mask' and k != 'id':
+                if torch.is_tensor(v) and k != 'mask':
                     self.batch_data[k] = self.batch_data[k].to(self.device, non_blocking=True)
 
     def next(self):

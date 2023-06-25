@@ -128,7 +128,7 @@ def main(config, mode):
         id_filename = id_file_dir + '/train_val_id.pickle'
         with open(id_filename, "rb") as file:
             train_ids, val_ids = pickle.load(file)
-        print("saved train ids: ", train_ids)
+        print("saved train ids: ", sorted(train_ids))
         left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}},
                                    subject_ids=train_ids)
         right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}},
@@ -137,6 +137,7 @@ def main(config, mode):
         # print("left right id same? ", left_train.subject_ids == right_train.subject_ids)
         expected_train_ids = list(left_train.subject_ids)
         train_prefetcher, test_prefetcher = load_hrtf(config)
+        print("same id? ", sorted(train_ids) == expected_train_ids)
         print("Loaded all datasets successfully.")
         id_list = [] 
         for _ in range(len(train_prefetcher)):
