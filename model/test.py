@@ -94,7 +94,7 @@ def test(config, val_prefetcher):
         file_name = '/' + os.path.basename(f"val_sample_{sample_index}.pkl")
         # file_name = '/' + os.path.basename(batch_data["filename"][0])
         val_sample['sr'] = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
-        val_sample['hr'] = hrir.detach().cpu()
+        val_sample['hr'] = torch.permute(hrir[0], (2, 3, 1, 0)).detach().cpu()
 
         with open(valid_dir + file_name, "wb") as file:
             pickle.dump(val_sample, file)

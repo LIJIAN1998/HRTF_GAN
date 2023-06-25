@@ -14,31 +14,28 @@ import numpy as np
 
 import matlab.engine
 
-def replace_nodes(config, sr_dir, file_name):
+from model.dataset import get_sample_ratio
+
+def replace_nodes(config, val_dir, file_name):
     # Overwrite the generated points that exist in the original data
-    with open(config.valid_hrtf_merge_dir + file_name, "rb") as f:
-        hr_hrtf = pickle.load(f)
+    with open(val_dir + file_name, "rb") as f:
+        data = pickle.load(f)
 
-    with open(sr_dir + file_name, "rb") as f:
-        sr_hrtf = pickle.load(f)
+    sr_hrir = data['sr'] # w x h x r x nbins
+    hr_hrir = data['hr']
 
-    lr_hrtf = torch.permute(
-        downsample_hrtf(torch.permute(hr_hrtf, (3, 0, 1, 2)), config.hrtf_size, config.upscale_factor),
-        (1, 2, 3, 0))
-
-    lr = lr_hrtf.detach().cpu()
-    for p in range(5):
-        for w in range(config.hrtf_size):
-            for h in range(config.hrtf_size):
-                if hr_hrtf[p, w, h] in lr:
-                    sr_hrtf[p, w, h] = hr_hrtf[p, w, h]
-
-    generated = torch.permute(sr_hrtf[:, None], (1, 4, 0, 2, 3))
-    target = torch.permute(hr_hrtf[:, None], (1, 4, 0, 2, 3))
+    row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
+    for i in range(sr_hrir.size(0) // row_ratio):  # sr_hrir.size(0) = num of row angles
+        for j in range(sr_hrir.size(1) // col_ratio): # sr_hrir.size(1) = num of column angles
+            sr_hrir[row_ratio*i, col_ratio*j, :] = hr_hrir[row_ratio*i, col_ratio*j, :]  # replace the nodes
+    
+    # 1 x w x h x r x nbins
+    generated = torch.permute(sr_hrir[None, :], (0, 4, 3, 1, 2)) # 1 x nbins x r x w x h
+    target = torch.permute(hr_hrir[None, :], (0, 4, 3, 1, 2))
 
     return target, generated
 
-def run_lsd_evaluation(config, sr_dir, file_ext=None, hrtf_selection=None):
+def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
 
     file_ext = 'lsd_errors.pickle' if file_ext is None else file_ext
 
@@ -52,7 +49,7 @@ def run_lsd_evaluation(config, sr_dir, file_ext=None, hrtf_selection=None):
             with open(config.valid_hrtf_merge_dir + file_name, "rb") as f:
                 hr_hrtf = pickle.load(f)
 
-            with open(f'{sr_dir}/{hrtf_selection}.pickle', "rb") as f:
+            with open(f'{val_dir}/{hrtf_selection}.pickle', "rb") as f:
                 sr_hrtf = pickle.load(f)
 
             generated = torch.permute(sr_hrtf[:, None], (1, 4, 0, 2, 3))
@@ -63,12 +60,13 @@ def run_lsd_evaluation(config, sr_dir, file_ext=None, hrtf_selection=None):
             lsd_errors.append([subject_id,  float(error.detach())])
             print('LSD Error of subject %s: %0.4f' % (subject_id, float(error.detach())))
     else:
-        sr_data_paths = glob.glob('%s/%s_*' % (sr_dir, config.dataset))
-        sr_data_file_names = ['/' + os.path.basename(x) for x in sr_data_paths]
+        val_data_paths = glob.glob(f"{val_dir}/val_sample_*")
+        # sr_data_paths = glob.glob('%s/%s_*' % (val_dir, config.dataset))
+        val_data_file_names = ['/' + os.path.basename(x) for x in val_data_paths]
 
         lsd_errors = []
-        for file_name in sr_data_file_names:
-            target, generated = replace_nodes(config, sr_dir, file_name)
+        for file_name in val_data_file_names:
+            target, generated = replace_nodes(config, val_dir, file_name)
             error = spectral_distortion_metric(generated, target)
             subject_id = ''.join(re.findall(r'\d+', file_name))
             lsd_errors.append([subject_id,  float(error.detach())])

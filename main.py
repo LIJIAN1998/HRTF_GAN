@@ -124,6 +124,9 @@ def main(config, mode):
 
     elif mode == 'train':
         print("using cuda? ", torch.cuda.is_available())
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                              'side': 'left', 'domain': 'magnitude'}})
+        print(ds[0].keys())
         # train_prefetcher, test_prefetcher = load_hrtf(config)
         # print("Loaded all datasets successfully.")
         # print("train fetcher: ", len(train_prefetcher))

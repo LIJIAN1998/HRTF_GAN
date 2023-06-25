@@ -162,15 +162,15 @@ def spectral_distortion_metric(generated, target, reduction='mean'):
     Computes the mean over every HRTF in the batch"""
     batch_size = generated.size(0)
     num_panels = generated.size(2)
-    height = generated.size(3)
-    width = generated.size(4)
+    width = generated.size(3)
+    height = generated.size(4)
     total_positions = num_panels * height * width
     total_sd_metric = 0
     for b in range(batch_size):
         total_all_positions = 0
         for i in range(num_panels):
-            for j in range(height):
-                for k in range(width):
+            for j in range(width):
+                for k in range(height):
                     average_over_frequencies = spectral_distortion_inner(generated[b, :, i, j, k],
                                                                          target[b, :, i, j, k])
                     total_all_positions += torch.sqrt(average_over_frequencies)
