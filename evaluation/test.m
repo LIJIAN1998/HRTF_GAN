@@ -1,6 +1,6 @@
 function [num, s] = myfunc(n, m)
-    num = 10 * n
-    s = "kunkun " + m
+    num = 10 * n;
+    s = strcat('kunkun ', m);
 end
 
 % fileID = fopen('mat.txt', 'w');
