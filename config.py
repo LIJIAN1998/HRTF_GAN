@@ -48,6 +48,7 @@ class Config:
         self.existing_model_path = f'{self.data_dirs_path}{self.runs_folder}/{self.existing_model_tag}'
 
         self.valid_path = f'{self.data_dirs_path}{self.runs_folder}/{self.tag}/valid'
+        self.valid_gt_path = f'{self.data_dirs_path}{self.runs_folder}/{self.tag}/valid_gt'
         self.model_path = f'{self.data_dirs_path}{self.runs_folder}/{self.tag}'
 
         self.projection_dir = f'{self.data_dirs_path}/projection_coordinates'

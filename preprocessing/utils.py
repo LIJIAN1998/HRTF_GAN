@@ -125,6 +125,24 @@ def add_itd(az, el, hrir, side, fs=48000, r=0.0875, c=343):
 
     return delayed_hrir, sofa_delay
 
+def my_gen_sofa_file(config, left_hrtf, right_hrtf, az, el):
+    source_position = [az + 360 if az < 0 else az, el, 1.2]
+
+    left_hrtf[left_hrtf == 0.0] = 1.0e-08
+    left_phase = np.imag(-hilbert(np.log(np.abs(left_hrtf))))
+    right_hrtf[right_hrtf == 0.0] = 1.0e-08
+    right_phase = np.imag(-hilbert(np.log(np.abs(right_hrtf))))
+
+    left_hrir = scipy.fft.irfft(np.concatenate((np.array([0]), np.abs(left_hrtf[:config.nbins_hrtf-1]))) * np.exp(1j * left_phase))[:config.nbins_hrtf]
+    right_hrir = scipy.fft.irfft(np.concatenate((np.array([0]), np.abs(right_hrtf[:config.nbins_hrtf-1]))) * np.exp(1j * right_phase))[:config.nbins_hrtf]
+
+    left_hrir, left_sample_delay = add_itd(az, el, left_hrir, side='left')
+    right_hrir, right_sample_delay = add_itd(az, el, right_hrir, side='right')
+
+    full_hrir = [left_hrir, right_hrir]
+    delay = [left_sample_delay, right_sample_delay]
+
+    return source_position, full_hrir, delay
 
 def gen_sofa_file(config, sphere_coords, left_hrtf, right_hrtf, count, left_phase=None, right_phase=None):
     el = np.degrees(sphere_coords[count][0])
@@ -149,6 +167,32 @@ def gen_sofa_file(config, sphere_coords, left_hrtf, right_hrtf, count, left_phas
 
     return source_position, full_hrir, delay
 
+def my_save_sofa(clean_hrtf, config, row_angles, column_angles, sofa_path_output):
+    full_hrirs = []
+    source_positions = []
+    delays = []
+    left_full_hrtf = clean_hrtf[:, :, :, :config.nbins_hrtf]   # r x w x h x nbins
+    right_full_hrtf = clean_hrtf[:, :, :, config.nbins_hrtf:]
+
+    for i in range(clean_hrtf.size(1)):  # loop through azimuth
+        for j in range(clean_hrtf.size(2)): # loop through elevation
+            left_hrtf = np.array(left_full_hrtf[0, i, j]) # only one radius
+            right_hrtf = np.array(right_full_hrtf[0, i, j])
+            az = row_angles[i]
+            el = column_angles[j]
+            source_position, full_hrir, delay = my_gen_sofa_file(config, left_hrtf, right_hrtf, az, el)
+
+            full_hrirs.append(full_hrir)
+            source_positions.append(source_position)
+            delays.append(delay)
+    
+    sofa = sf.Sofa("SimpleFreeFieldHRIR")
+    sofa.Data_IR = full_hrirs
+    sofa.Data_SamplingRate = config.hrir_samplerate
+    sofa.Data_Delay = delays
+    sofa.SourcePosition = source_positions
+    sf.write_sofa(sofa_path_output, sofa)
+            
 
 def save_sofa(clean_hrtf, config, cube_coords, sphere_coords, sofa_path_output, phase=None):
     full_hrirs = []
@@ -205,6 +249,25 @@ def save_sofa(clean_hrtf, config, cube_coords, sphere_coords, sofa_path_output, 
     sofa.SourcePosition = source_positions
     sf.write_sofa(sofa_path_output, sofa)
 
+def my_convert_to_sofa(hrtf_dir, config, row_angles, column_angles, phase_ext='_phase', mag_ext='_mag'):
+    sofa_path_output = hrtf_dir + '/sofa_min_phase/'
+
+    hrtf_file_names = [hrir_file_name for hrir_file_name in os.listdir(hrtf_dir)
+                       if os.path.isfile(os.path.join(hrtf_dir, hrir_file_name)) and phase_ext not in hrir_file_name]
+    phase_file_names = [phase_file_name for phase_file_name in os.listdir(hrtf_dir)
+                        if os.path.isfile(os.path.join(hrtf_dir, phase_file_name)) and phase_ext not in phase_file_name]
+    
+    # Clear/Create directories
+    shutil.rmtree(Path(sofa_path_output), ignore_errors=True)
+    Path(sofa_path_output).mkdir(parents=True, exist_ok=True)
+
+    for f in hrtf_file_names:
+        with open(os.path.join(hrtf_dir, f), "rb") as hrtf_file:
+            hrtf = pickle.load(hrtf_file) # r x w x h x nbins
+            sofa_filename_output = os.path.basename(hrtf_file.name).replace('.pickle', '.sofa').replace(mag_ext, '')
+            sofa_output = sofa_path_output + sofa_filename_output
+
+            my_save_sofa(hrtf, config, row_angles, column_angles, sofa_output)
 
 def convert_to_sofa(hrtf_dir, config, cube, sphere, phase_ext='_phase', use_phase=False, mag_ext='_mag'):
     if use_phase:

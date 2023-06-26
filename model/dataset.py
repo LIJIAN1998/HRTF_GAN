@@ -38,8 +38,9 @@ class CustomHRTFDataset(Dataset):
         self.max_dgree = max_degree
 
     def __getitem__(self, index: int):
-        hrir = self.original_hrtf_dataset[index]['features'][:, :, :, 1:]
-        original_mask = np.all(np.ma.getmaskarray(hrir), axis=3)
+        hrtf = self.original_hrtf_dataset[index]['features'][:, :, :, 1:]
+        sample_id = self.original_hrtf_dataset.subject_ids[index]
+        original_mask = np.all(np.ma.getmaskarray(hrtf), axis=3)
         mask = np.ones((self.num_row_angles, self.num_col_angles, self.num_radii), dtype=bool)
         row_ratio, col_ratio = get_sample_ratio(self.upscale_factor)
         for i in range(self.num_row_angles // row_ratio):
@@ -49,17 +50,17 @@ class CustomHRTFDataset(Dataset):
                                              self.original_hrtf_dataset.column_angles,
                                              self.original_hrtf_dataset.radii,
                                              mask)
-        lr_coefficient = lr_SHT(hrir).T
+        lr_coefficient = lr_SHT(hrtf).T
         hr_SHT = SphericalHarmonicsTransform(self.max_dgree, self.original_hrtf_dataset.row_angles,
                                              self.original_hrtf_dataset.column_angles,
                                              self.original_hrtf_dataset.radii,
                                              original_mask)
-        hr_coefficient = hr_SHT(hrir).T
+        hr_coefficient = hr_SHT(hrtf).T
 
-        hrir = torch.from_numpy(hrir.data).permute(3, 2, 0, 1) # nbins x r x w x h 
+        hrtf = torch.from_numpy(hrtf.data).permute(3, 2, 0, 1) # nbins x r x w x h 
 
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient, 
-                "hrir": hrir, "mask": original_mask}
+                "hrtf": hrtf, "mask": original_mask, "id": sample_id}
     
     def __len__(self):
         return len(self.original_hrtf_dataset)
@@ -97,9 +98,9 @@ class MergeHRTFDataset(Dataset):
                                              np.all(np.ma.getmaskarray(merge), axis=3))
         hr_coefficient = hr_SHT(merge).T
 
-        merge = torch.from_numpy(merge.data).permute(3, 2, 0, 1)
+        merge = torch.from_numpy(merge.data).permute(3, 2, 0, 1)  # nbins x r x w x h
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient,
-                "hrir": merge, "mask": original_mask, "id": sample_id}
+                "hrtf": merge, "mask": original_mask, "id": sample_id}
     
     def __len__(self):
         return len(self.left_hrtf)

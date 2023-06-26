@@ -1,9 +1,11 @@
 from model.util import spectral_distortion_metric
 from model.dataset import downsample_hrtf
-from preprocessing.utils import convert_to_sofa
+from preprocessing.utils import convert_to_sofa, my_convert_to_sofa
 
 import shutil
 from pathlib import Path
+import importlib
+import subprocess
 
 import glob
 import torch
@@ -78,6 +80,14 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
 
 def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=None):
 
+    imp = importlib.import_module('hrtfdata.full')
+    load_function = getattr(imp, config.dataset)
+    data_dir = config.raw_hrtf_dir / config.dataset
+    ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                         'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+    row_angles = ds.row_angles
+    column_angles = ds.column_angles
+
     file_ext = 'loc_errors.pickle' if file_ext is None else file_ext
 
     if hrtf_selection == 'minimum' or hrtf_selection == 'maximum':
@@ -102,7 +112,9 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
         with open(projection_filename, "rb") as file:
             cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
 
-        convert_to_sofa(nodes_replaced_path, config, cube, sphere)
+        my_convert_to_sofa(nodes_replaced_path, config, row_angles, column_angles)
+        my_convert_to_sofa(config.valid_gt_path, config, row_angles, column_angles)
+        # convert_to_sofa(nodes_replaced_path, config, cube, sphere)
         print('Created valid sofa files')
 
         hrtf_file_names = [hrtf_file_name for hrtf_file_name in os.listdir(nodes_replaced_path + '/sofa_min_phase')]
@@ -115,7 +127,8 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
 
     loc_errors = []
     for file in hrtf_file_names:
-        target_sofa_file = config.valid_hrtf_merge_dir + '/sofa_min_phase/' + file
+        target_sofa_file = config.valid_gt_path + '/sofa_min_phase/' + file
+        # target_sofa_file = config.valid_hrtf_merge_dir + '/sofa_min_phase/' + file
         if hrtf_selection == 'minimum' or hrtf_selection == 'maximum':
             generated_sofa_file = f'{nodes_replaced_path}/sofa_min_phase/{hrtf_selection}.sofa'
         else:

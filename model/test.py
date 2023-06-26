@@ -31,6 +31,7 @@ def test(config, val_prefetcher):
 
     ngpu = config.ngpu
     valid_dir = config.valid_path
+    valid_gt_dir = config.valid_gt_path
 
     nbins = config.nbins_hrtf
     if config.merge_flag:
@@ -73,15 +74,16 @@ def test(config, val_prefetcher):
     # Clear/Create directories
     shutil.rmtree(Path(valid_dir), ignore_errors=True)
     Path(valid_dir).mkdir(parents=True, exist_ok=True)
+    shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+    Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
 
-    sample_index = 0
     while batch_data is not None:
         # Transfer in-memory data to CUDA devices to speed up validation
         lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                          non_blocking=True, dtype=torch.float)
-        hrir = batch_data["hrir"]
+        hrtf = batch_data["hrtf"]
         masks = batch_data["mask"]
-        val_sample = {}
+        sample_id = batch_data["id"].item()
 
         # Use the generator model to generate fake samples
         with torch.no_grad():
@@ -91,13 +93,15 @@ def test(config, val_prefetcher):
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         sr = harmonics @ recon[0].T
         sr = torch.abs(sr.reshape(-1, nbins, num_radii, num_row_angles, num_col_angles))
-        file_name = '/' + os.path.basename(f"val_sample_{sample_index}.pkl")
-        # file_name = '/' + os.path.basename(batch_data["filename"][0])
-        val_sample['sr'] = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
-        val_sample['hr'] = torch.permute(hrir[0], (2, 3, 1, 0)).detach().cpu()
+        file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
+        sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
+        hr = torch.permute(hrtf[0], (2, 3, 1, 0)).detach().cpu()
 
         with open(valid_dir + file_name, "wb") as file:
-            pickle.dump(val_sample, file)
+            pickle.dump(sr, file)
+
+        with open(valid_gt_dir + file_name, "wb") as file:
+            pickle.dump(hr, file)
         
         # Preload the next batch of data
         batch_data = val_prefetcher.next()
