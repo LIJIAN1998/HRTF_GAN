@@ -10,10 +10,9 @@ matlab_script_path = './evaluation/test.m'
 
 param1 = 10
 param2 = 'hello'
-matlab_command = 'matlab -nodesktop -nosplash -r'
+matlab_command = '/rds/general/user/jl2622/projects/sonicom/live/matlab/R2021a/bin/matlab -nodesktop -nosplash -r'
 
-command = f"{matlab_command} \"try, {matlab_script_path}({param1}, '{param2}'), \
-                    catch ME, fprintf('%s', ME.message), end, exit\""
+command = f"{matlab_command} \"try, {matlab_script_path}({param1}, '{param2}'), catch ME, fprintf('%s', ME.message), end, exit\""
 
 result = subprocess.run(command, capture_output=True, text=True)
 output = result.stdout.strip()
