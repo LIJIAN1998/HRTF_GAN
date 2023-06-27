@@ -3,7 +3,7 @@ import subprocess
 # print("using cuda? ", torch.cuda.is_available())
 
 # Define the MATLAB command
-matlab_cmd = "/rds/general/user/jl2622/projects/sonicom/live/matlab/R2021a/bin/matlab -nosplash -nodesktop -r"
+matlab_cmd = "/rds/general/user/jl2622/projects/sonicom/live/matlab/R2021a/bin/matlab -nosplash -nodisplay -nojvm -nodesktop -r"
 
 # Define the MATLAB script to be executed
 matlab_script = """
@@ -18,6 +18,9 @@ exit;
 # Define the input values
 input_int = 5
 input_str = "example"
+
+matlab_script_path = "./evaluation/test.m"
+matlab_script = ""
 
 # Format the MATLAB script command with the input values
 matlab_cmd = matlab_cmd + ' "{0}"'.format(matlab_script.format(input_int, input_str))
