@@ -11,7 +11,7 @@ matlab_script_path = './evaluation/test.m'
 
 arg1 = 10
 arg2 = 'hello'
-command = f"{matlab_script_path}({arg1}, {arg2})"
+command = f"addpath('{matlab_script_path}');[result1, result2] = myfunc({arg1}, '{arg2}'); disp(result1); disp(result2);"
 # command = f"run('{matlab_script_path}', {', '.join(map(repr, parameters))});"
 process = subprocess.Popen([matlab_path, '-nodesktop', '-nosplash', '-r', command],
                            stdin=subprocess.PIPE, stdout=subprocess.PIPE)
