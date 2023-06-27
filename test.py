@@ -26,8 +26,9 @@ matlab_cmd = matlab_cmd + ' "' + matlab_script.format(input_int, input_str) + '"
 try:
     output = subprocess.check_output(matlab_cmd, shell=True, stderr=subprocess.STDOUT)
     output = output.decode("utf-8")
-    result_int, result_str = output.strip().split("\n")[-2:]
-    print("Result (integer):", int(result_int))
-    print("Result (string):", result_str)
+    print("MATLAB output:", output)
+    # result_int, result_str = output.strip().split("\n")[-2:]
+    # print("Result (integer):", int(result_int))
+    # print("Result (string):", result_str)
 except subprocess.CalledProcessError as e:
     print("Error:", e.output)
