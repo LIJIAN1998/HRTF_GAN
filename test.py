@@ -2,33 +2,32 @@ import torch
 import subprocess 
 # print("using cuda? ", torch.cuda.is_available())
 
-matlab_path = '/rds/general/user/jl2622/projects/sonicom/live/matlab/R2021a/bin/matlab'
+# Define the MATLAB command
+matlab_cmd = "/rds/general/user/jl2622/projects/sonicom/live/matlab/R2021a/bin/matlab -nosplash -nodesktop -r"
 
-matlab_script_path = './evaluation/test.m'
+# Define the MATLAB script to be executed
+matlab_script = """
+addpath('./evaluation/test.m');
+[num, str] = deal({0}, '{1}');
+[result_int, result_str] = multiply_and_concat(num, str);
+disp(result_int);
+disp(result_str);
+exit;
+"""
 
-# command = [matlab_path, '-batch', f"run('{matlab_script_path}')"]
-# subprocess.run(command)
+# Define the input values
+input_int = 5
+input_str = "example"
 
-arg1 = 10
-arg2 = 'hello'
-command = f"addpath('{matlab_script_path}');[result1, result2] = myfunc({arg1}, '{arg2}'); disp(result1); disp(result2);"
-# command = f"run('{matlab_script_path}', {', '.join(map(repr, parameters))});"
-process = subprocess.Popen([matlab_path, '-nodesktop', '-nosplash', '-r', command],
-                           stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+# Format the MATLAB script command with the input values
+matlab_cmd = matlab_cmd + ' "' + matlab_script.format(input_int, input_str) + '"'
 
-# for param in parameters:
-#     process.stdin.write(f"{param}\n".encode())
-# process.stdin.close()
-output = process.stdout.read().decode()
-
-process.wait()
-print(output)
-# param1 = 10
-# param2 = 'hello'
-# matlab_command = '/rds/general/user/jl2622/projects/sonicom/live/matlab/R2021a/bin/matlab -nodesktop -nosplash -r'
-
-# command = f"{matlab_command} \"try, {matlab_script_path}({param1}, '{param2}'), catch ME, fprintf('%s', ME.message), end, exit\""
-
-# result = subprocess.run(command, capture_output=True, text=True)
-# output = result.stdout.strip()
-# print(output)
+# Call the MATLAB script using subprocess
+try:
+    output = subprocess.check_output(matlab_cmd, shell=True, stderr=subprocess.STDOUT)
+    output = output.decode("utf-8")
+    result_int, result_str = output.strip().split("\n")[-2:]
+    print("Result (integer):", int(result_int))
+    print("Result (string):", result_str)
+except subprocess.CalledProcessError as e:
+    print("Error:", e.output)
