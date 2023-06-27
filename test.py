@@ -20,7 +20,7 @@ input_int = 5
 input_str = "example"
 
 # Format the MATLAB script command with the input values
-matlab_cmd = matlab_cmd + ' "' + matlab_script.format(input_int, input_str) + '"'
+matlab_cmd = matlab_cmd + ' "{0}"'.format(matlab_script.format(input_int, input_str))
 
 # Call the MATLAB script using subprocess
 try:
