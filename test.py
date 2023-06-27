@@ -9,8 +9,10 @@ matlab_script_path = './evaluation/test.m'
 # command = [matlab_path, '-batch', f"run('{matlab_script_path}')"]
 # subprocess.run(command)
 
-parameters = [10, 'hello']
-command = f"run('{matlab_script_path}', {', '.join(map(repr, parameters))});"
+arg1 = 10
+arg2 = 'hello'
+command = f"{matlab_script_path}({arg1}, {arg2})"
+# command = f"run('{matlab_script_path}', {', '.join(map(repr, parameters))});"
 process = subprocess.Popen([matlab_path, '-nodesktop', '-nosplash', '-r', command],
                            stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
