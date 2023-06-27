@@ -8,13 +8,22 @@ matlab_script_path = './evaluation/test.m'
 command = [matlab_path, '-batch', f"run('{matlab_script_path}')"]
 subprocess.run(command)
 
-parameters = [10, "hello"]
+# parameters = [10, "hello"]
+# process = subprocess.Popen([matlab_path, '-nodesktop', '-nosplash', '-r', f"run('{matlab_script_path}');"],
+#                            stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+# for param in parameters:
+#     process.stdin.write(f"{param}\n".encode())
+# process.stdin.close()
+parameters = [10, 'hello']
 process = subprocess.Popen([matlab_path, '-nodesktop', '-nosplash', '-r', f"run('{matlab_script_path}');"],
                            stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 for param in parameters:
     process.stdin.write(f"{param}\n".encode())
 process.stdin.close()
+output = process.stdout.read().decode()
+
 output = process.stdout.read().decode()
 process.wait()
 print(output)
