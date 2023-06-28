@@ -61,7 +61,7 @@ def load_hrtf(config):
         ds_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}},
                                subject_ids=val_ids)
         train_dataset = CustomHRTFDataset(ds_train, config.upscale_factor)
-        test_dataset = CustomHRTFDataset(ds_val, config.upscale_factor)
+        val_dataset = CustomHRTFDataset(ds_val, config.upscale_factor)
 
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=config.batch_size,
