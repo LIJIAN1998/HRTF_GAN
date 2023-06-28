@@ -70,6 +70,7 @@ def test(config, val_prefetcher):
     # Initialize the data loader and load the first batch of data
     val_prefetcher.reset()
     batch_data = val_prefetcher.next()
+    print(batch_data.keys())
 
     # Clear/Create directories
     shutil.rmtree(Path(valid_dir), ignore_errors=True)
@@ -78,7 +79,7 @@ def test(config, val_prefetcher):
     Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
 
     while batch_data is not None:
-        # Transfer in-memory data to CUDA devices to speed up validation
+        # Transfer in-memory data to CUDA devices to speed up validation 
         lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                          non_blocking=True, dtype=torch.float)
         hrtf = batch_data["hrtf"]
