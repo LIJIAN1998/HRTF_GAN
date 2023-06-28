@@ -124,43 +124,11 @@ def main(config, mode):
 
     elif mode == 'train':
         # print("using cuda? ", torch.cuda.is_available())
-        id_file_dir = config.train_val_id_dir
-        id_filename = id_file_dir + '/train_val_id.pickle'
-        with open(id_filename, "rb") as file:
-            train_ids, val_ids = pickle.load(file)
-        print("saved train ids: ", sorted(train_ids))
-        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}},
-                                   subject_ids=train_ids)
-        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}},
-                                    subject_ids=train_ids)
-        
-        # print("left right id same? ", left_train.subject_ids == right_train.subject_ids)
-        expected_train_ids = list(left_train.subject_ids)
-        train_prefetcher, test_prefetcher = load_hrtf(config)
-        print("same id? ", sorted(train_ids) == expected_train_ids)
-        print("Loaded all datasets successfully.")
-        id_list = [] 
-        for _ in range(len(train_prefetcher)):
-            id_list.append(train_prefetcher.next()["id"].item())
-        print("id same? ", expected_train_ids == sorted(id_list))
-        print("expected: ", expected_train_ids)
-        print("id list: ", id_list)
-        # print("train fetcher: ", len(train_prefetcher))
-        # print("test: ", len(test_prefetcher))
-        # # Trains the model, according to the parameters specified in Config
-        # util.initialise_folders(config, overwrite=True)
-        # train(config, train_prefetcher)
-
-        # data = train_prefetcher.next()
-        # lr = data['lr_coefficient']
-        # print("coef: ", lr.shape, torch.is_tensor(lr), lr.device.type)
-        # hr = data['hr_coefficient']
-        # print("hr: ", hr.shape)
-        # hrir = data['hrir']
-        # print("hrir:", hrir.shape, torch.is_tensor(hrir), hrir.device.type)
-        # masks = data['mask']
-        # print("mask: ", masks.shape, type(masks), masks.device.type)
-        # print(masks[0].detach().cpu().numpy().astype(bool).shape)
+        train_prefetcher, _ = load_hrtf(config)
+        print("train fetcher: ", len(train_prefetcher))
+        # Trains the model, according to the parameters specified in Config
+        util.initialise_folders(config, overwrite=True)
+        train(config, train_prefetcher)
 
     # elif mode == 'test':
     #     _, test_prefetcher = load_dataset(config, mean=None, std=None)
