@@ -121,7 +121,7 @@ def test_train(config, train_prefetcher):
         elif torch.isnan(feature_real).any():
             f.write("feature real has some nan\n")
     train_loss_Dec_sim += feature_sim_loss_D.item()
-    # convert reconstructed coefficient back to hrir
+    # convert reconstructed coefficient back to hrtf
     harmonics_list = []
     for i in range(masks.size(0)):
         SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
@@ -264,7 +264,7 @@ def train(config, train_prefetcher):
                                                              non_blocking=True, dtype=torch.float)
             hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                              non_blocking=True, dtype=torch.float)
-            hrir = batch_data["hrir"].to(device=device, memory_format=torch.contiguous_format,
+            hrtf = batch_data["hrtf"].to(device=device, memory_format=torch.contiguous_format,
                                          non_blocking=True, dtype=torch.float)
             masks = batch_data["mask"]
             
@@ -307,7 +307,7 @@ def train(config, train_prefetcher):
                 train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
                 feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
                 train_loss_Dec_sim += feature_sim_loss_D.item()
-                # convert reconstructed coefficient back to hrir
+                # convert reconstructed coefficient back to hrtf
                 harmonics_list = []
                 for i in range(masks.size(0)):
                     SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
@@ -316,7 +316,7 @@ def train(config, train_prefetcher):
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
                 recons = harmonics_tensor @ recon.permute(0, 2, 1)
                 recons = torch.abs(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles))
-                unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
+                unweighted_content_loss = content_criterion(config, recons, hrtf, sd_mean, sd_std, ild_mean, ild_std)
                 # with open('log.txt', "a") as f:
                 #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
                 content_loss = config.content_weight * unweighted_content_loss
