@@ -131,7 +131,7 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
-        _, test_prefetcher = load_dataset(config, mean=None, std=None)
+        _, test_prefetcher = load_hrtf(config, mean=None, std=None)
         print("Loaded all datasets successfully.")
 
         test(config, test_prefetcher)

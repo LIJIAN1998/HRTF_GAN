@@ -70,7 +70,6 @@ def test(config, val_prefetcher):
     # Initialize the data loader and load the first batch of data
     val_prefetcher.reset()
     batch_data = val_prefetcher.next()
-    print(batch_data.keys())
 
     # Clear/Create directories
     shutil.rmtree(Path(valid_dir), ignore_errors=True)
