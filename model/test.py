@@ -90,7 +90,7 @@ def test(config, val_prefetcher):
             _, _, recon = model(lr_coefficient)
 
         SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
-        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
         sr = harmonics @ recon[0].T
         sr = torch.abs(sr.reshape(-1, nbins, num_radii, num_row_angles, num_col_angles))
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
