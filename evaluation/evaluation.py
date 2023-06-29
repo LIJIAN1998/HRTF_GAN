@@ -21,10 +21,10 @@ from model.dataset import get_sample_ratio
 def replace_nodes(config, val_dir, file_name):
     # Overwrite the generated points that exist in the original data
     with open(val_dir + file_name, "rb") as f:
-        data = pickle.load(f)
+        sr_hrir = pickle.load(f) # w x h x r x nbins
 
-    sr_hrir = data['sr'] # w x h x r x nbins
-    hr_hrir = data['hr']
+    with open(config.valid_gt_path + file_name, "rb") as f:
+        hr_hrir = pickle.load(f)
 
     row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
     for i in range(sr_hrir.size(0) // row_ratio):  # sr_hrir.size(0) = num of row angles
