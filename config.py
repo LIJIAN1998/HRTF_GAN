@@ -36,7 +36,7 @@ class Config:
             # HPC data dirs
             self.data_dirs_path = '/rds/general/user/jl2622/home/HRTF-projection'
             self.raw_hrtf_dir = Path('/rds/general/project/sonicom/live/HRTF Datasets')
-            self.amt_dir = '/rds/general/user/jl2622/home/amt/thirdParty'
+            self.amt_dir = '/rds/general/user/jl2622/home/amt'
         else:
             # local data dirs
             self.data_dirs_path = '/home/aos13/HRTF-GANs-27Sep22-prep-for-publication'
