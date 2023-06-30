@@ -430,6 +430,9 @@ def calc_hrtf(config, hrirs):
         phases.append(phase)
     return magnitudes, phases
 
+# def my_interpolate_fft(config, features, sphere, sphere_triangles, sphere_coeffs):
+#     interpolated_hrirs = calc_all_interpolated_features(cs, features, sphere, sphere_triangles, sphere_coeffs)
+    
 
 def interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs, cube, fs_original, edge_len):
     """Combine all data processing steps into one function
