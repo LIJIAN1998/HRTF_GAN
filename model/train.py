@@ -90,7 +90,7 @@ def test_train(config, train_prefetcher):
                                                              non_blocking=True, dtype=torch.float)
     hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                         non_blocking=True, dtype=torch.float)
-    hrir = batch_data["hrir"].to(device=device, memory_format=torch.contiguous_format,
+    hrir = batch_data["hrtf"].to(device=device, memory_format=torch.contiguous_format,
                                     non_blocking=True, dtype=torch.float)
     masks = batch_data["mask"]
     
@@ -130,7 +130,10 @@ def test_train(config, train_prefetcher):
         # recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse
         # recon_hrir_tensor = torch.from_numpy(recon_hrir.T).reshape(nbins, num_radii, num_row_angles, num_col_angles)
     harmonics_tensor = torch.stack(harmonics_list).to(device)
+    print("any negative recon? ", (recon < 0).any())
+    print("any negative harmonics? ", (harmonics < 0).any())
     recons = harmonics_tensor @ recon.permute(0, 2, 1)
+    print("any negative result? ", (recons < 0).any())
     with open('log.txt', "a") as f:
         f.write(f"inverse transformation negative?: {(recons<0).any()}\n")
     recons = torch.abs(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)) 
@@ -141,10 +144,6 @@ def test_train(config, train_prefetcher):
     train_loss_Dec_content += content_loss
     err_dec = feature_sim_loss_D - gan_loss_dec
     train_loss_Dec += err_dec
-    # Update decoder
-    optDecoder.zero_grad()
-    err_dec.backward()
-    optDecoder.step()
 
 
 def train(config, train_prefetcher):
