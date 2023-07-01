@@ -69,6 +69,7 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
         lsd_errors = []
         for file_name in val_data_file_names:
             target, generated = replace_nodes(config, val_dir, file_name)
+            print(f"{file_name} contains negative? :", (generated < 0).any(), (target < 0).any())
             error = spectral_distortion_metric(generated, target)
             subject_id = ''.join(re.findall(r'\d+', file_name))
             lsd_errors.append([subject_id,  float(error.detach())])
@@ -106,7 +107,7 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
             target, generated = replace_nodes(config, sr_dir, file_name)
 
             with open(nodes_replaced_path + file_name, "wb") as file:
-                pickle.dump(torch.permute(generated[0], (1, 2, 3, 0)), file)
+                pickle.dump(torch.permute(generated[0], (1, 2, 3, 0)), file) # r x w x h x nbins
 
         # projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
         # with open(projection_filename, "rb") as file:

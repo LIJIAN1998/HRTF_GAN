@@ -3,6 +3,7 @@ import pickle
 
 import scipy
 import torch
+import torch.nn.functional as F
 import numpy as np
 
 from model.model import VAE
@@ -92,7 +93,7 @@ def test(config, val_prefetcher):
         SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
         sr = harmonics @ recon[0].T
-        sr = torch.abs(sr.reshape(-1, nbins, num_radii, num_row_angles, num_col_angles))
+        sr = F.softplus(sr.reshape(-1, nbins, num_radii, num_row_angles, num_col_angles))
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
         hr = torch.permute(hrtf[0], (2, 3, 1, 0)).detach().cpu()
