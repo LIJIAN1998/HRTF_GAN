@@ -128,7 +128,7 @@ def main(config, mode):
         print("train fetcher: ", len(train_prefetcher))
         # Trains the model, according to the parameters specified in Config
         util.initialise_folders(config, overwrite=True)
-        test_train(config, train_prefetcher)
+        train(config, train_prefetcher)
 
     elif mode == 'test':
         _, test_prefetcher = load_hrtf(config)
