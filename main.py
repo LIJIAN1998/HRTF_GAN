@@ -139,6 +139,14 @@ def main(config, mode):
         run_lsd_evaluation(config, config.valid_path)
         run_localisation_evaluation(config, config.valid_path)
 
+    elif mode == 'barycentric_baseline':
+        barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
+        barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                              'side': 'left', 'domain': 'magnitude'}})
+        row_angles = ds.row_angles
+        column_angles = ds.column_angles
+        
     print("finished")
 
 if __name__ == '__main__':

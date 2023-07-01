@@ -5,8 +5,9 @@ import numpy as np
 import torch
 import shutil
 from pathlib import Path
+import importlib
 
-from model.dataset import downsample_hrtf
+from model.dataset import downsample_hrtf, get_sample_ratio
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft
 from preprocessing.convert_coordinates import convert_cube_to_sphere
@@ -22,11 +23,28 @@ def my_barycentric_interpolation(config, barycentric_output_path):
     shutil.rmtree(Path(barycentric_output_path), ignore_errors=True)
     Path(barycentric_output_path).mkdir(parents=True, exist_ok=True)
 
+    imp = importlib.import_module('hrtfdata.full')
+    load_function = getattr(imp, config.dataset)
+    data_dir = config.raw_hrtf_dir / config.dataset
+    ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                         'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+    row_angles = ds.row_angles
+    column_angles = ds.column_angles
+    radii = ds.radii
+    row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
+
     for file_name in valid_gt_file_names:
         with open(config.valid_gt_path + file_name, "rb") as f:
             hr_hrtf = pickle.load(f)
 
-            
+        sphere_coords_lr = []
+        sphere_coords_lr_index = []
+
+        for i in range(hr_hrtf.size(0) // row_ratio):
+            for j in range(hr_hrtf.size(1) // col_ratio):
+                sphere_coords_lr.append(column_angles[col_ratio*j], row_angles[row_ratio * i])
+
+        
 
 
 def run_barycentric_interpolation(config, barycentric_output_path, subject_file=None):
