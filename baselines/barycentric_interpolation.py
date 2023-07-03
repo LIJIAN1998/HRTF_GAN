@@ -9,7 +9,7 @@ import importlib
 
 from model.dataset import downsample_hrtf, get_sample_ratio
 from preprocessing.cubed_sphere import CubedSphere
-from preprocessing.utils import interpolate_fft
+from preprocessing.utils import interpolate_fft, get_sphere_coords
 from preprocessing.convert_coordinates import convert_cube_to_sphere
 from preprocessing.barycentric_calcs import get_triangle_vertices, calc_barycentric_coordinates
 
@@ -30,6 +30,8 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                                                          'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
     row_angles = ds.row_angles
     column_angles = ds.column_angles
+    mask = ds[0]['features'].mask
+    sphere_coords, indices = get_sphere_coords(row_angles, column_angles, mask)
     radii = ds.radii
     row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
 
@@ -44,7 +46,11 @@ def my_barycentric_interpolation(config, barycentric_output_path):
             for j in range(hr_hrtf.size(1) // col_ratio):
                 sphere_coords_lr.append(column_angles[col_ratio*j], row_angles[row_ratio * i])
 
-        
+        euclidean_sphere_triangles = []
+        euclidean_sphere_coeffs = []
+
+
+
 
 
 def run_barycentric_interpolation(config, barycentric_output_path, subject_file=None):

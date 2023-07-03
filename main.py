@@ -12,7 +12,7 @@ from model.util import load_dataset, load_hrtf
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
-     merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories
+     merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories, get_sphere_coords
 
 from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation
 
@@ -143,10 +143,14 @@ def main(config, mode):
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                              'side': 'left', 'domain': 'magnitude'}})
+                                                              'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
         row_angles = ds.row_angles
         column_angles = ds.column_angles
-        
+        mask = ds[0]['features'].mask
+
+        sphere_coords, indices = get_sphere_coords(row_angles, column_angles, mask)
+        print(sphere_coords, indices)
+
     print("finished")
 
 if __name__ == '__main__':

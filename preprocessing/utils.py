@@ -430,6 +430,31 @@ def calc_hrtf(config, hrirs):
         phases.append(phase)
     return magnitudes, phases
 
+def get_sphere_coords(row_angles, column_angles, mask=None):
+    sphere_coords = []
+    indices = []
+
+    def elevation_validate(a, b): return None if b else a
+    num_elevation_measurements = len(column_angles)
+    elevation_indices = list(range(num_elevation_measurements))
+    elevation = column_angles * np.pi / 180
+
+    # loop through all azimuth positions
+    for azimuth_index, azimuth in enumerate(row_angles):
+        # convert degrees to radians by multiplying by a factor of pi/180
+        azimuth = azimuth * np.pi / 180
+        if type(mask) is np.bool_:
+            if not mask:
+                elevation_valid = elevation
+        else:
+            elevation_valid = list(map(elevation_validate, list(elevation), [x.flatten().any() for x in mask[azimuth_index]]))
+        
+        # sphere_coords is stored as (elevation, azimuth). Ultimately, we're creating a list of (elevation,
+        # azimuth) pairs for every measurement position in the sphere
+        sphere_coords += list(zip(elevation_valid, [azimuth] * num_elevation_measurements))
+        indices += list(zip(elevation_indices, [azimuth_index] * num_elevation_measurements))
+
+        return sphere_coords, indices
 # def my_interpolate_fft(config, features, sphere, sphere_triangles, sphere_coeffs):
 #     interpolated_hrirs = calc_all_interpolated_features(cs, features, sphere, sphere_triangles, sphere_coeffs)
     
