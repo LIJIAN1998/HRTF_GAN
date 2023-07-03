@@ -150,6 +150,11 @@ def main(config, mode):
 
         sphere_coords, indices = get_sphere_coords(row_angles, column_angles, mask)
         print(sphere_coords, indices)
+        print("from projection:")
+        projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
+        with open(projection_filename, "rb") as f:
+            (cube_coords, sphere_coords, euclidean_sphere_triangles, euclidean_sphere_coeffs) = pickle.load(f)
+        print(sphere_coords)
 
     print("finished")
 
