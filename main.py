@@ -142,20 +142,24 @@ def main(config, mode):
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                              'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                             'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
         row_angles = ds.row_angles
         column_angles = ds.column_angles
         mask = ds[0]['features'].mask
+        if type(mask) is np.bool_:
+            print("bool mask")
 
-        sphere_coords, indices = get_sphere_coords(row_angles, column_angles, mask)
-        print(sphere_coords, indices)
-        print("from projection:")
-        projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
-        with open(projection_filename, "rb") as f:
-            (cube_coords, sphere_coords, euclidean_sphere_triangles, euclidean_sphere_coeffs) = pickle.load(f)
-        print(sphere_coords)
+        def elevation_validate(a, b): return None if b else a
+        num_elevation_measurements = len(column_angles)
+        elevation_indices = list(range(num_elevation_measurements))
+        elevation = column_angles * np.pi / 180
 
+        for azimuth_index, azimuth in enumerate(row_angles):
+            azimuth = azimuth * np.pi / 180
+            a = [x.flatten().any() for x in mask[azimuth_index]]
+            print("length of []", len(a))
+            print(a)
     print("finished")
 
 if __name__ == '__main__':

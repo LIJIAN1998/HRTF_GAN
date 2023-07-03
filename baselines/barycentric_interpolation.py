@@ -35,21 +35,36 @@ def my_barycentric_interpolation(config, barycentric_output_path):
     radii = ds.radii
     row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
 
+    nbins = config.nbins_hrtf
+    if config.merge_flag:
+        nbins = config.nbins_hrtf * 2
+
     for file_name in valid_gt_file_names:
         with open(config.valid_gt_path + file_name, "rb") as f:
             hr_hrtf = pickle.load(f)
 
         sphere_coords_lr = []
         sphere_coords_lr_index = []
+        lr_hrtf = torch.zeros(hr_hrtf.size(0) // row_ratio, hr_hrtf.size(1) // col_ratio, 1, nbins)
 
         for i in range(hr_hrtf.size(0) // row_ratio):
             for j in range(hr_hrtf.size(1) // col_ratio):
                 sphere_coords_lr.append(column_angles[col_ratio*j], row_angles[row_ratio * i])
+                lr_hrtf[i, j, :] = hr_hrtf[row_ratio * i, col_ratio*j, :]
 
         euclidean_sphere_triangles = []
         euclidean_sphere_coeffs = []
+        for sphere_coord in sphere_coords:
+            # based on cube coordinates, get indices for magnitudes list of lists
+            triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                      sphere_coords=sphere_coords_lr)
+            coeffs = calc_barycentric_coordinates(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                  closest_points=triangle_vertices)
+            euclidean_sphere_triangles.append(triangle_vertices)
+            euclidean_sphere_coeffs.append(coeffs)
 
-
+        lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]
+        lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
 
 
 

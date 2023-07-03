@@ -5,6 +5,7 @@ import os
 import sofar as sf
 import numpy as np
 import torch
+import pandas as pd
 import scipy
 from scipy.signal import hilbert
 import scipy.signal as sps
@@ -369,6 +370,10 @@ def get_feature_for_point_tensor(elevation, azimuth, all_coords, subject_feature
     all_coords_row = all_coords.query(f'elevation == {elevation} & azimuth == {azimuth}')
     return scipy.fft.irfft(np.concatenate((np.array([0.0]), np.array(subject_features[int(all_coords_row.panel-1)][int(all_coords_row.elevation_index)][int(all_coords_row.azimuth_index)]))))
 
+def my_calc_interpolated_feature(triangle_vertices, coeffs, all_coords, subject_features):
+    features = []
+    pass
+
 
 def calc_interpolated_feature(time_domain_flag, triangle_vertices, coeffs, all_coords, subject_features):
     """Calculate the interpolated feature for a given point based on vertices specified by triangle_vertices, features
@@ -455,8 +460,10 @@ def get_sphere_coords(row_angles, column_angles, mask=None):
         indices += list(zip(elevation_indices, [azimuth_index] * num_elevation_measurements))
 
         return sphere_coords, indices
-# def my_interpolate_fft(config, features, sphere, sphere_triangles, sphere_coeffs):
-#     interpolated_hrirs = calc_all_interpolated_features(cs, features, sphere, sphere_triangles, sphere_coeffs)
+    
+def my_interpolate_fft(config, features, sphere_triangles, sphere_coeffs):
+
+    pass
     
 
 def interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs, cube, fs_original, edge_len):
