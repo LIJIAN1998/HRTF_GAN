@@ -1,5 +1,6 @@
 % 导入 SOFA API
 addpath('/rds/general/user/jl2622/home/SOFA_API')  % 替换为 SOFA API 的路径
+addpath('/rds/general/user/jl2622/home/amt')
 
 % 读取 SOFA 文件
 sofaFile = '/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid/nodes_replaced/sofa_min_phase/SONICOM_100.sofa';  % 替换为您的 SOFA 文件路径
