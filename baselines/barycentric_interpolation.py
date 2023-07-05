@@ -9,9 +9,10 @@ import importlib
 
 from model.dataset import downsample_hrtf, get_sample_ratio
 from preprocessing.cubed_sphere import CubedSphere
-from preprocessing.utils import interpolate_fft, get_sphere_coords
+from preprocessing.utils import interpolate_fft, get_sphere_coords, my_interpolate_fft
 from preprocessing.convert_coordinates import convert_cube_to_sphere
 from preprocessing.barycentric_calcs import get_triangle_vertices, calc_barycentric_coordinates
+from preprocessing.hrtf_sphere import HRTF_Sphere
 
 PI_4 = np.pi / 4
 
@@ -31,9 +32,10 @@ def my_barycentric_interpolation(config, barycentric_output_path):
     row_angles = ds.row_angles
     column_angles = ds.column_angles
     mask = ds[0]['features'].mask
-    sphere_coords, indices = get_sphere_coords(row_angles, column_angles, mask)
-    radii = ds.radii
-    row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
+    whole_sphere = HRTF_Sphere(mask=mask, row_angles=row_angles, column_angles=column_angles)
+    sphere_coords = whole_sphere.get_sphere_coords()
+
+    row_ratio, column_ratio = get_sample_ratio(config.upscale_factor)
 
     nbins = config.nbins_hrtf
     if config.merge_flag:
@@ -41,16 +43,22 @@ def my_barycentric_interpolation(config, barycentric_output_path):
 
     for file_name in valid_gt_file_names:
         with open(config.valid_gt_path + file_name, "rb") as f:
-            hr_hrtf = pickle.load(f)
+            hr_hrtf = pickle.load(f)  # w x h x r x nbins
 
         sphere_coords_lr = []
         sphere_coords_lr_index = []
-        lr_hrtf = torch.zeros(hr_hrtf.size(0) // row_ratio, hr_hrtf.size(1) // col_ratio, 1, nbins)
+        lr_hrtf = torch.zeros(hr_hrtf.size(0) // row_ratio, hr_hrtf.size(1) // column_ratio, 1, nbins)
+        for i in range(hr_hrtf.size(1) // column_ratio):
+            for j in range(hr_hrtf.size(0) // row_ratio):
+                sphere_coords_lr.append(column_angles[column_ratio*i], row_angles[row_ratio * j])
 
         for i in range(hr_hrtf.size(0) // row_ratio):
-            for j in range(hr_hrtf.size(1) // col_ratio):
-                sphere_coords_lr.append(column_angles[col_ratio*j], row_angles[row_ratio * i])
-                lr_hrtf[i, j, :] = hr_hrtf[row_ratio * i, col_ratio*j, :]
+            for j in range(hr_hrtf.size(1) // column_ratio):
+                elevation = column_angles[column_ratio*j] * np.pi / 180
+                azimuth = row_angles[row_ratio * i] * np.pi / 180
+                sphere_coords_lr.append(elevation, azimuth)
+                sphere_coords_lr_index.append(i ,j)
+                lr_hrtf[j, i, :] = hr_hrtf[row_ratio * j, column_ratio*i, :]
 
         euclidean_sphere_triangles = []
         euclidean_sphere_coeffs = []
@@ -63,9 +71,25 @@ def my_barycentric_interpolation(config, barycentric_output_path):
             euclidean_sphere_triangles.append(triangle_vertices)
             euclidean_sphere_coeffs.append(coeffs)
 
-        lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]
+        lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
+
+        lr_hrtf = lr_hrtf.permute(2, 0, 1, 3) # r x w x h x nbins
+        lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]  
         lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
 
+        barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, sphere_coords,
+                                                 euclidean_sphere_triangles,euclidean_sphere_coeffs)
+        barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, sphere_coords,
+                                                  euclidean_sphere_triangles, euclidean_sphere_coeffs)
+        
+        barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
+
+        with open(barycentric_output_path + file_name, "wb") as file:
+            pickle.dump(barycentric_hr_merged, file)
+        
+        print('Created barycentric baseline %s' % file_name.replace('/', ''))
+        
+    return 
 
 
 def run_barycentric_interpolation(config, barycentric_output_path, subject_file=None):

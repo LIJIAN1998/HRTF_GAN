@@ -370,9 +370,24 @@ def get_feature_for_point_tensor(elevation, azimuth, all_coords, subject_feature
     all_coords_row = all_coords.query(f'elevation == {elevation} & azimuth == {azimuth}')
     return scipy.fft.irfft(np.concatenate((np.array([0.0]), np.array(subject_features[int(all_coords_row.panel-1)][int(all_coords_row.elevation_index)][int(all_coords_row.azimuth_index)]))))
 
+def my_get_feature_for_point_tensor(elevation, azimuth, all_coords, subject_features):
+    all_coords_row = all_coords.query(f'elevation == {elevation} & azimuth == {azimuth}')
+    return scipy.fft.irfft(np.concatenate((np.array([0.0]), np.array(subject_features[0][int(all_coords_row.elevation_index)][int(all_coords_row.azimuth_index)]))))
+
 def my_calc_interpolated_feature(triangle_vertices, coeffs, all_coords, subject_features):
     features = []
-    pass
+    for p in triangle_vertices:
+        features_p = my_get_feature_for_point_tensor(p[0], p[1], all_coords, subject_features)
+        features_no_ITD = remove_itd(features_p, int(len(features_p)*0.04), len(features_p))
+        features.append(features_no_ITD)
+    
+    # based on equation 6 in "3D Tune-In Toolkit: An open-source library for real-time binaural spatialisation"
+    if len(features) == 3:
+        interpolated_feature = coeffs["alpha"] * features[0] + coeffs["beta"] * features[1] + coeffs["gamma"] * features[2]
+    else:
+        interpolated_feature = features[0]
+
+    return interpolated_feature
 
 
 def calc_interpolated_feature(time_domain_flag, triangle_vertices, coeffs, all_coords, subject_features):
@@ -397,6 +412,20 @@ def calc_interpolated_feature(time_domain_flag, triangle_vertices, coeffs, all_c
 
     return interpolated_feature
 
+def my_calc_all_interpolated_features(hrtf_sphere, features,  euclidean_sphere, euclidean_sphere_triangles, euclidean_sphere_coeffs):
+    selected_feature_interpolated = []
+    for i, p in enumerate(euclidean_sphere):
+        if p[0] is not None:
+            time_domain_flag = False
+            features_p = my_calc_interpolated_feature(time_domain_flag=time_domain_flag,
+                                                      triangle_vertices=euclidean_sphere_triangles[i],
+                                                      coeffs=euclidean_sphere_coeffs[i],
+                                                      all_coords=hrtf_sphere.get_df(),
+                                                      subject_features=features)
+            selected_feature_interpolated.append(features_p)
+        else:
+            selected_feature_interpolated.append(None)
+    return selected_feature_interpolated
 
 def calc_all_interpolated_features(cs, features, euclidean_sphere, euclidean_sphere_triangles, euclidean_sphere_coeffs):
     """Essentially a wrapper function for calc_interpolated_features above, calculated interpolated features for all
@@ -461,10 +490,27 @@ def get_sphere_coords(row_angles, column_angles, mask=None):
 
         return sphere_coords, indices
     
-def my_interpolate_fft(config, features, sphere_triangles, sphere_coeffs):
-
-    pass
+def my_interpolate_fft(config, hrtf_sphere, features, sphere_coords, sphere_triangles, sphere_coeffs):
+    """
+    hrtf_sphere: HRTF_Sphere object associated with dataset
+    features: features for a given subject, 
+    sphere_coords: A list of locations of the gridded cubed sphere points to be interpolated,
+                     given as (elevation, azimuth)
+    sphere_triangles: A list of lists of triangle vertices for barycentric interpolation, where each list of
+                             vertices defines the triangle for the corresponding point in sphere
+    sphere_coeffs: A list of barycentric coordinates for each location in sphere, corresponding to the triangles
+                          described by sphere_triangles
+    """
+    interpolated_hrirs = my_calc_all_interpolated_features(hrtf_sphere, features, sphere_coords, sphere_triangles, sphere_coeffs)
+    magnitudes, phases = calc_hrtf(config, interpolated_hrirs)
+    magnitudes_raw = [[[[] for _ in range(features.size(2))] for _ in range(features.size(1))] for _ in range(1)]
+    count = 0
+    for i in range(features.size(1)):
+        for j in range(features.size(2)):
+            magnitudes_raw[0][i][j] = magnitudes[count]
+            count += 1
     
+    return torch.tensor(np.array(magnitudes_raw))
 
 def interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs, cube, fs_original, edge_len):
     """Combine all data processing steps into one function

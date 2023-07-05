@@ -5,12 +5,13 @@ module load anaconda3/personal
 source activate env3_7
 
 cd $PBS_O_WORKDIR
+/rds/general/user/jl2622/projects/sonicom/live/matlab/R2021a/bin/matlab -r "convert"
 # cd /rds/general/user/jl2622/projects/sonicom/live/matlab/R2021a/extern/engines/python
 # python setup.py build --build-base="/rds/general/user/jl2622/home/matlab/" install --user
 # python model/model.py > output.txt
 # python test.py > output.txt
 # python opt.py > output.txt
-python main.py barycentric_baseline --hpc True --tag ari-upscale-4 > output.txt
+# python main.py barycentric_baseline --hpc True --tag ari-upscale-4 > output.txt
 # cp output.txt $PBS_O_WORKDIR
 
 conda deactivate
