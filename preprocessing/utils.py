@@ -172,7 +172,7 @@ def my_save_sofa(clean_hrtf, config, row_angles, column_angles, sofa_path_output
     full_hrirs = []
     source_positions = []
     delays = []
-    left_full_hrtf = clean_hrtf[:, :, :, :config.nbins_hrtf]   # r x w x h x nbins
+    left_full_hrtf = clean_hrtf[:, :, :, :config.nbins_hrtf]   # w x h x r x nbins
     right_full_hrtf = clean_hrtf[:, :, :, config.nbins_hrtf:]
 
     for i in range(clean_hrtf.size(1)):  # loop through azimuth
@@ -264,7 +264,7 @@ def my_convert_to_sofa(hrtf_dir, config, row_angles, column_angles, phase_ext='_
 
     for f in hrtf_file_names:
         with open(os.path.join(hrtf_dir, f), "rb") as hrtf_file:
-            hrtf = pickle.load(hrtf_file) # r x w x h x nbins
+            hrtf = pickle.load(hrtf_file) # w x h x r x nbins
             sofa_filename_output = os.path.basename(hrtf_file.name).replace('.pickle', '.sofa').replace(mag_ext, '')
             sofa_output = sofa_path_output + sofa_filename_output
 

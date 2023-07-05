@@ -131,13 +131,20 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
-        _, test_prefetcher = load_hrtf(config)
-        print("Loaded all datasets successfully.")
+        # _, test_prefetcher = load_hrtf(config)
+        # print("Loaded all datasets successfully.")
 
-        test(config, test_prefetcher)
+        # test(config, test_prefetcher)
 
-        run_lsd_evaluation(config, config.valid_path)
-        run_localisation_evaluation(config, config.valid_path)
+        # run_lsd_evaluation(config, config.valid_path)
+        # run_localisation_evaluation(config, config.valid_path)
+
+        with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid/nodes_replaced/SONICOM_100.pickle', "rb") as file:
+            valid = pickle.load(file)
+        print("valid shape: ", valid.shape)
+        with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid_gt/SONICOM_100.pickle', "rb") as file:
+            gt = pickle.load(file)
+        print("gt: ", gt.shape)
 
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
