@@ -47,8 +47,6 @@ def my_barycentric_interpolation(config, barycentric_output_path):
 
         sphere_coords_lr = []
         sphere_coords_lr_index = []
-        row_angles_lr = []
-        column_angles_lr = []
 
         lr_hrtf = torch.zeros(hr_hrtf.size(0) // row_ratio, hr_hrtf.size(1) // column_ratio, 1, nbins)
 
@@ -73,7 +71,6 @@ def my_barycentric_interpolation(config, barycentric_output_path):
 
         lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
 
-        lr_hrtf = lr_hrtf.permute(2, 0, 1, 3) # r x w x h x nbins
         lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]  
         lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
 

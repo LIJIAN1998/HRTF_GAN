@@ -16,7 +16,7 @@ function [pol_acc1, pol_rms1, querr1] = calc_loc(fullSofa1FileName, fullSofa2Fil
 
     dtf = getDTF(h1,fs);
     SOFA_obj1 = hrtf2sofa(dtf,fs,az,el);
-    [~, target1] = barumerli2023_featureextraction(SOFA_obj1, 'dtf', 'targ_az', SOFA_obj1.SourcePosition(:, 1), 'targ_el', SOFA_obj1.SourcePosition(:, 2));\
+    [~, target1] = barumerli2023_featureextraction(SOFA_obj1, 'dtf', 'targ_az', SOFA_obj1.SourcePosition(:, 1), 'targ_el', SOFA_obj1.SourcePosition(:, 2));
     
     dtf = getDTF(h2,fs2);
     SOFA_obj2 = hrtf2sofa(dtf,fs2,az2,el2);
