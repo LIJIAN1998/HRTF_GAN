@@ -19,6 +19,8 @@ from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluatio
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from scipy.ndimage import binary_dilation
 
+import matlab.engine
+
 PI_4 = np.pi / 4
 
 # Random seed to maintain reproducible results
@@ -131,13 +133,13 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
-        _, test_prefetcher = load_hrtf(config)
-        print("Loaded all datasets successfully.")
+        # _, test_prefetcher = load_hrtf(config)
+        # print("Loaded all datasets successfully.")
 
-        test(config, test_prefetcher)
+        # test(config, test_prefetcher)
 
-        run_lsd_evaluation(config, config.valid_path)
-        run_localisation_evaluation(config, config.valid_path)
+        # run_lsd_evaluation(config, config.valid_path)
+        # run_localisation_evaluation(config, config.valid_path)
 
         with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid/nodes_replaced/SONICOM_100.pickle', "rb") as file:
             valid = pickle.load(file)
@@ -146,7 +148,17 @@ def main(config, mode):
             gt = pickle.load(file)
         print("gt: ", gt.shape)
 
-
+        generated_sofa = '/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid/nodes_replaced/sofa_min_phase/SONICOM_100.sofa'
+        target_sofa = '/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid_gt/sofa_min_phase/SONICOM_100.sofa'
+        eng = matlab.engine.start_matlab()
+        s = eng.genpath(config.amt_dir)
+        eng.addpath(s, nargout=0)
+        s = eng.genpath(config.data_dirs_path)
+        eng.addpath(s, nargout=0)
+        s = eng.genpath('/rds/general/user/jl2622/home/HRTF_GAN/evaluation')
+        eng.addpath(s, nargout=0)
+        [pol_acc1, pol_rms1, querr1] = eng.test(generated_sofa, nargout=3)
+        print(pol_acc1, pol_rms1, querr1)
 
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
