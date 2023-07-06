@@ -156,7 +156,7 @@ def main(config, mode):
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
         sphere = my_barycentric_interpolation(config, barycentric_output_path)
 
-        if config.gen_sofa_flag:
+        # if config.gen_sofa_flag:
 
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
                                                              'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
