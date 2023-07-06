@@ -43,22 +43,22 @@ def my_barycentric_interpolation(config, barycentric_output_path):
 
     for file_name in valid_gt_file_names:
         with open(config.valid_gt_path + file_name, "rb") as f:
-            hr_hrtf = pickle.load(f)  # w x h x r x nbins
+            hr_hrtf = pickle.load(f)  # r x w x h x nbins
 
         sphere_coords_lr = []
         sphere_coords_lr_index = []
+        row_angles_lr = []
+        column_angles_lr = []
+
         lr_hrtf = torch.zeros(hr_hrtf.size(0) // row_ratio, hr_hrtf.size(1) // column_ratio, 1, nbins)
-        for i in range(hr_hrtf.size(1) // column_ratio):
-            for j in range(hr_hrtf.size(0) // row_ratio):
-                sphere_coords_lr.append(column_angles[column_ratio*i], row_angles[row_ratio * j])
 
         for i in range(hr_hrtf.size(0) // row_ratio):
             for j in range(hr_hrtf.size(1) // column_ratio):
                 elevation = column_angles[column_ratio*j] * np.pi / 180
                 azimuth = row_angles[row_ratio * i] * np.pi / 180
                 sphere_coords_lr.append(elevation, azimuth)
-                sphere_coords_lr_index.append(i ,j)
-                lr_hrtf[j, i, :] = hr_hrtf[row_ratio * j, column_ratio*i, :]
+                sphere_coords_lr_index.append(j ,i)
+                lr_hrtf[i, j, :] = hr_hrtf[row_ratio * i, column_ratio*j, :]
 
         euclidean_sphere_triangles = []
         euclidean_sphere_coeffs = []
@@ -89,7 +89,7 @@ def my_barycentric_interpolation(config, barycentric_output_path):
         
         print('Created barycentric baseline %s' % file_name.replace('/', ''))
         
-    return 
+    return sphere_coords
 
 
 def run_barycentric_interpolation(config, barycentric_output_path, subject_file=None):

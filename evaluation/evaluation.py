@@ -82,6 +82,20 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
     with open(f'{config.path}/{file_ext}', "wb") as file:
         pickle.dump(lsd_errors, file)
 
+def check_sofa(config):
+    eng = matlab.engine.start_matlab()
+    s = eng.genpath(config.amt_dir)
+    eng.addpath(s, nargout=0)
+    s = eng.genpath(config.data_dirs_path)
+    eng.addpath(s, nargout=0)
+    s = eng.genpath('/rds/general/user/jl2622/home/HRTF_GAN/evaluation')
+    eng.addpath(s, nargout=0)
+
+    generated_sofa = '/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid/nodes_replaced/sofa_min_phase/SONICOM_100.sofa'
+    target_sofa = '/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid_gt/sofa_min_phase/SONICOM_100.sofa'
+    [pol_acc1, pol_rms1, querr1] = eng.test(generated_sofa, target_sofa, nargout=3)
+    print(pol_acc1, pol_rms1, querr1)
+
 def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=None):
 
     imp = importlib.import_module('hrtfdata.full')

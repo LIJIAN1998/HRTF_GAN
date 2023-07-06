@@ -14,7 +14,8 @@ from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories, get_sphere_coords
 
-from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation
+from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation
+from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from scipy.ndimage import binary_dilation
@@ -148,39 +149,18 @@ def main(config, mode):
             gt = pickle.load(file)
         print("gt: ", gt.shape)
 
-        generated_sofa = '/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid/nodes_replaced/sofa_min_phase/SONICOM_100.sofa'
-        target_sofa = '/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid_gt/sofa_min_phase/SONICOM_100.sofa'
-        eng = matlab.engine.start_matlab()
-        s = eng.genpath(config.amt_dir)
-        eng.addpath(s, nargout=0)
-        s = eng.genpath(config.data_dirs_path)
-        eng.addpath(s, nargout=0)
-        s = eng.genpath('/rds/general/user/jl2622/home/HRTF_GAN/evaluation')
-        eng.addpath(s, nargout=0)
-        [pol_acc1, pol_rms1, querr1] = eng.test(generated_sofa, nargout=3)
-        print(pol_acc1, pol_rms1, querr1)
+        check_sofa(config)
 
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
+        sphere = my_barycentric_interpolation(config, barycentric_output_path)
+
+        if config.gen_sofa_flag:
+
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
                                                              'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
-        row_angles = ds.row_angles
-        column_angles = ds.column_angles
-        mask = ds[0]['features'].mask
-        if type(mask) is np.bool_:
-            print("bool mask")
-
-        def elevation_validate(a, b): return None if b else a
-        num_elevation_measurements = len(column_angles)
-        elevation_indices = list(range(num_elevation_measurements))
-        elevation = column_angles * np.pi / 180
-
-        for azimuth_index, azimuth in enumerate(row_angles):
-            azimuth = azimuth * np.pi / 180
-            a = [x.flatten().any() for x in mask[azimuth_index]]
-            print("length of []", len(a))
-            print(a)
+        
     print("finished")
 
 if __name__ == '__main__':
