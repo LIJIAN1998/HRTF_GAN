@@ -96,7 +96,7 @@ def test(config, val_prefetcher):
         sr = F.softplus(sr.reshape(-1, nbins, num_radii, num_row_angles, num_col_angles))
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
-        hr = torch.permute(hrtf[0], (2, 3, 1, 0)).detach().cpu()
+        hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
 
         with open(valid_dir + file_name, "wb") as file:
             pickle.dump(sr, file)

@@ -24,7 +24,7 @@ def replace_nodes(config, val_dir, file_name):
         sr_hrir = pickle.load(f) # w x h x r x nbins
 
     with open(config.valid_gt_path + file_name, "rb") as f:
-        hr_hrir = pickle.load(f)
+        hr_hrir = pickle.load(f).permute(1, 2, 0, 3)  # r x w x h x nbins -> w x h x r x nbins
 
     row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
     for i in range(sr_hrir.size(0) // row_ratio):  # sr_hrir.size(0) = num of row angles
