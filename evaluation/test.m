@@ -23,17 +23,17 @@ function [pol_acc1, pol_rms1, querr1] = calc_loc(fullSofa1FileName, fullSofa2Fil
     [template2, target2] = barumerli2023_featureextraction(SOFA_obj2, 'dtf', 'targ_az', SOFA_obj2.SourcePosition(:, 1), 'targ_el', SOFA_obj2.SourcePosition(:, 2));
 
     % Run virtual experiments
-    [m1,doa1] = barumerli2023('template',template2,'target',target1,'num_exp',num_exp,'sigma_spectral', 4, 'MAP');
-    % Calculate performance measures
-    sim1 = barumerli2023_metrics(m1, 'middle_metrics');
-    lat_acc1 = sim1.accL; % mean lateral error
-    lat_rms1 = sim1.rmsL; % lateral RMS error
-    pol_acc1 = sim1.accP; % mean polar error
-    pol_rms1 = sim1.rmsP; % polar RMS error
-    querr1 = sim1.querr; % quadrant error percentage 
-    pol_acc1_avg = pol_acc1_avg + pol_acc1;
-    pol_rms1_avg = pol_rms1_avg + pol_rms1;
-    querr1_avg = querr1_avg + querr1;
-    fprintf('Finished running barumerli2021 fo HRTF.')
+    % [m1,doa1] = barumerli2023('template',template2,'target',target1,'num_exp',num_exp,'sigma_spectral', 4, 'MAP');
+    % % Calculate performance measures
+    % sim1 = barumerli2023_metrics(m1, 'middle_metrics');
+    % lat_acc1 = sim1.accL; % mean lateral error
+    % lat_rms1 = sim1.rmsL; % lateral RMS error
+    % pol_acc1 = sim1.accP; % mean polar error
+    % pol_rms1 = sim1.rmsP; % polar RMS error
+    % querr1 = sim1.querr; % quadrant error percentage 
+    % pol_acc1_avg = pol_acc1_avg + pol_acc1;
+    % pol_rms1_avg = pol_rms1_avg + pol_rms1;
+    % querr1_avg = querr1_avg + querr1;
+    % fprintf('Finished running barumerli2021 fo HRTF.')
 end
 

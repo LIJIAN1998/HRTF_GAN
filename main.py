@@ -143,9 +143,9 @@ def main(config, mode):
         # run_lsd_evaluation(config, config.valid_path)
         # run_localisation_evaluation(config, config.valid_path)
 
-        with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid/nodes_replaced/SONICOM_100.pickle', "rb") as file:
-            valid = pickle.load(file)
-        print("valid shape: ", valid.shape)
+        with open('/rds/general/user/jl2622/home/HRTF-projection/data/SONICOM/hr_merge/valid/SONICOM_mag_100.pickle', "rb") as file:
+            valid_merge_hrtf = pickle.load(file)
+        print("valid merge shape: ", valid_merge_hrtf.shape)
         with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid_gt/SONICOM_100.pickle', "rb") as file:
             gt = pickle.load(file)
         print("gt: ", gt.shape)
@@ -173,7 +173,7 @@ def main(config, mode):
 
     elif mode == 'hrtf_selection_baseline':
         run_hrtf_selection(config, config.hrtf_selection_dir)
-        
+
         pass
     print("finished")
 
