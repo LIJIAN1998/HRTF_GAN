@@ -11,7 +11,7 @@ from model.test import test
 from model.util import load_dataset, load_hrtf
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
-from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, \
+from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, my_convert_to_sofa,\
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories, get_sphere_coords
 
 from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation
@@ -156,11 +156,23 @@ def main(config, mode):
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
         sphere = my_barycentric_interpolation(config, barycentric_output_path)
 
-        # if config.gen_sofa_flag:
+        if config.gen_sofa_flag:
+            coords = sphere.get_sphere_coords()
+            row_angles = list(set([x[1] for x in coords]))
+            column_angles = list(set([x[0] for x  in coords]))
+            my_convert_to_sofa(barycentric_output_path, config, row_angles, column_angles)
+            print('Created barycentric baseline sofa files')
 
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
-                                                             'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+        config.path = config.barycentric_hrtf_dir
+        file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        run_lsd_evaluation(config, barycentric_output_path, file_ext)
+
+        file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        run_localisation_evaluation(config, barycentric_output_path, file_ext)
+
+    elif mode == 'hrtf_selection_baseline':
         
+        pass
     print("finished")
 
 if __name__ == '__main__':
