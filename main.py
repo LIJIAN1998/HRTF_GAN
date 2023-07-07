@@ -15,6 +15,7 @@ from preprocessing.utils import interpolate_fft, generate_euclidean_cube, conver
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories, get_sphere_coords
 
 from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation
+from baselines.hrtf_selection import run_hrtf_selection
 from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
@@ -171,6 +172,7 @@ def main(config, mode):
         run_localisation_evaluation(config, barycentric_output_path, file_ext)
 
     elif mode == 'hrtf_selection_baseline':
+        run_hrtf_selection(config, config.hrtf_selection_dir)
         
         pass
     print("finished")

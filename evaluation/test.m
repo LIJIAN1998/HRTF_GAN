@@ -25,7 +25,7 @@ function [pol_acc1, pol_rms1, querr1] = calc_loc(fullSofa1FileName, fullSofa2Fil
     % Run virtual experiments
     [m1,doa1] = barumerli2023('template',template2,'target',target1,'num_exp',num_exp,'sigma_spectral', 4, 'MAP');
     % Calculate performance measures
-    sim1 = barumerli2021_metrics(m1, 'middle_metrics');
+    sim1 = barumerli2023_metrics(m1, 'middle_metrics');
     lat_acc1 = sim1.accL; % mean lateral error
     lat_rms1 = sim1.rmsL; % lateral RMS error
     pol_acc1 = sim1.accP; % mean polar error
