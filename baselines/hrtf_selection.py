@@ -12,7 +12,7 @@ from model.util import spectral_distortion_metric
 def run_hrtf_selection(config, hrtf_selection_output_path, subject_file=None):
 
     if subject_file is None:
-        valid_data_paths = glob.glob('%s/%s_*' % (config.valid_hrtf_merge_dir, config.dataset))
+        valid_data_paths = glob.glob('%s/%s_*' % (config.valid_gt_path, config.dataset))
         valid_data_file_names = ['/' + os.path.basename(x) for x in valid_data_paths]
     else:
         valid_data_file_names = ['/' + subject_file]
@@ -26,7 +26,7 @@ def run_hrtf_selection(config, hrtf_selection_output_path, subject_file=None):
     hrtf_dict_right = {}
     subj_ids = []
     for file_name in valid_data_file_names:
-        with open(config.valid_hrtf_merge_dir + file_name, "rb") as f:
+        with open(config.valid_gt_path + file_name, "rb") as f:
             hr_hrtf = pickle.load(f)
 
         # add to dict for right ears
