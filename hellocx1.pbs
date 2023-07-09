@@ -12,7 +12,7 @@ cd $PBS_O_WORKDIR
 # python test.py > output.txt
 # python opt.py > output.txt
 # python main.py test --hpc True --tag ari-upscale-4 > output.txt
-python opt.py
+python opt.py > output.txt
 # cp output.txt $PBS_O_WORKDIR
 
 conda deactivate

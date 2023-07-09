@@ -135,22 +135,13 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
-        # _, test_prefetcher = load_hrtf(config)
-        # print("Loaded all datasets successfully.")
+        _, test_prefetcher = load_hrtf(config)
+        print("Loaded all datasets successfully.")
 
-        # test(config, test_prefetcher)
+        test(config, test_prefetcher)
 
-        # run_lsd_evaluation(config, config.valid_path)
-        # run_localisation_evaluation(config, config.valid_path)
-
-        with open('/rds/general/user/jl2622/home/HRTF-projection/data/SONICOM/hr_merge/valid/SONICOM_mag_100.pickle', "rb") as file:
-            valid_merge_hrtf = pickle.load(file)
-        print("valid merge shape: ", valid_merge_hrtf.shape)
-        with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid_gt/SONICOM_100.pickle', "rb") as file:
-            gt = pickle.load(file)
-        print("gt: ", gt.shape)
-
-        check_sofa(config)
+        run_lsd_evaluation(config, config.valid_path)
+        run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
@@ -174,7 +165,25 @@ def main(config, mode):
     elif mode == 'hrtf_selection_baseline':
         run_hrtf_selection(config, config.hrtf_selection_dir)
 
-        pass
+        if config.gen_sofa_flag:
+            ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                                 'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+            row_angles = ds.row_angles
+            column_angles = ds.column_angles
+            my_convert_to_sofa(config.hrtf_selection_dir, config, row_angles, column_angles)
+
+        config.path = config.hrtf_selection_dir
+
+        file_ext = f'lsd_errors_hrtf_selection_minimum_data.pickle'
+        run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
+        file_ext = f'loc_errors_hrtf_selection_minimum_data.pickle'
+        run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
+
+        file_ext = f'lsd_errors_hrtf_selection_maximum_data.pickle'
+        run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
+        file_ext = f'loc_errors_hrtf_selection_maximum_data.pickle'
+        run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
+
     print("finished")
 
 if __name__ == '__main__':
