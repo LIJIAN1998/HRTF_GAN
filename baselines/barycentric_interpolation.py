@@ -50,10 +50,11 @@ def my_barycentric_interpolation(config, barycentric_output_path):
         sphere_coords_lr = []
         sphere_coords_lr_index = []
 
-        lr_hrtf = torch.zeros(hr_hrtf.size(0) // row_ratio, hr_hrtf.size(1) // column_ratio, 1, nbins)
+        # initialize an empty lr_hrtf
+        lr_hrtf = torch.zeros(hr_hrtf.size(1) // row_ratio, hr_hrtf.size(2) // column_ratio, 1, nbins)
 
-        for i in range(hr_hrtf.size(0) // row_ratio):
-            for j in range(hr_hrtf.size(1) // column_ratio):
+        for i in range(hr_hrtf.size(1) // row_ratio):
+            for j in range(hr_hrtf.size(2) // column_ratio):
                 elevation = column_angles[column_ratio*j] * np.pi / 180
                 azimuth = row_angles[row_ratio * i] * np.pi / 180
                 sphere_coords_lr.append(elevation, azimuth)
