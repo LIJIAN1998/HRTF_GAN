@@ -57,8 +57,8 @@ def my_barycentric_interpolation(config, barycentric_output_path):
             for j in range(hr_hrtf.size(2) // column_ratio):
                 elevation = column_angles[column_ratio*j] * np.pi / 180
                 azimuth = row_angles[row_ratio * i] * np.pi / 180
-                sphere_coords_lr.append(elevation, azimuth)
-                sphere_coords_lr_index.append(j ,i)
+                sphere_coords_lr.append((elevation, azimuth))
+                sphere_coords_lr_index.append((j ,i))
                 lr_hrtf[i, j, :] = hr_hrtf[row_ratio * i, column_ratio*j, :]
 
         print("my lr sphere coords:", len(sphere_coords_lr))
