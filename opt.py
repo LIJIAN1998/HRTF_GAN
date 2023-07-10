@@ -79,6 +79,8 @@ def optim_hyperparameter(config):
     critic_iters = config["critic_iters"]
 
     for epoch in range(start_epoch, 200):
+        with open("log.txt", "a") as f:
+            f.write(f"Epoch: {epoch}\n")
         train_loss_Dis = 0.
         train_loss_Dis_hr = 0.
         train_loss_Dis_recon = 0.
@@ -180,6 +182,48 @@ def optim_hyperparameter(config):
                 optEncoder.zero_grad()
                 err_enc.backward()
                 optEncoder.step()
+
+            if batch_index % 10 == 0:
+                with open("log.txt", "a") as f:
+                    f.write(f"{batch_index}/{len(train_prefetcher)}\n")
+                    f.write(f"dis: {gan_loss.item()}\t dec: {err_dec.item()}\t enc: {err_enc.item()}\n")
+                    f.write(f"D_real: {loss_D_hr.item()}, D_fake: {loss_D_recon.item()}\n")
+                    f.write(f"content loss: {content_loss.item()}, sim_D: {feature_sim_loss_D.item()}, gan loss: {gan_loss_dec.item()}\n")
+                    f.write(f"prior: {prior_loss.item()}, sim_E: {feature_sim_loss_E.item()}\n\n")
+
+            batch_data = train_prefetcher.next()
+
+        avg_train_loss_Dis = train_loss_Dis / len(train_prefetcher)
+        avg_train_loss_Dis_hr = train_loss_Dis_hr / len(train_prefetcher)
+        avg_train_loss_Dis_recon = train_loss_Dis_recon / len(train_prefetcher)
+        avg_train_loss_Dec = train_loss_Dec / len(train_prefetcher)
+        avg_train_loss_Dec_gan = train_loss_Dec_gan / len(train_prefetcher)
+        avg_train_loss_Dec_content = train_loss_Dec_content / len(train_prefetcher)
+        avg_train_loss_Dec_sim = train_loss_Dec_sim / len(train_prefetcher)
+        avg_train_loss_Enc = train_loss_Enc / len(train_prefetcher)
+        avg_train_loss_Enc_prior = train_loss_Enc_prior / len(train_prefetcher)
+        avg_train_loss_Enc_sim = train_loss_Enc_sim / len(train_prefetcher)
+
+        print(f"Avearge epoch loss, discriminator: {avg_train_loss_Dis}, decoder: {avg_train_loss_Dec}, encoder: {avg_train_loss_Enc}")
+        print(f"Avearge epoch loss, D_real: {avg_train_loss_Dis_hr}, D_fake: {avg_train_loss_Dis_recon}")
+        print(f"Avearge content loss: {avg_train_loss_Dec_content},  decoder similarity loss: {avg_train_loss_Dec_sim}, gan loss: {avg_train_loss_Dec_gan}")
+        print(f"Average prior loss: {avg_train_loss_Enc_prior}, encoder similarity loss: {avg_train_loss_Enc_sim}\n")
+
+        checkpoint_data = {
+            "epoch": epoch,
+            "VAE_state_dict": vae.state_dict(),
+            "discriminator_state_dict": netD.state_dict(),
+            "optD_state_dict": optD.state_dict(),
+            "optEncoder_state_dict": optEncoder.state_dict(),
+            "optDecoder_state_dict": optDecoder.state_dict(),
+        }
+        checkpoint = Checkpoint.from_dict(checkpoint_data)
+
+        session.report(
+            {}
+        )
+
+
 
 
     
