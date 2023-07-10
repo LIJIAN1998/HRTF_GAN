@@ -146,6 +146,8 @@ def main(config, mode):
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
+        run_barycentric_interpolation(config, barycentric_output_path)
+        print("!!!!!!!!!!!!!!!!!!my interpolation!!!!!!!!!!!!!!!!!!!!!!!!")
         sphere = my_barycentric_interpolation(config, barycentric_output_path)
 
         if config.gen_sofa_flag:

@@ -14,6 +14,8 @@ from preprocessing.convert_coordinates import convert_cube_to_sphere
 from preprocessing.barycentric_calcs import get_triangle_vertices, calc_barycentric_coordinates
 from preprocessing.hrtf_sphere import HRTF_Sphere
 
+from pprint import pprint
+
 PI_4 = np.pi / 4
 
 def my_barycentric_interpolation(config, barycentric_output_path):
@@ -58,6 +60,8 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                 sphere_coords_lr_index.append(j ,i)
                 lr_hrtf[i, j, :] = hr_hrtf[row_ratio * i, column_ratio*j, :]
 
+        print("my lr sphere coords:", len(sphere_coords_lr))
+        pprint(sphere_coords_lr)
         euclidean_sphere_triangles = []
         euclidean_sphere_coeffs = []
         for sphere_coord in sphere_coords:
@@ -122,6 +126,10 @@ def run_barycentric_interpolation(config, barycentric_output_path, subject_file=
                 sphere_coords_lr.append(convert_cube_to_sphere(panel, x, y))
                 sphere_coords_lr_index.append([int(i), int(j / config.upscale_factor), int(k / config.upscale_factor)])
 
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print("num lr coords: ", len(sphere_coords_lr))
+        pprint(sphere_coords_lr)
+        return 
         euclidean_sphere_triangles = []
         euclidean_sphere_coeffs = []
         for sphere_coord in sphere_coords:
