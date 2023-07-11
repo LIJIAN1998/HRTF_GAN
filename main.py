@@ -144,6 +144,8 @@ def main(config, mode):
         run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
+        print("start job")
+        return 
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
         run_barycentric_interpolation(config, barycentric_output_path)
