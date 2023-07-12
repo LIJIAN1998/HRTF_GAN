@@ -34,6 +34,19 @@ def split_dataset(dataset, train_ratio=0.8):
 
     return random_split(dataset, lengths=[train_len, test_len])
 
+def compute_sh_degree(config):
+    data_dir = config.raw_hrtf_dir / config.dataset
+    imp = importlib.import_module('hrtfdata.full')
+    load_function = getattr(imp, config.dataset)
+    ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                         'side': 'left', 'domain': 'time'}}, subject_ids='first')
+    num_row_angles = len(ds.row_angles)
+    num_col_angles = len(ds.column_angles)
+    num_radii = len(ds.radii)
+
+    degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
+    return degree
+
 def load_hrtf(config):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')

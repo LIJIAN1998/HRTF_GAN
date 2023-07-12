@@ -9,7 +9,11 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.backends.cudnn as cudnn
 
+from config import Config
+
 from model.util import *
+from model.test import test
+from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 
 import importlib
@@ -22,7 +26,7 @@ from ray.tune.schedulers import ASHAScheduler
 print("import done!")
 print("using cuda? ", torch.cuda.is_available())
 
-def optim_hyperparameter(config):
+def train_vae_gan(config):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
@@ -45,7 +49,7 @@ def optim_hyperparameter(config):
     print(device, " will be used.\n")
     cudnn.benchmark = True
 
-    degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
+    degree = compute_sh_degree(config)
     vae = VAE(nbins=nbins, max_degree=degree, latent_dim=10).to(device)
     netD = Discriminator(nbins=nbins).to(device)
     if ('cuda' in str(device)) and (ngpu > 1):
@@ -74,7 +78,7 @@ def optim_hyperparameter(config):
     else:
         start_epoch = 0
 
-    train_prefetcher, test_prefetcher = load_hrtf(config)
+    train_prefetcher, _ = load_hrtf(config)
 
     critic_iters = config["critic_iters"]
 
@@ -220,10 +224,75 @@ def optim_hyperparameter(config):
         checkpoint = Checkpoint.from_dict(checkpoint_data)
 
         session.report(
-            {}
+            {"loss_Dis": avg_train_loss_Dis, "loss_Dec": avg_train_loss_Dec, "loss_Enc": avg_train_loss_Enc},
+            checkpoint=checkpoint,
         )
+    print("Finished Training")
 
 
+def main(config, num_samples=20, gpus_per_trial=1):
+    hyperparameters = {
+        "batch_size": tune.choice([2, 4, 8, 16]),
+        "optimizer": tune.choice(["adam", "rmsprop"]),
+        "lr": tune.loguniform(1e-4, 1e-1),
+        "alpha": tune.loguniform(1e-2, 1),
+        "gamma": tune.choice([0.15, 1.5, 15]),
+        "beta": tune.choice([0.05, 0.5, 5]),
+        "latent_dim": tune.choice([10, 50, 100]),
+    }
 
+    scheduler = ASHAScheduler(
+        metric=["loss_Dis", "loss_Dec", "loss_Enc"],
+        mode="min",
+        max_t=config.num_epochs,
+        grace_period=30,
+        reduction_factor=2,
+    )
+
+    result = tune.run(
+        partial(train_vae_gan),
+        resources_per_trial={"cpu": 8, "gpu": gpus_per_trial},
+        config=hyperparameters,
+        num_samples=num_samples,
+        scheduler=scheduler,
+    )
+
+    best_trial = result.get_best_trial(["loss_Dis", "loss_Dec", "loss_Enc"], "min", "last")
+    print(f"Best trail combination: {best_trial.config}")
+    print(f"Best trail final discriminator loss: {best_trial.last_result['loss_Dis']}")
+    print(f"Best trail final decoder loss: {best_trial.last_result['loss_Dec']}")
+    print(f"Best trail final encoder loss: {best_trial.last_result['loss_Enc']}")
+
+    nbins = config.nbins_hrtf
+    if config.merge_flag:
+        nbins = config.nbins_hrtf * 2
+
+    degree = compute_sh_degree(config)
+    best_trained_model = VAE(nbins=nbins, max_degree=degree, latent_dim=best_trial.config["latent_dim"])
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda:0"
+        if gpus_per_trial > 1:
+            best_trained_model = nn.DataParallel(best_trained_model)
+    best_trained_model.to(device)
+
+    best_checkpoint = best_trial.checkpoint.to_air_checkpoint()
+    best_checkpoint_data = best_checkpoint.to_dict()
+
+    best_trained_model.load_state_dict(best_checkpoint_data["VAE_state_dict"])
+    path = config.path
+    with torch.no_grad():
+        torch.save(best_checkpoint_data["VAE_state_dict"], f'{path}/vae.pt')
+    
+    _, test_prefetcher = load_hrtf(config)
+    print("Loaded all datasets successfully.")
+    test(config, test_prefetcher)
+    run_lsd_evaluation(config, config.valid_path)
+    run_localisation_evaluation(config, config.valid_path)
+
+if __name__ == "__main__":
+    tag = "ari-upscale-4"
+    config = Config(tag, using_hpc=True)
+    main(config)
 
     

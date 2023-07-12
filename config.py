@@ -73,7 +73,7 @@ class Config:
         # Training hyperparams
         self.batch_size = 4
         self.num_workers = 1
-        self.num_epochs = 10  # was originally 250
+        self.num_epochs = 200  # was originally 250
         self.lr_encoder = 0.0002
         self.lr_decoder = 0.0002
         self.lr_dis = 0.0000015

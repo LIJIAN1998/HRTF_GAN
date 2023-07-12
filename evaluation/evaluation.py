@@ -79,6 +79,8 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
             print('LSD Error of subject %s: %0.4f' % (subject_id, float(error.detach())))
 
     print('Mean LSD Error: %0.3f' % np.mean([error[1] for error in lsd_errors]))
+    with open('log.txt', 'wb') as f:
+        f.write('Mean LSD Error: %0.3f' % np.mean([error[1] for error in lsd_errors]))
     with open(f'{config.path}/{file_ext}', "wb") as file:
         pickle.dump(lsd_errors, file)
 
@@ -166,6 +168,10 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
     print('Mean ACC Error: %0.3f' % np.mean([error[1] for error in loc_errors]))
     print('Mean RMS Error: %0.3f' % np.mean([error[2] for error in loc_errors]))
     print('Mean QUERR Error: %0.3f' % np.mean([error[3] for error in loc_errors]))
+    with open('log.txt', 'wb') as f:
+        f.write('Mean ACC Error: %0.3f \n' % np.mean([error[1] for error in loc_errors]))
+        f.write('Mean RMS Error: %0.3f \n' % np.mean([error[2] for error in loc_errors]))
+        f.write('Mean QUERR Error: %0.3f \n' % np.mean([error[3] for error in loc_errors]))
     with open(f'{config.path}/{file_ext}', "wb") as file:
         pickle.dump(loc_errors, file)
 
