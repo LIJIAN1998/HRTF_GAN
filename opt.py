@@ -26,7 +26,18 @@ from ray.tune.schedulers import ASHAScheduler
 print("import done!")
 print("using cuda? ", torch.cuda.is_available())
 
-def train_vae_gan(config):
+def get_optimizer(hyperparameters, vae, netD):
+    if hyperparameters['optimizer'] == 'adam':
+        optEncoder = optim.Adam(vae.encoder.parameters(), lr=hyperparameters["lr"])
+        optDecoder = optim.Adam(vae.decoder.parameters(), lr=hyperparameters["lr"])
+        optD = optim.Adam(netD.parameters(), lr=hyperparameters["lr"] * hyperparameters["alpha"])
+    elif hyperparameters['optimizer'] == 'rmsprop':
+        optEncoder = optim.RMSprop(vae.encoder.parameters(), lr=hyperparameters["lr"])
+        optDecoder = optim.RMSprop(vae.decoder.parameters(), lr=hyperparameters["lr"])
+        optD = optim.RMSprop(netD.parameters(), lr=hyperparameters["lr"] * hyperparameters["alpha"])
+    return optEncoder, optDecoder, optD
+
+def train_vae_gan(config, hyperparameters):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
@@ -49,17 +60,20 @@ def train_vae_gan(config):
     print(device, " will be used.\n")
     cudnn.benchmark = True
 
+    critic_iters = hyperparameters["critic_iters"]
+    gamma = hyperparameters["gamma"]
+    beta = hyperparameters["beta"]
+    latent_dim = hyperparameters["latent_dim"]
+    config.batch_size = hyperparameters["batch_size"]
+
     degree = compute_sh_degree(config)
-    vae = VAE(nbins=nbins, max_degree=degree, latent_dim=10).to(device)
+    vae = VAE(nbins=nbins, max_degree=degree, latent_dim=latent_dim).to(device)
     netD = Discriminator(nbins=nbins).to(device)
     if ('cuda' in str(device)) and (ngpu > 1):
         netD = (nn.DataParallel(netD, list(range(ngpu)))).to(device)
         vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
-     
-    beta1, beta2 = config.beta1, config.beta2
-    optEncoder = optim.SGD(vae.encoder.parameters(), lr=config["lr"], momentum=0.9)
-    optDecoder = optim.SGD(vae.decoder.parameters(), lr=config["lr"], momentum=0.9)
-    optD = optim.SGD(netD.parameters(), lr=config["lr"], betas=(beta1, beta2))
+    
+    optEncoder, optDecoder, optD = get_optimizer(hyperparameters, vae, netD)
 
     # Define loss functions
     adversarial_criterion = nn.BCEWithLogitsLoss()
@@ -74,13 +88,15 @@ def train_vae_gan(config):
     if checkpoint:
         checkpoint_state = checkpoint.to_dict()
         start_epoch = checkpoint_state["epoch"]
+        vae.load_state_dict(checkpoint_data["VAE_state_dict"])
+        netD.load_state_dict(checkpoint_data["discriminator_state_dict"])
         optEncoder.load_state_dict(checkpoint_state["optEncoder_state_dict"])
+        optDecoder.load_state_dict(checkpoint_state["optDecoder_state_dict"])
+        optD.load_state_dict(checkpoint_data["optD_state_dict"])
     else:
         start_epoch = 0
 
     train_prefetcher, _ = load_hrtf(config)
-
-    critic_iters = config["critic_iters"]
 
     for epoch in range(start_epoch, 200):
         with open("log.txt", "a") as f:
@@ -150,7 +166,7 @@ def train_vae_gan(config):
                 err_dec_recon = adversarial_criterion(pred_recon, zeros_label)
                 gan_loss_dec = err_dec_real + err_dec_recon
                 train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
-                feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
+                feature_sim_loss_D = gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
                 train_loss_Dec_sim += feature_sim_loss_D.item()
                 # convert reconstructed coefficient back to hrtf
                 harmonics_list = []
@@ -178,7 +194,7 @@ def train_vae_gan(config):
                 train_loss_Enc_prior += prior_loss.item()
                 feature_recon = netD(recon)[1]
                 feature_real = netD(hr_coefficient)[1]
-                feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
+                feature_sim_loss_E = beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
                 train_loss_Enc_sim += feature_sim_loss_E.item()
                 err_enc = prior_loss + feature_sim_loss_E
                 train_loss_Enc += err_enc.item()
@@ -239,6 +255,7 @@ def main(config, num_samples=20, gpus_per_trial=1):
         "gamma": tune.choice([0.15, 1.5, 15]),
         "beta": tune.choice([0.05, 0.5, 5]),
         "latent_dim": tune.choice([10, 50, 100]),
+        "critic_iter": tune.choice([3, 4, 5, 6]),
     }
 
     scheduler = ASHAScheduler(
