@@ -66,18 +66,19 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                 sphere_coords_lr_index.append((j ,i))
                 lr_hrtf[:, i, j] = hr_hrtf[:, row_ratio * i, column_ratio*j]
 
-        # print("my lr sphere coords:", len(sphere_coords_lr))
-        # pprint(sphere_coords_lr)
-        # euclidean_sphere_triangles = []
-        # euclidean_sphere_coeffs = []
-        # for sphere_coord in sphere_coords:
-        #     # based on cube coordinates, get indices for magnitudes list of lists
-        #     triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
-        #                                               sphere_coords=sphere_coords_lr)
-        #     coeffs = calc_barycentric_coordinates(elevation=sphere_coord[0], azimuth=sphere_coord[1],
-        #                                           closest_points=triangle_vertices)
-        #     euclidean_sphere_triangles.append(triangle_vertices)
-        #     euclidean_sphere_coeffs.append(coeffs)
+        print("my lr sphere coords:", len(sphere_coords_lr))
+        pprint(sphere_coords_lr)
+        euclidean_sphere_triangles = []
+        euclidean_sphere_coeffs = []
+        for sphere_coord in sphere_coords:
+            # based on cube coordinates, get indices for magnitudes list of lists
+            triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                      sphere_coords=sphere_coords_lr)
+            coeffs = calc_barycentric_coordinates(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                  closest_points=triangle_vertices)
+            euclidean_sphere_triangles.append(triangle_vertices)
+            euclidean_sphere_coeffs.append(coeffs)
+        print(f"{num_file}, triangle")
 
         # lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
 
