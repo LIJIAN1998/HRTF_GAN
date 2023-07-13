@@ -78,7 +78,8 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                                                   closest_points=triangle_vertices)
             euclidean_sphere_triangles.append(triangle_vertices)
             euclidean_sphere_coeffs.append(coeffs)
-        print(f"{num_file}, triangle")
+        with open("log.txt", "wb") as f:
+            f.write(f"{num_file}, triangle")
 
         # lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
 
