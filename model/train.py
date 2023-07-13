@@ -314,7 +314,7 @@ def train(config, train_prefetcher):
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
                 recons = harmonics_tensor @ recon.permute(0, 2, 1)
-                recons = torch.abs(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles))
+                recons = F.softplus(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles))
                 unweighted_content_loss = content_criterion(config, recons, hrtf, sd_mean, sd_std, ild_mean, ild_std)
                 # with open('log.txt', "a") as f:
                 #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
