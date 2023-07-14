@@ -416,9 +416,7 @@ def my_calc_all_interpolated_features(hrtf_sphere, features,  euclidean_sphere, 
     selected_feature_interpolated = []
     for i, p in enumerate(euclidean_sphere):
         if p[0] is not None:
-            time_domain_flag = False
-            features_p = my_calc_interpolated_feature(time_domain_flag=time_domain_flag,
-                                                      triangle_vertices=euclidean_sphere_triangles[i],
+            features_p = my_calc_interpolated_feature(triangle_vertices=euclidean_sphere_triangles[i],
                                                       coeffs=euclidean_sphere_coeffs[i],
                                                       all_coords=hrtf_sphere.get_df(),
                                                       subject_features=features)
