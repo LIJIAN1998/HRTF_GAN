@@ -106,7 +106,7 @@ def get_triangle_vertices(elevation, azimuth, sphere_coords):
 
     The best triangle is defined as the triangle with the minimum total distance from vertices to the point of interest
     that also encloses the point of interest"""
-    with open("log.txt", "wb") as f:
+    with open("log.txt", "a") as f:
         f.write("get_triangle_vertices\n")
     # get distances from point of interest to every other point
     point_distances = calc_all_distances(elevation=elevation, azimuth=azimuth, sphere_coords=sphere_coords)
@@ -139,7 +139,7 @@ def get_triangle_vertices(elevation, azimuth, sphere_coords):
 
 def calc_barycentric_coordinates(elevation, azimuth, closest_points):
     """Calculate alpha, beta, and gamma coefficients for barycentric interpolation (modified for spherical triangle)"""
-    with open("log.txt", "wb") as f:
+    with open("log.txt", "a") as f:
         f.write("calc_barycentric_coordinates\n")
     # not zero indexing var names in order to match equations in 3D Tune-In Toolkit paper
     if len(closest_points) == 3:
