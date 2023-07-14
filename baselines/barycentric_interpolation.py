@@ -47,10 +47,9 @@ def debug_barycentric(config, barycentric_output_path):
         f.write(f"num coords: {len(sphere_coords)}")
 
     row_ratio, column_ratio = get_sample_ratio(config.upscale_factor)
-    with open(config.valid_gt_path + 'SONICOM_100.pickle', "rb") as f:
+    with open(config.valid_gt_path + '/SONICOM_100.pickle', "rb") as f:
         hr_hrtf = pickle.load(f)  # r x w x h x nbins
-
-    print(hr_hrtf.shape)
+        
     # initialize an empty lr_hrtf
     lr_hrtf = torch.zeros(1, hr_hrtf.size(1) // row_ratio, hr_hrtf.size(2) // column_ratio, nbins)
 
