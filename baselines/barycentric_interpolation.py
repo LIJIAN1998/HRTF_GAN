@@ -119,7 +119,7 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                 lr_hrtf[:, i, j] = hr_hrtf[:, row_ratio * i, column_ratio*j]
 
         print("my lr sphere coords:", len(sphere_coords_lr))
-        with open("log.txt", "wb") as f:
+        with open("log.txt", "a") as f:
             f.write(f"num lr coords: {len(sphere_coords_lr)}\n")
         # pprint(sphere_coords_lr)
         euclidean_sphere_triangles = []
@@ -132,7 +132,7 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                                                   closest_points=triangle_vertices)
             euclidean_sphere_triangles.append(triangle_vertices)
             euclidean_sphere_coeffs.append(coeffs)
-        with open("log.txt", "wb") as f:
+        with open("log.txt", "a") as f:
             f.write(f"{num_file}, triangle\n")
 
         # lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
@@ -192,7 +192,7 @@ def run_barycentric_interpolation(config, barycentric_output_path, subject_file=
 
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         print("num lr coords: ", len(sphere_coords_lr))
-        with open("log.txt", "wb") as f:
+        with open("log.txt", "a") as f:
             f.write(f"num lr coords: {len(sphere_coords_lr)}\n")
         return 
         euclidean_sphere_triangles = []
