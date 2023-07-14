@@ -38,7 +38,7 @@ def debug_barycentric(config, barycentric_output_path):
     mask = ds[0]['features'].mask
     whole_sphere = HRTF_Sphere(mask=mask, row_angles=row_angles, column_angles=column_angles)
     sphere_coords = whole_sphere.get_sphere_coords()
-    with open("log.txt", "wb") as f:
+    with open("log.txt", "a") as f:
         f.write(f"num coords: {len(sphere_coords)}")
 
     row_ratio, column_ratio = get_sample_ratio(config.upscale_factor)
@@ -170,7 +170,7 @@ def run_barycentric_interpolation(config, barycentric_output_path, subject_file=
     projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
     with open(projection_filename, "rb") as f:
         (cube_coords, sphere_coords, euclidean_sphere_triangles, euclidean_sphere_coeffs) = pickle.load(f)
-    with open("log.txt", "wb") as f:
+    with open("log.txt", "a") as f:
         f.write(f"num sphere coords: {len(sphere_coords)}\n")
 
     for file_name in valid_data_file_names:
