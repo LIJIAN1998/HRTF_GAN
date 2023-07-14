@@ -15,6 +15,7 @@ from preprocessing.barycentric_calcs import get_triangle_vertices, calc_barycent
 from preprocessing.hrtf_sphere import HRTF_Sphere
 
 from pprint import pprint
+import time
 
 PI_4 = np.pi / 4
 
@@ -65,12 +66,21 @@ def debug_barycentric(config, barycentric_output_path):
             lr_hrtf[:, i, j] = hr_hrtf[:, row_ratio * i, column_ratio*j]
 
     print("num of my lr coords: ", len(sphere_coords_lr))
+    with open("log.txt", "a") as f:
+        f.write(f"num lr coords: {len(sphere_coords_lr)}\n")
     euclidean_sphere_triangles = []
     euclidean_sphere_coeffs = []
+    n = 0
     for sphere_coord in sphere_coords:
         # based on cube coordinates, get indices for magnitudes list of lists
+        start_time = time.time()
         triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
                                                     sphere_coords=sphere_coords_lr)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        with open("log.txt", "a") as f:
+            f.write(f"count: {n}\n")
+            f.write(f"time for one get_triangle_vertices: {elapsed_time}\n")
         coeffs = calc_barycentric_coordinates(elevation=sphere_coord[0], azimuth=sphere_coord[1],
                                                 closest_points=triangle_vertices)
         euclidean_sphere_triangles.append(triangle_vertices)
