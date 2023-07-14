@@ -84,22 +84,22 @@ def debug_barycentric(config, barycentric_output_path):
         euclidean_sphere_triangles.append(triangle_vertices)
         euclidean_sphere_coeffs.append(coeffs)
 
-        lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
+    lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
 
-        lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]  
-        lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
+    lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]  
+    lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
 
-        barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, sphere_coords,
-                                                 euclidean_sphere_triangles,euclidean_sphere_coeffs)
-        barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, sphere_coords,
-                                                  euclidean_sphere_triangles, euclidean_sphere_coeffs)
+    barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, sphere_coords,
+                                                euclidean_sphere_triangles,euclidean_sphere_coeffs)
+    barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, sphere_coords,
+                                                euclidean_sphere_triangles, euclidean_sphere_coeffs)
+    
+    barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
+
+    with open(barycentric_output_path + '/SONICOM_100.pickle', "wb") as file:
+        pickle.dump(barycentric_hr_merged, file)
         
-        barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
-
-        with open(barycentric_output_path + '/SONICOM_100.pickle', "wb") as file:
-            pickle.dump(barycentric_hr_merged, file)
-        
-        print('Created barycentric baseline %s' % '/SONICOM_100.pickle'.replace('/', ''))
+    print('Created barycentric baseline %s' % '/SONICOM_100.pickle'.replace('/', ''))
     end_time = time.time()
     elapsed_time = end_time - start_time
     with open("log.txt", "a") as f:
