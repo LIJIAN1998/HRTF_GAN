@@ -37,6 +37,11 @@ def debug_barycentric(config, barycentric_output_path):
     column_angles = ds.column_angles
     mask = ds[0]['features'].mask
     whole_sphere = HRTF_Sphere(mask=mask, row_angles=row_angles, column_angles=column_angles)
+
+    nbins = config.nbins_hrtf
+    if config.merge_flag:
+        nbins = config.nbins_hrtf * 2
+
     sphere_coords = whole_sphere.get_sphere_coords()
     with open("log.txt", "a") as f:
         f.write(f"num coords: {len(sphere_coords)}")
