@@ -614,6 +614,15 @@ def remove_itd(hrir, pre_window, length):
     else:
         trimmed_hrir = trim_hrir(hrir, start, -1)
         fade_window = fadein + [1] * (len(trimmed_hrir) - fadein_len - fadeout_len) + fadeout
+        print("hrir: ", hrir)
+        print("hrir shape: ", hrir.shape)
+        print("pre_window: ", pre_window)
+        print("length: ", length)
+        print("over_threshold_index: ", over_threshold_index)
+        print("start: ", start)
+        print("stop: ", stop)
+        print("trimmed shape: ", trimmed_hrir.shape, len(trimmed_hrir))
+        print("fade window: ", fade_window.shape)
         faded_hrir = trimmed_hrir * fade_window
         zero_pad = [0] * (length - len(trimmed_hrir))
         faded_hrir = np.ma.append(faded_hrir, zero_pad)
