@@ -45,7 +45,7 @@ def debug_barycentric(config, barycentric_output_path):
 
     sphere_coords = whole_sphere.get_sphere_coords()
     with open("log.txt", "a") as f:
-        f.write(f"num coords: {len(sphere_coords)}")
+        f.write(f"num coords: {len(sphere_coords)}\n")
 
     row_ratio, column_ratio = get_sample_ratio(config.upscale_factor)
     with open(config.valid_gt_path + '/SONICOM_100.pickle', "rb") as f:
@@ -67,24 +67,44 @@ def debug_barycentric(config, barycentric_output_path):
 
     print("num of my lr coords: ", len(sphere_coords_lr))
     with open("log.txt", "a") as f:
-        f.write(f"num lr coords: {len(sphere_coords_lr)}\n")
+        f.write(f"my num lr coords: {len(sphere_coords_lr)}\n")
     euclidean_sphere_triangles = []
     euclidean_sphere_coeffs = []
     n = 0
+    start_time = time.time()
     for sphere_coord in sphere_coords:
         # based on cube coordinates, get indices for magnitudes list of lists
-        start_time = time.time()
         triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
                                                     sphere_coords=sphere_coords_lr)
-        end_time = time.time()
-        elapsed_time = end_time - start_time
+        n += 1
         with open("log.txt", "a") as f:
             f.write(f"count: {n}\n")
-            f.write(f"time for one get_triangle_vertices: {elapsed_time}\n")
         coeffs = calc_barycentric_coordinates(elevation=sphere_coord[0], azimuth=sphere_coord[1],
                                                 closest_points=triangle_vertices)
         euclidean_sphere_triangles.append(triangle_vertices)
         euclidean_sphere_coeffs.append(coeffs)
+
+        lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
+
+        lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]  
+        lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
+
+        barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, sphere_coords,
+                                                 euclidean_sphere_triangles,euclidean_sphere_coeffs)
+        barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, sphere_coords,
+                                                  euclidean_sphere_triangles, euclidean_sphere_coeffs)
+        
+        barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
+
+        with open(barycentric_output_path + '/SONICOM_100.pickle', "wb") as file:
+            pickle.dump(barycentric_hr_merged, file)
+        
+        print('Created barycentric baseline %s' % '/SONICOM_100.pickle'.replace('/', ''))
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    with open("log.txt", "a") as f:
+        f.write(f"count: {n}\n")
+        f.write(f"time for one file: {elapsed_time}\n")
 
 def my_barycentric_interpolation(config, barycentric_output_path):
     print("my barycentric interpolation")
@@ -151,23 +171,22 @@ def my_barycentric_interpolation(config, barycentric_output_path):
         with open("log.txt", "a") as f:
             f.write(f"{num_file}, triangle\n")
 
-        # lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
+        lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
 
-        # lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]  
-        # lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
+        lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]  
+        lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
 
-        # barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, sphere_coords,
-        #                                          euclidean_sphere_triangles,euclidean_sphere_coeffs)
-        # barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, sphere_coords,
-        #                                           euclidean_sphere_triangles, euclidean_sphere_coeffs)
+        barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, sphere_coords,
+                                                 euclidean_sphere_triangles,euclidean_sphere_coeffs)
+        barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, sphere_coords,
+                                                  euclidean_sphere_triangles, euclidean_sphere_coeffs)
         
-        # barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
+        barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
 
-        # with open(barycentric_output_path + file_name, "wb") as file:
-        #     pickle.dump(barycentric_hr_merged, file)
+        with open(barycentric_output_path + file_name, "wb") as file:
+            pickle.dump(barycentric_hr_merged, file)
         
         print('Created barycentric baseline %s' % file_name.replace('/', ''))
-    return "finished"
     return sphere_coords
 
 
