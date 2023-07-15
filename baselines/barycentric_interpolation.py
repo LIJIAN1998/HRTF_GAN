@@ -48,7 +48,7 @@ def debug_barycentric(config, barycentric_output_path):
         f.write(f"num coords: {len(sphere_coords)}\n")
 
     row_ratio, column_ratio = get_sample_ratio(config.upscale_factor)
-    with open(config.valid_gt_path + '/SONICOM_100.pickle', "rb") as f:
+    with open(config.valid_gt_path + '/SONICOM_104.pickle', "rb") as f:
         hr_hrtf = pickle.load(f)  # r x w x h x nbins
 
     # initialize an empty lr_hrtf
@@ -70,7 +70,7 @@ def debug_barycentric(config, barycentric_output_path):
         f.write(f"my num lr coords: {len(sphere_coords_lr)}\n")
     euclidean_sphere_triangles = []
     euclidean_sphere_coeffs = []
-    
+
     start_time = time.time()
     for sphere_coord in sphere_coords:
         # based on cube coordinates, get indices for magnitudes list of lists
