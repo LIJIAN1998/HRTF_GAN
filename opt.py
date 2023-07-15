@@ -23,8 +23,6 @@ from ray import tune
 from ray.air import Checkpoint, session
 from ray.tune.schedulers import ASHAScheduler
 
-print("import done!")
-print("using cuda? ", torch.cuda.is_available())
 
 def get_optimizer(hyperparameters, vae, netD):
     if hyperparameters['optimizer'] == 'adam':
@@ -308,8 +306,9 @@ def main(config, num_samples=20, gpus_per_trial=1):
     run_localisation_evaluation(config, config.valid_path)
 
 if __name__ == "__main__":
+    print("using cuda? ", torch.cuda.is_available())
     tag = "ari-upscale-4"
     config = Config(tag, using_hpc=True)
-    main(config)
+    # main(config)
 
     
