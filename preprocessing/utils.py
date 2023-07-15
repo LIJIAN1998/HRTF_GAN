@@ -622,7 +622,7 @@ def remove_itd(hrir, pre_window, length):
         print("start: ", start)
         print("stop: ", stop)
         print("trimmed shape: ", len(trimmed_hrir))
-        print("fade window: ", fade_window.shape)
+        print("fade window: ", len(fade_window))
         faded_hrir = trimmed_hrir * fade_window
         zero_pad = [0] * (length - len(trimmed_hrir))
         faded_hrir = np.ma.append(faded_hrir, zero_pad)
