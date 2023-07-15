@@ -621,7 +621,7 @@ def remove_itd(hrir, pre_window, length):
         print("over_threshold_index: ", over_threshold_index)
         print("start: ", start)
         print("stop: ", stop)
-        print("trimmed shape: ", trimmed_hrir.shape, len(trimmed_hrir))
+        print("trimmed shape: ", len(trimmed_hrir))
         print("fade window: ", fade_window.shape)
         faded_hrir = trimmed_hrir * fade_window
         zero_pad = [0] * (length - len(trimmed_hrir))
