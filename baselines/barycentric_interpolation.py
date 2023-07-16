@@ -20,9 +20,9 @@ import time
 PI_4 = np.pi / 4
 
 def local_test():
-    with open('/Users/lijian/Downloads/icl/IndividualP/SONICOM_mag_100.pickle', 'rb') as f:
+    with open('/rds/general/user/jl2622/home/HRTF-projection/data/SONICOM/hr_merge/valid/SONICOM_mag_100.pickle', 'rb') as f:
         hrtf1 = pickle.load(f)
-    with open('/Users/lijian/Downloads/icl/IndividualP/SONICOM_100.pickle', 'rb') as f:
+    with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid_gt/SONICOM_100.pickle', 'rb') as f:
         hrtf2 = pickle.load(f)
     print(hrtf1.shape)
     print(hrtf2.shape)
