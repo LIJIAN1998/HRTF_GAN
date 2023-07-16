@@ -14,7 +14,7 @@ from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, my_convert_to_sofa,\
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories, get_sphere_coords
 
-from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation, debug_barycentric
+from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation, debug_barycentric, local_test
 from baselines.hrtf_selection import run_hrtf_selection
 from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
 
@@ -186,6 +186,9 @@ def main(config, mode):
         file_ext = f'loc_errors_hrtf_selection_maximum_data.pickle'
         run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
 
+    elif mode == 'debug':
+        local_test()
+
     print("finished")
 
 if __name__ == '__main__':
@@ -208,4 +211,5 @@ if __name__ == '__main__':
         tag = None
 
     config = Config(tag, using_hpc=hpc)
-    main(config, args.mode)
+    local_test()
+    # main(config, args.mode)

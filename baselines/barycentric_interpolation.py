@@ -19,6 +19,14 @@ import time
 
 PI_4 = np.pi / 4
 
+def local_test():
+    with open('/Users/lijian/Downloads/icl/IndividualP/SONICOM_mag_100.pickle', 'rb') as f:
+        hrtf1 = pickle.load(f)
+    with open('/Users/lijian/Downloads/icl/IndividualP/SONICOM_100.pickle', 'rb') as f:
+        hrtf2 = pickle.load(f)
+    print(hrtf1.shape)
+    print(hrtf2.shape)
+
 def debug_barycentric(config, barycentric_output_path):
     print("debug barycentric interpolation")
 
@@ -206,9 +214,11 @@ def run_barycentric_interpolation(config, barycentric_output_path, subject_file=
         f.write(f"num sphere coords: {len(sphere_coords)}\n")
 
     for file_name in valid_data_file_names:
+        file_name = '/SONICOM_mag_100.pickle'
         with open(config.valid_hrtf_merge_dir + file_name, "rb") as f:
             hr_hrtf = pickle.load(f)
 
+        print("hrtf shape: ", hr_hrtf.shape)
         lr_hrtf = torch.permute(downsample_hrtf(torch.permute(hr_hrtf, (3, 0, 1, 2)), config.hrtf_size, config.upscale_factor), (1, 2, 3, 0))
 
         sphere_coords_lr = []
@@ -226,7 +236,7 @@ def run_barycentric_interpolation(config, barycentric_output_path, subject_file=
         print("num lr coords: ", len(sphere_coords_lr))
         with open("log.txt", "a") as f:
             f.write(f"num lr coords: {len(sphere_coords_lr)}\n")
-        return 
+
         euclidean_sphere_triangles = []
         euclidean_sphere_coeffs = []
         for sphere_coord in sphere_coords:
@@ -246,6 +256,7 @@ def run_barycentric_interpolation(config, barycentric_output_path, subject_file=
         barycentric_hr_left = interpolate_fft(config, cs, lr_hrtf_left, sphere_coords, euclidean_sphere_triangles,
                                          euclidean_sphere_coeffs, cube_coords, fs_original=config.hrir_samplerate,
                                          edge_len=config.hrtf_size)
+        return
         barycentric_hr_right = interpolate_fft(config, cs, lr_hrtf_right, sphere_coords, euclidean_sphere_triangles,
                                               euclidean_sphere_coeffs, cube_coords, fs_original=config.hrir_samplerate,
                                               edge_len=config.hrtf_size)
