@@ -146,8 +146,8 @@ def main(config, mode):
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
-        run_barycentric_interpolation(config, barycentric_output_path)
-        print("!!!!!!!!!!!!!!!!!!my interpolation!!!!!!!!!!!!!!!!!!!!!!!!")
+        # run_barycentric_interpolation(config, barycentric_output_path)
+        # print("!!!!!!!!!!!!!!!!!!my interpolation!!!!!!!!!!!!!!!!!!!!!!!!")
         debug_barycentric(config, barycentric_output_path)
         # sphere = my_barycentric_interpolation(config, barycentric_output_path)
         # if config.gen_sofa_flag:
@@ -185,9 +185,6 @@ def main(config, mode):
         run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
         file_ext = f'loc_errors_hrtf_selection_maximum_data.pickle'
         run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
-
-    elif mode == 'debug':
-        local_test()
 
     print("finished")
 

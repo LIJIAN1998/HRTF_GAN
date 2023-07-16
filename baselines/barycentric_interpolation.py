@@ -14,6 +14,7 @@ from preprocessing.convert_coordinates import convert_cube_to_sphere
 from preprocessing.barycentric_calcs import get_triangle_vertices, calc_barycentric_coordinates
 from preprocessing.hrtf_sphere import HRTF_Sphere
 
+from config import Config
 from pprint import pprint
 import time
 
@@ -24,12 +25,96 @@ def local_test():
         hrtf1 = pickle.load(f)
     with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/valid_gt/SONICOM_100.pickle', 'rb') as f:
         hrtf2 = pickle.load(f)
-    print(hrtf1.shape)
-    print(hrtf2.shape)
+    print("hrtf1: ", hrtf1.shape)
+    print("hrtf2: ", hrtf2.shape)
+
+    tag = "ari-upscale-4"
+    config = Config(tag, using_hpc=True)
+
+    projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
+    with open(projection_filename, "rb") as f:
+        (cube_coords, sphere_coords, euclidean_sphere_triangles, euclidean_sphere_coeffs) = pickle.load(f)
+
+    lr1 = torch.permute(downsample_hrtf(torch.permute(hrtf1, (3, 0, 1, 2)), config.hrtf_size, config.upscale_factor), (1, 2, 3, 0))
+
+    sphere_coords_lr = []
+    sphere_coords_lr_index = []
+    for panel, x, y in cube_coords:
+        # based on cube coordinates, get indices for magnitudes list of lists
+        i = panel - 1
+        j = round(config.hrtf_size * (x - (PI_4 / config.hrtf_size) + PI_4) / (np.pi / 2))
+        k = round(config.hrtf_size * (y - (PI_4 / config.hrtf_size) + PI_4) / (np.pi / 2))
+        if hrtf1[i, j, k] in lr1:
+            sphere_coords_lr.append(convert_cube_to_sphere(panel, x, y))
+            sphere_coords_lr_index.append([int(i), int(j / config.upscale_factor), int(k / config.upscale_factor)])
+
+    euclidean_sphere_triangles = []
+    euclidean_sphere_coeffs = []
+    for sphere_coord in sphere_coords:
+        # based on cube coordinates, get indices for magnitudes list of lists
+        triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                    sphere_coords=sphere_coords_lr)
+        coeffs = calc_barycentric_coordinates(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                closest_points=triangle_vertices)
+        euclidean_sphere_triangles.append(triangle_vertices)
+        euclidean_sphere_coeffs.append(coeffs)
+    
+    cs = CubedSphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
+    lr1_left = lr1[:, :, :, :config.nbins_hrtf]
+    lr1_right = lr1[:, :, :, config.nbins_hrtf:]
+    print("lr1_left: ", lr1_left)
+
+    barycentric_hr_left = interpolate_fft(config, cs, lr1_left, sphere_coords, euclidean_sphere_triangles,
+                                         euclidean_sphere_coeffs, cube_coords, fs_original=config.hrir_samplerate,
+                                         edge_len=config.hrtf_size)
+    
+
+
 
 def debug_barycentric(config, barycentric_output_path):
     print("debug barycentric interpolation")
+    with open('/rds/general/user/jl2622/home/HRTF-projection/data/SONICOM/hr_merge/valid/SONICOM_mag_100.pickle', 'rb') as f:
+        hrtf1 = pickle.load(f)
+    print("hrtf1: ", hrtf1.shape)
 
+    projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
+    with open(projection_filename, "rb") as f:
+        (cube_coords, sphere_coords, euclidean_sphere_triangles, euclidean_sphere_coeffs) = pickle.load(f)
+
+    lr1 = torch.permute(downsample_hrtf(torch.permute(hrtf1, (3, 0, 1, 2)), config.hrtf_size, config.upscale_factor), (1, 2, 3, 0))
+
+    sphere_coords_lr = []
+    sphere_coords_lr_index = []
+    for panel, x, y in cube_coords:
+        # based on cube coordinates, get indices for magnitudes list of lists
+        i = panel - 1
+        j = round(config.hrtf_size * (x - (PI_4 / config.hrtf_size) + PI_4) / (np.pi / 2))
+        k = round(config.hrtf_size * (y - (PI_4 / config.hrtf_size) + PI_4) / (np.pi / 2))
+        if hrtf1[i, j, k] in lr1:
+            sphere_coords_lr.append(convert_cube_to_sphere(panel, x, y))
+            sphere_coords_lr_index.append([int(i), int(j / config.upscale_factor), int(k / config.upscale_factor)])
+
+    euclidean_sphere_triangles = []
+    euclidean_sphere_coeffs = []
+    for sphere_coord in sphere_coords:
+        # based on cube coordinates, get indices for magnitudes list of lists
+        triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                    sphere_coords=sphere_coords_lr)
+        coeffs = calc_barycentric_coordinates(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                closest_points=triangle_vertices)
+        euclidean_sphere_triangles.append(triangle_vertices)
+        euclidean_sphere_coeffs.append(coeffs)
+    
+    cs = CubedSphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
+    lr1_left = lr1[:, :, :, :config.nbins_hrtf]
+    lr1_right = lr1[:, :, :, config.nbins_hrtf:]
+    print("lr1_left: ", lr1_left)
+
+    barycentric_hr_left = interpolate_fft(config, cs, lr1_left, sphere_coords, euclidean_sphere_triangles,
+                                         euclidean_sphere_coeffs, cube_coords, fs_original=config.hrir_samplerate,
+                                         edge_len=config.hrtf_size)
+
+    ###########################################################################
     valid_gt_path = glob.glob('%s/%s_*' % (config.valid_gt_path, config.dataset))
     valid_gt_file_names = ['/' + os.path.basename(x) for x in valid_gt_path]
 
@@ -59,6 +144,7 @@ def debug_barycentric(config, barycentric_output_path):
     with open(config.valid_gt_path + '/SONICOM_104.pickle', "rb") as f:
         hr_hrtf = pickle.load(f)  # r x w x h x nbins
 
+    print("hrtf2: ", hr_hrtf.shape)
     # initialize an empty lr_hrtf
     lr_hrtf = torch.zeros(1, hr_hrtf.size(1) // row_ratio, hr_hrtf.size(2) // column_ratio, nbins)
 
@@ -73,6 +159,7 @@ def debug_barycentric(config, barycentric_output_path):
             sphere_coords_lr_index.append((j ,i))
             lr_hrtf[:, i, j] = hr_hrtf[:, row_ratio * i, column_ratio*j]
 
+    print("lr: ", lr_hrtf.shape)
     print("num of my lr coords: ", len(sphere_coords_lr))
     with open("log.txt", "a") as f:
         f.write(f"my num lr coords: {len(sphere_coords_lr)}\n")
