@@ -149,12 +149,12 @@ def main(config, mode):
         # run_barycentric_interpolation(config, barycentric_output_path)
         # print("!!!!!!!!!!!!!!!!!!my interpolation!!!!!!!!!!!!!!!!!!!!!!!!")
         debug_barycentric(config, barycentric_output_path)
-        sphere_coords = my_barycentric_interpolation(config, barycentric_output_path)
-        if config.gen_sofa_flag:
-            row_angles = list(set([x[1] for x in sphere_coords]))
-            column_angles = list(set([x[0] for x  in sphere_coords]))
-            my_convert_to_sofa(barycentric_output_path, config, row_angles, column_angles)
-            print('Created barycentric baseline sofa files')
+        # sphere_coords = my_barycentric_interpolation(config, barycentric_output_path)
+        # if config.gen_sofa_flag:
+        #     row_angles = list(set([x[1] for x in sphere_coords]))
+        #     column_angles = list(set([x[0] for x  in sphere_coords]))
+        #     my_convert_to_sofa(barycentric_output_path, config, row_angles, column_angles)
+        #     print('Created barycentric baseline sofa files')
 
         # config.path = config.barycentric_hrtf_dir
         # file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
