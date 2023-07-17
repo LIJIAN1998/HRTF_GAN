@@ -49,6 +49,9 @@ def debug_barycentric(config, barycentric_output_path):
 
     euclidean_sphere_triangles = []
     euclidean_sphere_coeffs = []
+    n = 0
+    with open("log.txt", 'a') as f:
+        f.write(f"total num coords: {len(sphere_coords)}\n")
     for sphere_coord in sphere_coords:
         # based on cube coordinates, get indices for magnitudes list of lists
         triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
@@ -57,6 +60,8 @@ def debug_barycentric(config, barycentric_output_path):
                                                 closest_points=triangle_vertices)
         euclidean_sphere_triangles.append(triangle_vertices)
         euclidean_sphere_coeffs.append(coeffs)
+        with open("log.txt", 'a') as f:
+            f.write(n, "\n")
     with open('log.txt', 'a') as f:
         f.write("triangles calculated\n")
     
