@@ -614,7 +614,6 @@ def remove_itd(hrir, pre_window, length):
     else:
         trimmed_hrir = trim_hrir(hrir, start, -1)
         fade_window = fadein + [1] * (len(trimmed_hrir) - fadein_len - fadeout_len) + fadeout
-        print("hrir: ", hrir)
         print("hrir shape: ", hrir.shape)
         print("pre_window: ", pre_window)
         print("length: ", length)
@@ -623,6 +622,15 @@ def remove_itd(hrir, pre_window, length):
         print("stop: ", stop)
         print("trimmed shape: ", len(trimmed_hrir))
         print("fade window: ", len(fade_window))
+        with open("log.txt", 'a') as f:
+            f.write(f"hrir: , {hrir.shape}\n")
+            f.write(f"pre_window, {pre_window}\n")
+            f.write(f"length, {length}\n")
+            f.write(f"over_threshold_index, {over_threshold_index}\n")
+            f.write(f"start, {start}\n")
+            f.write(f"stop, {stop}\n")
+            f.write(f"trimmed shape: {len(trimmed_hrir)}\n")
+            f.write(f"fade window: {len(fade_window)}")
         faded_hrir = trimmed_hrir * fade_window
         zero_pad = [0] * (length - len(trimmed_hrir))
         faded_hrir = np.ma.append(faded_hrir, zero_pad)

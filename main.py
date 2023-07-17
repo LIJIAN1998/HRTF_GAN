@@ -149,13 +149,12 @@ def main(config, mode):
         # run_barycentric_interpolation(config, barycentric_output_path)
         # print("!!!!!!!!!!!!!!!!!!my interpolation!!!!!!!!!!!!!!!!!!!!!!!!")
         debug_barycentric(config, barycentric_output_path)
-        # sphere = my_barycentric_interpolation(config, barycentric_output_path)
-        # if config.gen_sofa_flag:
-        #     coords = sphere.get_sphere_coords()
-        #     row_angles = list(set([x[1] for x in coords]))
-        #     column_angles = list(set([x[0] for x  in coords]))
-        #     my_convert_to_sofa(barycentric_output_path, config, row_angles, column_angles)
-        #     print('Created barycentric baseline sofa files')
+        sphere_coords = my_barycentric_interpolation(config, barycentric_output_path)
+        if config.gen_sofa_flag:
+            row_angles = list(set([x[1] for x in sphere_coords]))
+            column_angles = list(set([x[0] for x  in sphere_coords]))
+            my_convert_to_sofa(barycentric_output_path, config, row_angles, column_angles)
+            print('Created barycentric baseline sofa files')
 
         # config.path = config.barycentric_hrtf_dir
         # file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
@@ -185,6 +184,20 @@ def main(config, mode):
         run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
         file_ext = f'loc_errors_hrtf_selection_maximum_data.pickle'
         run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
+
+    elif mode == "debug":
+        ds = load_function(data_dir, features_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
+        cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
+        projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
+        with open(projection_filename, "rb") as file:
+            cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
+        features = ds[0]['features'].data
+        print("features: ", features.shape)
+        print(*ds[0]['features'].shape[:-2])
+        features = features.reshape(*ds[0]['features'].shape[:-2], -1)
+        clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
+                                     cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
+        print("clean_hrtf", clean_hrtf.shape)
 
     print("finished")
 

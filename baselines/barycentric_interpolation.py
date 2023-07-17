@@ -62,6 +62,8 @@ def debug_barycentric(config, barycentric_output_path):
     barycentric_hr_left = interpolate_fft(config, cs, lr1_left, sphere_coords, euclidean_sphere_triangles,
                                          euclidean_sphere_coeffs, cube_coords, fs_original=config.hrir_samplerate,
                                          edge_len=config.hrtf_size)
+    
+    return
 
     ###########################################################################
     valid_gt_path = glob.glob('%s/%s_*' % (config.valid_gt_path, config.dataset))
@@ -144,7 +146,6 @@ def debug_barycentric(config, barycentric_output_path):
     end_time = time.time()
     elapsed_time = end_time - start_time
     with open("log.txt", "a") as f:
-        f.write(f"count: {n}\n")
         f.write(f"time for one file: {elapsed_time}\n")
 
 def my_barycentric_interpolation(config, barycentric_output_path):
