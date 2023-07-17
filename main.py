@@ -208,5 +208,4 @@ if __name__ == '__main__':
         tag = None
 
     config = Config(tag, using_hpc=hpc)
-    local_test()
-    # main(config, args.mode)
+    main(config, args.mode)
