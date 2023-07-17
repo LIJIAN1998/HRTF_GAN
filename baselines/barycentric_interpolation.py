@@ -61,7 +61,7 @@ def debug_barycentric(config, barycentric_output_path):
         euclidean_sphere_triangles.append(triangle_vertices)
         euclidean_sphere_coeffs.append(coeffs)
         with open("log.txt", 'a') as f:
-            f.write(n, "\n")
+            f.write(f"{n}\n")
     with open('log.txt', 'a') as f:
         f.write("triangles calculated\n")
     
