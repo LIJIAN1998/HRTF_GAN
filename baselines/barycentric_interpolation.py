@@ -49,14 +49,16 @@ def debug_barycentric(config, barycentric_output_path):
 
     euclidean_sphere_triangles = []
     euclidean_sphere_coeffs = []
-    # for sphere_coord in sphere_coords:
-    #     # based on cube coordinates, get indices for magnitudes list of lists
-    #     triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
-    #                                                 sphere_coords=sphere_coords_lr)
-    #     coeffs = calc_barycentric_coordinates(elevation=sphere_coord[0], azimuth=sphere_coord[1],
-    #                                             closest_points=triangle_vertices)
-    #     euclidean_sphere_triangles.append(triangle_vertices)
-    #     euclidean_sphere_coeffs.append(coeffs)
+    for sphere_coord in sphere_coords:
+        # based on cube coordinates, get indices for magnitudes list of lists
+        triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                    sphere_coords=sphere_coords_lr)
+        coeffs = calc_barycentric_coordinates(elevation=sphere_coord[0], azimuth=sphere_coord[1],
+                                                closest_points=triangle_vertices)
+        euclidean_sphere_triangles.append(triangle_vertices)
+        euclidean_sphere_coeffs.append(coeffs)
+    with open('log.txt', 'a') as f:
+        f.write("triangles calculated\n")
     
     # cs = CubedSphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
     # lr1_left = lr1[:, :, :, :config.nbins_hrtf]
