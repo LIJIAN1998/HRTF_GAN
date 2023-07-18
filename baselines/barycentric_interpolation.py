@@ -66,15 +66,17 @@ def debug_barycentric(config, barycentric_output_path):
     with open('log.txt', 'a') as f:
         f.write("triangles calculated\n")
     
-    # cs = CubedSphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
-    # lr1_left = lr1[:, :, :, :config.nbins_hrtf]
-    # lr1_right = lr1[:, :, :, config.nbins_hrtf:]
-    # print("lr1_left: ", lr1_left)
+    cs = CubedSphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
+    lr1_left = lr1[:, :, :, :config.nbins_hrtf]
+    lr1_right = lr1[:, :, :, config.nbins_hrtf:]
+    print("lr1_left: ", lr1_left)
 
-    # barycentric_hr_left = interpolate_fft(config, cs, lr1_left, sphere_coords, euclidean_sphere_triangles,
-    #                                      euclidean_sphere_coeffs, cube_coords, fs_original=config.hrir_samplerate,
-    #                                      edge_len=config.hrtf_size)
-
+    barycentric_hr_left = interpolate_fft(config, cs, lr1_left, sphere_coords, euclidean_sphere_triangles,
+                                         euclidean_sphere_coeffs, cube_coords, fs_original=config.hrir_samplerate,
+                                         edge_len=config.hrtf_size)
+    print("interpolation results: ", barycentric_hr_left.shape)
+    with open('log.txt', 'a') as f:
+        f.write("interpolation done")
 
     ###########################################################################
     # valid_gt_path = glob.glob('%s/%s_*' % (config.valid_gt_path, config.dataset))
