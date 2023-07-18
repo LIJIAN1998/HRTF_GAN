@@ -73,7 +73,7 @@ def debug_barycentric(config, barycentric_output_path):
     cs = CubedSphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
     lr1_left = lr1[:, :, :, :config.nbins_hrtf]
     lr1_right = lr1[:, :, :, config.nbins_hrtf:]
-    print("lr1_left: ", lr1_left)
+    print("lr1_left: ", lr1_left.shape)
 
     start = time.time()
     barycentric_hr_left = interpolate_fft(config, cs, lr1_left, sphere_coords, euclidean_sphere_triangles,
@@ -83,7 +83,7 @@ def debug_barycentric(config, barycentric_output_path):
     time_elapsed = end - start
     print("interpolation results: ", barycentric_hr_left.shape)
     with open('log.txt', 'a') as f:
-        f.write(f"fft time: {time_elapsed}")
+        f.write(f"fft time: {time_elapsed}\n")
         f.write("interpolation done")
 
     ###########################################################################

@@ -378,8 +378,8 @@ def my_calc_interpolated_feature(triangle_vertices, coeffs, all_coords, subject_
     features = []
     for p in triangle_vertices:
         features_p = my_get_feature_for_point_tensor(p[0], p[1], all_coords, subject_features)
-        features_no_ITD = remove_itd(features_p, int(len(features_p)*0.04), len(features_p))
-        features.append(features_no_ITD)
+        # features_no_ITD = remove_itd(features_p, int(len(features_p)*0.04), len(features_p))
+        features.append(features_p)
     
     # based on equation 6 in "3D Tune-In Toolkit: An open-source library for real-time binaural spatialisation"
     if len(features) == 3:
@@ -394,6 +394,10 @@ def calc_interpolated_feature(time_domain_flag, triangle_vertices, coeffs, all_c
     """Calculate the interpolated feature for a given point based on vertices specified by triangle_vertices, features
     specified by subject_features, and barycentric coefficients specified by coeffs"""
     # get features for each of the three closest points, add to a list in order of closest to farthest
+    print("calc_interpolated_feature function")
+    with open("log.txt", 'a') as f:
+        f.write("calc_interpolated_feature function\n")
+        f.write(f"time domain flag, {time_domain_flag}")
     features = []
     for p in triangle_vertices:
         if time_domain_flag:
@@ -428,6 +432,9 @@ def my_calc_all_interpolated_features(hrtf_sphere, features,  euclidean_sphere, 
 def calc_all_interpolated_features(cs, features, euclidean_sphere, euclidean_sphere_triangles, euclidean_sphere_coeffs):
     """Essentially a wrapper function for calc_interpolated_features above, calculated interpolated features for all
     points on the euclidean sphere rather than a single point"""
+    print("calc_all_interpolated_features function")
+    with open("log.txt", 'a') as f:
+        f.write("calc_all_interpolated_features function \n")
     selected_feature_interpolated = []
     for i, p in enumerate(euclidean_sphere):
         if p[0] is not None:
@@ -524,7 +531,9 @@ def interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeff
     :param cube: A list of locations of the gridded cubed sphere points to be interpolated, given as (panel, x, y)
     :param edge_len: Edge length of gridded cube
     """
-
+    print("iterpolate fft function")
+    with open("log.txt", "a") as f:
+        f.write("iterpolate fft function\n")
     # interpolated_hrirs is a list of interpolated HRIRs corresponding to the points specified in load_sphere and
     # load_cube, all three lists share the same ordering
     interpolated_hrirs = calc_all_interpolated_features(cs, features, sphere, sphere_triangles, sphere_coeffs)
@@ -564,6 +573,7 @@ def trim_hrir(hrir, start, stop):
 
 def remove_itd(hrir, pre_window, length):
     """Remove ITD from HRIR using kalman filter"""
+    print("remove")
     with open("log.txt", 'a') as f:
         f.write("remove itd\n")
     # normalize such that max(abs(hrir)) == 1
