@@ -52,6 +52,7 @@ def debug_barycentric(config, barycentric_output_path):
     n = 0
     with open("log.txt", 'a') as f:
         f.write(f"total num coords: {len(sphere_coords)}\n")
+    start = time.time()
     for sphere_coord in sphere_coords:
         n += 1
         # based on cube coordinates, get indices for magnitudes list of lists
@@ -63,7 +64,10 @@ def debug_barycentric(config, barycentric_output_path):
         euclidean_sphere_coeffs.append(coeffs)
         with open("log.txt", 'a') as f:
             f.write(f"{n}\n")
+    end = time.time()
+    time_elapsed = end - start
     with open('log.txt', 'a') as f:
+        f.write(f"time used: {time_elapsed}\n")
         f.write("triangles calculated\n")
     
     cs = CubedSphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
@@ -71,11 +75,15 @@ def debug_barycentric(config, barycentric_output_path):
     lr1_right = lr1[:, :, :, config.nbins_hrtf:]
     print("lr1_left: ", lr1_left)
 
+    start = time.time()
     barycentric_hr_left = interpolate_fft(config, cs, lr1_left, sphere_coords, euclidean_sphere_triangles,
                                          euclidean_sphere_coeffs, cube_coords, fs_original=config.hrir_samplerate,
                                          edge_len=config.hrtf_size)
+    end = time.time()
+    time_elapsed = end - start
     print("interpolation results: ", barycentric_hr_left.shape)
     with open('log.txt', 'a') as f:
+        f.write(f"fft time: {time_elapsed}")
         f.write("interpolation done")
 
     ###########################################################################
