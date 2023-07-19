@@ -397,7 +397,7 @@ def calc_interpolated_feature(time_domain_flag, triangle_vertices, coeffs, all_c
     print("calc_interpolated_feature function")
     with open("log.txt", 'a') as f:
         f.write("calc_interpolated_feature function\n")
-        f.write(f"time domain flag, {time_domain_flag}")
+        f.write(f"time domain flag, {time_domain_flag}\n")
     features = []
     for p in triangle_vertices:
         if time_domain_flag:
