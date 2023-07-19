@@ -372,7 +372,7 @@ def get_feature_for_point_tensor(elevation, azimuth, all_coords, subject_feature
 
 def my_get_feature_for_point_tensor(elevation, azimuth, all_coords, subject_features):
     all_coords_row = all_coords.query(f'elevation == {elevation} & azimuth == {azimuth}')
-    return scipy.fft.irfft(np.concatenate((np.array([0.0]), np.array(subject_features[0][int(all_coords_row.elevation_index)][int(all_coords_row.azimuth_index)]))))
+    return scipy.fft.irfft(np.concatenate((np.array([0.0]), np.array(subject_features[0][int(all_coords_row.azimuth_index)][int(all_coords_row.elevation_index)]))))
 
 def my_calc_interpolated_feature(triangle_vertices, coeffs, all_coords, subject_features):
     features = []
