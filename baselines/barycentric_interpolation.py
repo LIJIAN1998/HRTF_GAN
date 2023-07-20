@@ -168,6 +168,7 @@ def debug_barycentric(config, barycentric_output_path):
     elapsed_time = end_time - start_time
     with open("log.txt", "a") as f:
         f.write(f"time for one file: {elapsed_time}\n")
+    return sphere_coords
 
 def my_barycentric_interpolation(config, barycentric_output_path):
     print("my barycentric interpolation")
