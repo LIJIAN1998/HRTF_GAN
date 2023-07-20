@@ -139,6 +139,7 @@ def debug_barycentric(config, barycentric_output_path):
     euclidean_sphere_coeffs = []
 
     start_time = time.time()
+    n = 0
     for sphere_coord in sphere_coords:
         # based on cube coordinates, get indices for magnitudes list of lists
         triangle_vertices = get_triangle_vertices(elevation=sphere_coord[0], azimuth=sphere_coord[1],
@@ -147,6 +148,8 @@ def debug_barycentric(config, barycentric_output_path):
                                                 closest_points=triangle_vertices)
         euclidean_sphere_triangles.append(triangle_vertices)
         euclidean_sphere_coeffs.append(coeffs)
+        with open("log.txt", "a") as f:
+            f.write(f"{n}\n")
 
     lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
 
@@ -159,6 +162,8 @@ def debug_barycentric(config, barycentric_output_path):
                                                 euclidean_sphere_triangles, euclidean_sphere_coeffs)
     
     barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
+    with open("log.txt", "a") as f:
+        f.write(f"barycentric hr merge: {barycentric_hr_merged.shape}")
 
     with open(barycentric_output_path + '/SONICOM_100.pickle', "wb") as file:
         pickle.dump(barycentric_hr_merged, file)
