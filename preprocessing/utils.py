@@ -394,10 +394,6 @@ def calc_interpolated_feature(time_domain_flag, triangle_vertices, coeffs, all_c
     """Calculate the interpolated feature for a given point based on vertices specified by triangle_vertices, features
     specified by subject_features, and barycentric coefficients specified by coeffs"""
     # get features for each of the three closest points, add to a list in order of closest to farthest
-    print("calc_interpolated_feature function")
-    with open("log.txt", 'a') as f:
-        f.write("calc_interpolated_feature function\n")
-        f.write(f"time domain flag, {time_domain_flag}\n")
     features = []
     for p in triangle_vertices:
         if time_domain_flag:
@@ -432,9 +428,6 @@ def my_calc_all_interpolated_features(hrtf_sphere, features,  euclidean_sphere, 
 def calc_all_interpolated_features(cs, features, euclidean_sphere, euclidean_sphere_triangles, euclidean_sphere_coeffs):
     """Essentially a wrapper function for calc_interpolated_features above, calculated interpolated features for all
     points on the euclidean sphere rather than a single point"""
-    print("calc_all_interpolated_features function")
-    with open("log.txt", 'a') as f:
-        f.write("calc_all_interpolated_features function \n")
     selected_feature_interpolated = []
     for i, p in enumerate(euclidean_sphere):
         if p[0] is not None:
@@ -495,7 +488,7 @@ def get_sphere_coords(row_angles, column_angles, mask=None):
 
         return sphere_coords, indices
     
-def my_interpolate_fft(config, hrtf_sphere, features, sphere_coords, sphere_triangles, sphere_coeffs):
+def my_interpolate_fft(config, hrtf_sphere, features, full_size, sphere_coords, sphere_triangles, sphere_coeffs):
     """
     hrtf_sphere: HRTF_Sphere object associated with dataset
     features: features for a given subject, 
@@ -508,10 +501,10 @@ def my_interpolate_fft(config, hrtf_sphere, features, sphere_coords, sphere_tria
     """
     interpolated_hrirs = my_calc_all_interpolated_features(hrtf_sphere, features, sphere_coords, sphere_triangles, sphere_coeffs)
     magnitudes, phases = calc_hrtf(config, interpolated_hrirs)
-    magnitudes_raw = [[[[] for _ in range(features.size(2))] for _ in range(features.size(1))] for _ in range(1)]
+    magnitudes_raw = [[[[] for _ in range(full_size(1))] for _ in range(full_size(0))] for _ in range(1)]
     count = 0
-    for i in range(features.size(1)):
-        for j in range(features.size(2)):
+    for i in range(full_size(0)):
+        for j in range(full_size(1)):
             magnitudes_raw[0][i][j] = magnitudes[count]
             count += 1
     
@@ -531,9 +524,6 @@ def interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeff
     :param cube: A list of locations of the gridded cubed sphere points to be interpolated, given as (panel, x, y)
     :param edge_len: Edge length of gridded cube
     """
-    print("iterpolate fft function")
-    with open("log.txt", "a") as f:
-        f.write("iterpolate fft function\n")
     # interpolated_hrirs is a list of interpolated HRIRs corresponding to the points specified in load_sphere and
     # load_cube, all three lists share the same ordering
     interpolated_hrirs = calc_all_interpolated_features(cs, features, sphere, sphere_triangles, sphere_coeffs)
