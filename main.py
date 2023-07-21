@@ -216,7 +216,7 @@ def main(config, mode):
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
         with open(barycentric_output_path + '/SONICOM_100.pickle', "rb") as f:
             hrtf = pickle.load(f)
-        hrtf = torch.permute(hrtf, (1, 2, 0, 3))
+        hrtf = torch.permute(hrtf, (2, 0, 1, 3))
         with open(barycentric_output_path + '/SONICOM_100.pickle', "wb") as f:
             pickle.dump(hrtf, f)
         print("hrtf pickle: ", hrtf.shape)
