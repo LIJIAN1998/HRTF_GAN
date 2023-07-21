@@ -501,10 +501,10 @@ def my_interpolate_fft(config, hrtf_sphere, features, full_size, sphere_coords, 
     """
     interpolated_hrirs = my_calc_all_interpolated_features(hrtf_sphere, features, sphere_coords, sphere_triangles, sphere_coeffs)
     magnitudes, phases = calc_hrtf(config, interpolated_hrirs)
-    magnitudes_raw = [[[[] for _ in range(full_size(1))] for _ in range(full_size(0))] for _ in range(1)]
+    magnitudes_raw = [[[[] for _ in range(full_size[1])] for _ in range(full_size[0])] for _ in range(1)]
     count = 0
-    for i in range(full_size(0)):
-        for j in range(full_size(1)):
+    for i in range(full_size[0]):
+        for j in range(full_size[1]):
             magnitudes_raw[0][i][j] = magnitudes[count]
             count += 1
     
