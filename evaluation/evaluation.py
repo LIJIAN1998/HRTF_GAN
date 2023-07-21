@@ -43,12 +43,12 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
 
     if hrtf_selection == 'minimum' or hrtf_selection == 'maximum':
         lsd_errors = []
-        valid_data_paths = glob.glob('%s/%s_*' % (config.valid_hrtf_merge_dir, config.dataset))
+        valid_data_paths = glob.glob('%s/%s_*' % (config.valid_gt_path, config.dataset))
         valid_data_file_names = ['/' + os.path.basename(x) for x in valid_data_paths]
 
         for file_name in valid_data_file_names:
             # Overwrite the generated points that exist in the original data
-            with open(config.valid_hrtf_merge_dir + file_name, "rb") as f:
+            with open(config.valid_gt_path + file_name, "rb") as f:
                 hr_hrtf = pickle.load(f)
 
             with open(f'{val_dir}/{hrtf_selection}.pickle', "rb") as f:
