@@ -79,7 +79,7 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
 
     print('Mean LSD Error: %0.3f' % np.mean([error[1] for error in lsd_errors]))
     with open('log.txt', 'a') as f:
-        f.write('Mean LSD Error: %0.3f' % np.mean([error[1] for error in lsd_errors]))
+        f.write('Mean LSD Error: %0.3f \n' % np.mean([error[1] for error in lsd_errors]))
     with open(f'{config.path}/{file_ext}', "wb") as file:
         pickle.dump(lsd_errors, file)
 
