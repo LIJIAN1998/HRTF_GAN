@@ -216,7 +216,17 @@ def main(config, mode):
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
         with open(barycentric_output_path + '/SONICOM_100.pickle', "rb") as f:
             hrtf = pickle.load(f)
+        hrtf = torch.permute(hrtf, (1, 2, 0, 3))
+        with open(barycentric_output_path + '/SONICOM_100.pickle', "wb") as f:
+            pickle.dump(hrtf, f)
         print("hrtf pickle: ", hrtf.shape)
+        config.path = config.barycentric_hrtf_dir
+        file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        run_lsd_evaluation(config, barycentric_output_path, file_ext)
+
+        file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        run_localisation_evaluation(config, barycentric_output_path, file_ext)
+
 
     print("finished")
 
