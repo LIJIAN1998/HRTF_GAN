@@ -11,6 +11,7 @@ from model.test import test
 from model.util import load_dataset, load_hrtf
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
+from preprocessing.hrtf_sphere import HRTF_Sphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, my_convert_to_sofa,\
      merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories, get_sphere_coords
 
@@ -186,20 +187,36 @@ def main(config, mode):
         run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
 
     elif mode == "debug":
-        ds = load_function(data_dir, features_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
-        cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
-        projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
-        with open(projection_filename, "rb") as file:
-            cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
-        features = ds[0]['features'].data
-        print("features: ", features.shape)
-        print(*ds[0]['features'].shape[:-2])
-        features = features.reshape(*ds[0]['features'].shape[:-2], -1)
-        clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
-                                     cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
-        print("clean_hrtf", clean_hrtf.shape)
+        # ds = load_function(data_dir, features_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
+        # cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
+        # projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
+        # with open(projection_filename, "rb") as file:
+        #     cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
+        # features = ds[0]['features'].data
+        # print("features: ", features.shape)
+        # print(*ds[0]['features'].shape[:-2])
+        # features = features.reshape(*ds[0]['features'].shape[:-2], -1)
+        # clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
+        #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
+        # print("clean_hrtf", clean_hrtf.shape)
 
-        
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                         'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+        row_angles = ds.row_angles
+        column_angles = ds.column_angles
+        mask = ds[0]['features'].mask
+        whole_sphere = HRTF_Sphere(mask=mask, row_angles=row_angles, column_angles=column_angles)
+        sphere_coords = whole_sphere.get_sphere_coords()
+        row_angles = list(set([x[1] for x in sphere_coords]))
+        column_angles = list(set([x[0] for x  in sphere_coords]))
+        print("row_angles: ", len(row_angles), "\n", row_angles)
+        print("culumn angles: ", len(column_angles), "\n", column_angles)
+
+        barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
+        barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
+        with open(barycentric_output_path + '/SONICOM_100.pickle', "rb") as f:
+            hrtf = pickle.load(f)
+        print("hrtf pickle: ", hrtf.shape)
 
     print("finished")
 

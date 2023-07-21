@@ -62,7 +62,6 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
             lsd_errors.append([subject_id,  float(error.detach())])
             print('LSD Error of subject %s: %0.4f' % (subject_id, float(error.detach())))
     else:
-        print("else")
         val_data_paths = glob.glob(f"{val_dir}/{config.dataset}_*")
         # sr_data_paths = glob.glob('%s/%s_*' % (val_dir, config.dataset))
         val_data_file_names = ['/' + os.path.basename(x) for x in val_data_paths]

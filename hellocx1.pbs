@@ -11,7 +11,7 @@ cd $PBS_O_WORKDIR
 # python model/model.py > output.txt
 # python test.py > output.txt
 # python opt.py > output.txt
-python main.py barycentric_baseline --hpc True --tag ari-upscale-4 > output.txt
+python main.py debug --hpc True --tag ari-upscale-4 > output.txt
 # python opt.py > output.txt
 # cp output.txt $PBS_O_WORKDIR
 
