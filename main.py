@@ -199,6 +199,8 @@ def main(config, mode):
                                      cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         print("clean_hrtf", clean_hrtf.shape)
 
+        
+
     print("finished")
 
 if __name__ == '__main__':

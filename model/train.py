@@ -10,6 +10,7 @@ from model.model import *
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 from torch.autograd import Variable
+import torch.nn.functional as F
 import numpy as np
 import torch
 import torch.nn as nn
@@ -136,7 +137,7 @@ def test_train(config, train_prefetcher):
     print("any negative result? ", (recons < 0).any())
     with open('log.txt', "a") as f:
         f.write(f"inverse transformation negative?: {(recons<0).any()}\n")
-    recons = torch.abs(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)) 
+    recons = F.softplus(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)) 
     unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
     # with open('log.txt', "a") as f:
     #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")

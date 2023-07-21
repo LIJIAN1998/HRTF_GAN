@@ -167,10 +167,10 @@ def debug_barycentric(config, barycentric_output_path):
     lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]  
     lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
 
-    barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, sphere_coords,
-                                                euclidean_sphere_triangles,euclidean_sphere_coeffs)
-    barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, sphere_coords,
-                                                euclidean_sphere_triangles, euclidean_sphere_coeffs)
+    barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, full_size, sphere_coords,
+                                             euclidean_sphere_triangles,euclidean_sphere_coeffs)
+    barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, full_size, sphere_coords,
+                                              euclidean_sphere_triangles, euclidean_sphere_coeffs)
     
     barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
     with open("log.txt", "a") as f:
