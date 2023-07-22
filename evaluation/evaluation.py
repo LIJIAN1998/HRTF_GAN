@@ -56,8 +56,6 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
 
             generated = torch.permute(sr_hrtf[:, None], (1, 4, 0, 2, 3)) 
             target = torch.permute(hr_hrtf[:, None], (1, 4, 0, 2, 3))  # 1 x nbins x r x w x h
-            print("generated: ", generated.shape)
-            print("target: ", target.shape)
 
             error = spectral_distortion_metric(generated, target)
             subject_id = ''.join(re.findall(r'\d+', file_name))
