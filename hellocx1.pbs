@@ -1,5 +1,5 @@
-#PBS -l walltime=05:00:00
-#PBS -lselect=1:ncpus=20:mem=512gb
+#PBS -l walltime=00:25:00
+#PBS -lselect=1:ncpus=30:mem=512gb
 
 module load anaconda3/personal
 source activate env3_7
