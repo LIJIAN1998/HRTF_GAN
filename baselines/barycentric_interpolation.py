@@ -202,9 +202,12 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                                                          'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
     row_angles = ds.row_angles
     column_angles = ds.column_angles
+    full_size = (len(row_angles), len(column_angles))
     mask = ds[0]['features'].mask
     whole_sphere = HRTF_Sphere(mask=mask, row_angles=row_angles, column_angles=column_angles)
     sphere_coords = whole_sphere.get_sphere_coords()
+    with open("log.txt", "a") as f:
+        f.write(f"num coords: {len(sphere_coords)}\n")
 
     row_ratio, column_ratio = get_sample_ratio(config.upscale_factor)
 
@@ -222,6 +225,8 @@ def my_barycentric_interpolation(config, barycentric_output_path):
         sphere_coords_lr_index = []
         num_file += 1
         print("file opened: ", num_file)
+        with open("log.txt", "a") as f:
+            f.write(f"num files: {num_file}")
 
         # initialize an empty lr_hrtf
         lr_hrtf = torch.zeros(1, hr_hrtf.size(1) // row_ratio, hr_hrtf.size(2) // column_ratio, nbins)
@@ -234,9 +239,6 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                 sphere_coords_lr_index.append((j ,i))
                 lr_hrtf[:, i, j] = hr_hrtf[:, row_ratio * i, column_ratio*j]
 
-        print("my lr sphere coords:", len(sphere_coords_lr))
-        with open("log.txt", "a") as f:
-            f.write(f"num lr coords: {len(sphere_coords_lr)}\n")
         # pprint(sphere_coords_lr)
         euclidean_sphere_triangles = []
         euclidean_sphere_coeffs = []
@@ -256,9 +258,9 @@ def my_barycentric_interpolation(config, barycentric_output_path):
         lr_hrtf_left = lr_hrtf[:, :, :, :config.nbins_hrtf]  
         lr_hrtf_right = lr_hrtf[:, :, :, config.nbins_hrtf:]
 
-        barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, sphere_coords,
+        barycentric_hr_left = my_interpolate_fft(config, lr_sphere, lr_hrtf_left, full_size, sphere_coords,
                                                  euclidean_sphere_triangles,euclidean_sphere_coeffs)
-        barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, sphere_coords,
+        barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, full_size, sphere_coords,
                                                   euclidean_sphere_triangles, euclidean_sphere_coeffs)
         
         barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
