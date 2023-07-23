@@ -149,8 +149,8 @@ def main(config, mode):
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
         # run_barycentric_interpolation(config, barycentric_output_path)
         # print("!!!!!!!!!!!!!!!!!!my interpolation!!!!!!!!!!!!!!!!!!!!!!!!")
-        sphere_coords = debug_barycentric(config, barycentric_output_path)
-        # sphere_coords = my_barycentric_interpolation(config, barycentric_output_path)
+        # sphere_coords = debug_barycentric(config, barycentric_output_path)
+        sphere_coords = my_barycentric_interpolation(config, barycentric_output_path)
         if config.gen_sofa_flag:
             row_angles = list(set([x[1] for x in sphere_coords]))
             column_angles = list(set([x[0] for x  in sphere_coords]))
