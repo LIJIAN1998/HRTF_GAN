@@ -100,7 +100,7 @@ def test_train(config, train_prefetcher):
     zeros_label = Variable(torch.zeros(bs,1)).to(device) # labels for generated data
 
     mu, log_var, recon = vae(lr_coefficient)
-    with open('log.txt', "a") as f:
+    with open('train_log.txt', "a") as f:
         f.write(f"recon negative?: {(recon<0).any()}\n")
 
     # train decoder
@@ -111,7 +111,7 @@ def test_train(config, train_prefetcher):
     gan_loss_dec = err_dec_real + err_dec_recon
     train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
     feature_sim_loss_D = config.gamma * ((feature_recon - feature_real) ** 2).mean() # feature loss
-    with open('log.txt', "a") as f:
+    with open('train_log.txt', "a") as f:
         f.write(f"sim loss D: {feature_sim_loss_D}\n")
         if torch.isnan(feature_recon).all():
             f.write("all feature recon is nan\n")
@@ -128,19 +128,18 @@ def test_train(config, train_prefetcher):
         SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         harmonics_list.append(harmonics)
-        # recon_hrir = SHT.inverse(recon[i].T.detach().cpu().numpy())  # Compute the inverse
-        # recon_hrir_tensor = torch.from_numpy(recon_hrir.T).reshape(nbins, num_radii, num_row_angles, num_col_angles)
     harmonics_tensor = torch.stack(harmonics_list).to(device)
     print("any negative recon? ", (recon < 0).any())
     print("any negative harmonics? ", (harmonics < 0).any())
     recons = harmonics_tensor @ recon.permute(0, 2, 1)
     print("any negative result? ", (recons < 0).any())
-    with open('log.txt', "a") as f:
+    with open('train_log.txt', "a") as f:
         f.write(f"inverse transformation negative?: {(recons<0).any()}\n")
     recons = F.softplus(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles)) 
     unweighted_content_loss = content_criterion(config, recons, hrir, sd_mean, sd_std, ild_mean, ild_std)
-    # with open('log.txt', "a") as f:
-    #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
+    with open('train_log.txt', "a") as f:
+        f.write(f"after softplus, negative? {(recons<0).any()}\n")
+        f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
     content_loss = config.content_weight * unweighted_content_loss
     train_loss_Dec_content += content_loss
     err_dec = feature_sim_loss_D - gan_loss_dec

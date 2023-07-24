@@ -199,34 +199,8 @@ def main(config, mode):
         # clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
-
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                         'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
-        row_angles = ds.row_angles
-        column_angles = ds.column_angles
-        mask = ds[0]['features'].mask
-        whole_sphere = HRTF_Sphere(mask=mask, row_angles=row_angles, column_angles=column_angles)
-        sphere_coords = whole_sphere.get_sphere_coords()
-        row_angles = list(set([x[1] for x in sphere_coords]))
-        column_angles = list(set([x[0] for x  in sphere_coords]))
-        print("row_angles: ", len(row_angles), "\n", row_angles)
-        print("culumn angles: ", len(column_angles), "\n", column_angles)
-
-        barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
-        barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
-        with open(barycentric_output_path + '/SONICOM_100.pickle', "rb") as f:
-            hrtf = pickle.load(f)
-        hrtf = torch.permute(hrtf, (2, 0, 1, 3))
-        with open(barycentric_output_path + '/SONICOM_100.pickle', "wb") as f:
-            pickle.dump(hrtf, f)
-        print("hrtf pickle: ", hrtf.shape)
-        config.path = config.barycentric_hrtf_dir
-        file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        run_lsd_evaluation(config, barycentric_output_path, file_ext)
-
-        file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        run_localisation_evaluation(config, barycentric_output_path, file_ext)
-
+        train_prefetcher, _ = load_hrtf(config)
+        test_train(config, train_prefetcher)
 
     print("finished")
 
