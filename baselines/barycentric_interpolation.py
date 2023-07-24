@@ -225,8 +225,6 @@ def my_barycentric_interpolation(config, barycentric_output_path):
         sphere_coords_lr_index = []
         num_file += 1
         print("file opened: ", num_file)
-        with open("log.txt", "a") as f:
-            f.write(f"num files: {num_file}")
 
         # initialize an empty lr_hrtf
         lr_hrtf = torch.zeros(1, hr_hrtf.size(1) // row_ratio, hr_hrtf.size(2) // column_ratio, nbins)
@@ -251,7 +249,7 @@ def my_barycentric_interpolation(config, barycentric_output_path):
             euclidean_sphere_triangles.append(triangle_vertices)
             euclidean_sphere_coeffs.append(coeffs)
         with open("log.txt", "a") as f:
-            f.write(f"{num_file}, triangle\n")
+            f.write(f"num files: {num_file}\n")
 
         lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
 
@@ -263,7 +261,7 @@ def my_barycentric_interpolation(config, barycentric_output_path):
         barycentric_hr_right = my_interpolate_fft(config, lr_sphere, lr_hrtf_right, full_size, sphere_coords,
                                                   euclidean_sphere_triangles, euclidean_sphere_coeffs)
         
-        barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3))
+        barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3)).permute(1, 2, 0, 3)
 
         with open(barycentric_output_path + file_name, "wb") as file:
             pickle.dump(barycentric_hr_merged, file)
