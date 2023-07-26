@@ -24,18 +24,18 @@ from ray.air import Checkpoint, session
 from ray.tune.schedulers import ASHAScheduler
 
 
-def get_optimizer(hyperparameters, vae, netD):
-    if hyperparameters['optimizer'] == 'adam':
-        optEncoder = optim.Adam(vae.encoder.parameters(), lr=hyperparameters["lr"])
-        optDecoder = optim.Adam(vae.decoder.parameters(), lr=hyperparameters["lr"])
-        optD = optim.Adam(netD.parameters(), lr=hyperparameters["lr"] * hyperparameters["alpha"])
-    elif hyperparameters['optimizer'] == 'rmsprop':
-        optEncoder = optim.RMSprop(vae.encoder.parameters(), lr=hyperparameters["lr"])
-        optDecoder = optim.RMSprop(vae.decoder.parameters(), lr=hyperparameters["lr"])
-        optD = optim.RMSprop(netD.parameters(), lr=hyperparameters["lr"] * hyperparameters["alpha"])
+def get_optimizer(config, vae, netD):
+    if config.optimizer == 'adam':
+        optEncoder = optim.Adam(vae.encoder.parameters(), lr=config.lr)
+        optDecoder = optim.Adam(vae.decoder.parameters(), lr=config.lr)
+        optD = optim.Adam(netD.parameters(), lr=config.lr * config.alpha)
+    elif config.optimizer == 'rmsprop':
+        optEncoder = optim.RMSprop(vae.encoder.parameters(), lr=config.lr)
+        optDecoder = optim.RMSprop(vae.decoder.parameters(), lr=config.lr)
+        optD = optim.RMSprop(netD.parameters(), lr=config.lr * config.alpha)
     return optEncoder, optDecoder, optD
 
-def train_vae_gan(config, hyperparameters):
+def train_vae_gan(config):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
@@ -58,11 +58,9 @@ def train_vae_gan(config, hyperparameters):
     print(device, " will be used.\n")
     cudnn.benchmark = True
 
-    critic_iters = hyperparameters["critic_iters"]
-    gamma = hyperparameters["gamma"]
-    beta = hyperparameters["beta"]
-    latent_dim = hyperparameters["latent_dim"]
-    config.batch_size = hyperparameters["batch_size"]
+    critic_iters = config.critic_iters
+    lambda_feature = config.lambda_feature
+    latent_dim = config.latent_dim
 
     degree = compute_sh_degree(config)
     vae = VAE(nbins=nbins, max_degree=degree, latent_dim=latent_dim).to(device)
@@ -71,7 +69,7 @@ def train_vae_gan(config, hyperparameters):
         netD = (nn.DataParallel(netD, list(range(ngpu)))).to(device)
         vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
     
-    optEncoder, optDecoder, optD = get_optimizer(hyperparameters, vae, netD)
+    optEncoder, optDecoder, optD = get_optimizer(config, vae, netD)
 
     # Define loss functions
     adversarial_criterion = nn.BCEWithLogitsLoss()
@@ -82,17 +80,22 @@ def train_vae_gan(config, hyperparameters):
     ild_mean = 3.6508303231127868
     ild_std = 0.5261339271318863
 
-    checkpoint = session.get_checkpoint()
-    if checkpoint:
-        checkpoint_state = checkpoint.to_dict()
-        start_epoch = checkpoint_state["epoch"]
-        vae.load_state_dict(checkpoint_data["VAE_state_dict"])
-        netD.load_state_dict(checkpoint_data["discriminator_state_dict"])
-        optEncoder.load_state_dict(checkpoint_state["optEncoder_state_dict"])
-        optDecoder.load_state_dict(checkpoint_state["optDecoder_state_dict"])
-        optD.load_state_dict(checkpoint_data["optD_state_dict"])
-    else:
-        start_epoch = 0
+    if config.start_with_existing_model:
+        print(f'Initialized weights using an existing model - {config.existing_model_path}')
+        vae.load_state_dict(torch.load(f'{config.existing_model_path}/Vae.pt'))
+        netD.load_state_dict(torch.load(f'{config.existing_model_path}/Disc.pt'))
+
+    # checkpoint = session.get_checkpoint()
+    # if checkpoint:
+    #     checkpoint_state = checkpoint.to_dict()
+    #     start_epoch = checkpoint_state["epoch"]
+    #     vae.load_state_dict(checkpoint_data["VAE_state_dict"])
+    #     netD.load_state_dict(checkpoint_data["discriminator_state_dict"])
+    #     optEncoder.load_state_dict(checkpoint_state["optEncoder_state_dict"])
+    #     optDecoder.load_state_dict(checkpoint_state["optDecoder_state_dict"])
+    #     optD.load_state_dict(checkpoint_data["optD_state_dict"])
+    # else:
+    #     start_epoch = 0
 
     train_prefetcher, _ = load_hrtf(config)
 

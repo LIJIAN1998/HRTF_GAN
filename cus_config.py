@@ -20,7 +20,8 @@ def main():
         config.batch_size = combination[0]
         config.optimizer = combination[1]
         config.save(n)
-    for i in range(combinations):
+    for i in range(len(combination)):
+        i += 1
         config.load(n)
         print(config.batch_size, config.optimizer)
 
