@@ -19,13 +19,14 @@ def main():
     config = Config(tag, using_hpc=True)
     for combination in combinations:
         n += 1
-        print(n)
+        print("index: ", n)
         config.batch_size = combination[0]
         config.optimizer = combination[1]
         config.save(n)
         print(config.batch_size)
         print(config.optimizer)
     for i in range(1, 7):
+        config = Config(tag, using_hpc=True)
         print(i)
         config.load(n)
         print(config.batch_size, config.optimizer)
