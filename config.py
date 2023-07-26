@@ -104,7 +104,6 @@ class Config:
         j = {}
         for k, v in self.__dict__.items():
             j[k] = v
-        save_path = ""
         with open(f'{self.path}/config_files/config_{n}.json', 'w') as f:
             json.dump(j, f)
 
