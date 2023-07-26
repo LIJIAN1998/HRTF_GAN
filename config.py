@@ -108,11 +108,12 @@ class Config:
             json.dump(j, f)
 
     def load(self, n):
+        print(f"load path: {self.path}/config_files/config_{n}.json'")
         with open(f'{self.path}/config_files/config_{n}.json', 'r') as f:
             j = json.load(f)
             for k, v in j.items():
                 setattr(self, k, v)
-        self.raw_hrtf_dir = Path(self.raw_hrtf_dir)
+        # self.raw_hrtf_dir = Path(self.raw_hrtf_dir)
 
     def get_train_params(self):
         return self.batch_size, self.beta1, self.beta2, self.num_epochs, self.lr_encoder, self.lr_decoder, self.lr_dis, self.critic_iters

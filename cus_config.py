@@ -25,11 +25,13 @@ def main():
         config.save(n)
         print(config.batch_size)
         print(config.optimizer)
+
     for i in range(1, 7):
         config = Config(tag, using_hpc=True)
         print(i)
         config.load(n)
         print(config.batch_size, config.optimizer)
+        
     print("check 1")
     with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/config_files/config_1.json', 'r') as f:
         j = json.load(f)
