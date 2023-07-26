@@ -76,19 +76,37 @@ class Encoder(nn.Module):
         self.nbins = nbins
         self.coefficient = (max_degree + 1) ** 2
         self.latent_dim = latent_dim
-        self.num_encode_blocks = int(np.log2(self.coefficient // 7)) + 1
 
-        encode_layers = []
         in_channels = self.nbins
         out_channels = 256
-        for _ in range(self.num_encode_blocks):
-            encode_layers.append(EncodingBlock(in_channels, out_channels))
-            in_channels = out_channels
-            out_channels = min(out_channels*2, 512)
-        self.encode_blocks = nn.Sequential(*encode_layers)
 
-        self.compute_mean = nn.Linear(512*7, latent_dim)
-        self.compute_log_var = nn.Linear(512*7, latent_dim)
+        if self.coefficient == 9:
+            self.encode_blocks = nn.Sequential(
+                EncodingBlock(in_channels, out_channels),
+                nn.Conv1d(out_channels, out_channels*2, kernel_size=2, stride=1),
+                nn.BatchNorm1d(out_channels*2),
+                nn.ReLU(),
+            )
+        elif self.coefficient == 4:
+            self.encode_blocks = nn.Sequential(
+                nn.Conv1d(in_channels, out_channels, kernel_size=3, padding=1, stride=1),
+                nn.BatchNorm1d(out_channels),
+                nn.ReLU(),
+                nn.Conv1d(out_channels, out_channels*2, kernel_size=3, padding=1, stride=1),
+                nn.BatchNorm1d(out_channels*2),
+                nn.ReLU(),
+            )
+        else:
+            self.num_encode_blocks = int(np.log2(self.coefficient // 4)) + 1
+            encode_layers = []
+            for _ in range(self.num_encode_blocks):
+                encode_layers.append(EncodingBlock(in_channels, out_channels))
+                in_channels = out_channels
+                out_channels = min(out_channels*2, 512)
+            self.encode_blocks = nn.Sequential(*encode_layers)
+
+        self.compute_mean = nn.Linear(512*4, latent_dim)
+        self.compute_log_var = nn.Linear(512*4, latent_dim)
 
     def encode(self, x):
         x = self.encode_blocks(x)
@@ -119,16 +137,23 @@ class Decoder(nn.Module):
         self.num_coefficient = (out_degree + 1) ** 2
         
         self.decoder = nn.Sequential(
-            nn.Linear(self.latent_dim, 512*7),
-            Reshape(-1, 512, 7),
+            nn.Linear(self.latent_dim, 512*4),
+            Reshape(-1, 512, 4),
             nn.ConvTranspose1d(512, 512, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(512),
             nn.PReLU(),
             nn.ConvTranspose1d(512, 512, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm1d(512),
             nn.PReLU(),
-            # 512x13
+            # 512x7
             nn.ConvTranspose1d(512, 256, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm1d(256),
+            nn.PReLU(),
+            nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm1d(256),
+            nn.PReLU(),
+            # 512x13
+            nn.ConvTranspose1d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(256),
             nn.PReLU(),
             nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, padding=1, bias=False),

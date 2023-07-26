@@ -73,12 +73,11 @@ class Config:
         # Training hyperparams
         self.batch_size = 4
         self.num_workers = 1
+        self.optimizer = 'adam'
         self.num_epochs = 200  # was originally 250
         self.lr_encoder = 0.0002
         self.lr_decoder = 0.0002
         self.lr_dis = 0.0000015
-        self.lr_decay_vae = 0.80
-        self.lr_decay_dis = 0.85
         # how often to train the generator
         self.critic_iters = 4
 
@@ -98,15 +97,16 @@ class Config:
         else:
             self.device_name = 'cpu'
 
-    def save(self):
+    def save(self, n):
         j = {}
         for k, v in self.__dict__.items():
             j[k] = v
-        with open(f'{self.path}/config.json', 'w') as f:
-            json.dump(list(j), f)
+        save_path = ""
+        with open(f'{self.path}/config_files/config_{n}.json', 'w') as f:
+            json.dump(j, f)
 
-    def load(self):
-        with open(f'{self.path}/config.json', 'r') as f:
+    def load(self, n):
+        with open(f'{self.path}/config_files/config_{n}.json', 'r') as f:
             j = json.load(f)
             for k, v in j.items():
                 setattr(self, k, v)
