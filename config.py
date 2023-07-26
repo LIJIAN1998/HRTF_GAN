@@ -35,12 +35,12 @@ class Config:
         if using_hpc:
             # HPC data dirs
             self.data_dirs_path = '/rds/general/user/jl2622/home/HRTF-projection'
-            self.raw_hrtf_dir = Path('/rds/general/project/sonicom/live/HRTF Datasets')
+            self.raw_hrtf_dir = '/rds/general/project/sonicom/live/HRTF Datasets'
             self.amt_dir = '/rds/general/user/jl2622/home/amt'
         else:
             # local data dirs
             self.data_dirs_path = '/home/aos13/HRTF-GANs-27Sep22-prep-for-publication'
-            self.raw_hrtf_dir = Path('/home/aos13/HRTF_datasets')
+            self.raw_hrtf_dir = '/home/aos13/HRTF_datasets'
             self.amt_dir = '/home/aos13/AMT/amt_code'
 
         self.runs_folder = '/runs-hpc'
@@ -113,6 +113,7 @@ class Config:
             j = json.load(f)
             for k, v in j.items():
                 setattr(self, k, v)
+            self.raw_hrtf_dir = Path(self.raw_hrtf_dir)
 
     def get_train_params(self):
         return self.batch_size, self.beta1, self.beta2, self.num_epochs, self.lr_encoder, self.lr_decoder, self.lr_dis, self.critic_iters
