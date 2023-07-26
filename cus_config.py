@@ -19,7 +19,7 @@ def main():
     config = Config(tag, using_hpc=True)
     for combination in combinations:
         with open("cust_log.txt", "a") as f:
-            f.write(n)
+            f.write(f"{n}\n")
         print("index: ", n)
         config.batch_size = combination[0]
         config.optimizer = combination[1]
