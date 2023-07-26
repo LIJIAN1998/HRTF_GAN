@@ -108,7 +108,6 @@ class Config:
             json.dump(j, f)
 
     def load(self, n):
-        print(f"load path: {self.path}/config_files/config_{n}.json'")
         with open(f'{self.path}/config_files/config_{n}.json', 'r') as f:
             j = json.load(f)
             for k, v in j.items():

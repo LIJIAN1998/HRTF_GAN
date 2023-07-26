@@ -29,35 +29,7 @@ def main():
     for i in range(1, 7):
         config = Config(tag, using_hpc=True)
         print(i)
-        config.load(n)
+        config.load(i)
         print(config.batch_size, config.optimizer)
-        
-    print("check 1")
-    with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/config_files/config_1.json', 'r') as f:
-        j = json.load(f)
-        print(j["batch_size"], j["optimizer"])
-        for k, v in j.items():
-            setattr(config, k, v)
-    print(config.batch_size, config.optimizer)
-    # print("check 2")
-    # with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/config_files/config_2.json', 'r') as f:
-    #     j = json.load(f)
-    #     print(j["batch_size"], j["optimizer"])
-    # print("check 3")
-    # with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/config_files/config_3.json', 'r') as f:
-    #     j = json.load(f)
-    #     print(j["batch_size"], j["optimizer"])
-    # print("check 4")
-    # with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/config_files/config_4.json', 'r') as f:
-    #     j = json.load(f)
-    #     print(j["batch_size"], j["optimizer"])
-    # print("check 5")
-    # with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/config_files/config_5.json', 'r') as f:
-    #     j = json.load(f)
-    #     print(j["batch_size"], j["optimizer"])
-    # print("check 6")
-    # with open('/rds/general/user/jl2622/home/HRTF-projection/runs-hpc/ari-upscale-4/config_files/config_6.json', 'r') as f:
-    #     j = json.load(f)
-    #     print(j["batch_size"], j["optimizer"])
 if __name__ == '__main__':
     main()
