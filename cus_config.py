@@ -11,9 +11,9 @@ def main():
     alpha = [1e-2, 1]
     lambda_feature = [1e-3, 1e-2]
     latent_dim = [10, 50, 100]
-    critic_iter = [3, 4, 5]
+    critic_iters = [3, 4, 5]
 
-    combinations = list(itertools.product(batch_size, optimizer, lr, alpha, lambda_feature, latent_dim, critic_iter))
+    combinations = list(itertools.product(batch_size, optimizer, lr, alpha, lambda_feature, latent_dim, critic_iters))
 
     tag = 'ari-upscale-4'
     config = Config(tag, using_hpc=True)
