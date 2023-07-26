@@ -106,7 +106,7 @@ class Config:
             j[k] = v
         save_path = ""
         with open(f'{self.path}/config_files/config_{n}.json', 'w') as f:
-            json.dump(list(j), f)
+            json.dump(j, f)
 
     def load(self, n):
         with open(f'{self.path}/config_files/config_{n}.json', 'r') as f:
