@@ -17,10 +17,11 @@ def main():
     config = Config(tag, using_hpc=True)
     for combination in combinations:
         n += 1
+        print(n)
         config.batch_size = combination[0]
         config.optimizer = combination[1]
         config.save(n)
-    for i in range(len(combination)):
+    for i in range(len(combinations)):
         i += 1
         config.load(n)
         print(config.batch_size, config.optimizer)
