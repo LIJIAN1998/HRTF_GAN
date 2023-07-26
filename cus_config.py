@@ -13,23 +13,22 @@ def main():
     latent_dim = [10, 50, 100]
     critic_iter = [3, 4, 5]
 
-    combinations = list(itertools.product(batch_size, optimizer))
+    combinations = list(itertools.product(batch_size, optimizer, lr, alpha, lambda_feature, latent_dim, critic_iter))
 
     tag = 'ari-upscale-4'
     config = Config(tag, using_hpc=True)
     for combination in combinations:
-        n += 1
+        with open("cust_log.txt", "a") as f:
+            f.write(n)
         print("index: ", n)
         config.batch_size = combination[0]
         config.optimizer = combination[1]
+        config.lr = combination[2]
+        config.alpha = combination[3]
+        config.lambda_feature = combination[4]
+        config.latent_dim = combination[5]
+        config.critic_iters = combination[6]
         config.save(n)
-        print(config.batch_size)
-        print(config.optimizer)
 
-    for i in range(1, 7):
-        config = Config(tag, using_hpc=True)
-        print(i)
-        config.load(i)
-        print(config.batch_size, config.optimizer)
 if __name__ == '__main__':
     main()
