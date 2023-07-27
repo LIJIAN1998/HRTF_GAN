@@ -35,7 +35,7 @@ class Config:
         if using_hpc:
             # HPC data dirs
             self.data_dirs_path = '/rds/general/user/jl2622/home/HRTF-projection'
-            self.raw_hrtf_dir = '/rds/general/project/sonicom/live/HRTF Datasets'
+            self.raw_hrtf_dir = Path('/rds/general/project/sonicom/live/HRTF Datasets')
             self.amt_dir = '/rds/general/user/jl2622/home/amt'
         else:
             # local data dirs
@@ -102,6 +102,7 @@ class Config:
             self.device_name = 'cpu'
 
     def save(self, n):
+        self.raw_hrtf_dir = str(self.raw_hrtf_dir)
         j = {}
         for k, v in self.__dict__.items():
             j[k] = v
