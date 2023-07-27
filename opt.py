@@ -323,9 +323,13 @@ def eval_vae(config, val_prefetcher):
         sr = F.softplus(sr.reshape(-1, nbins, num_radii, num_row_angles, num_col_angles))
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
+        hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
 
         with open(valid_dir + file_name, "wb") as file:
             pickle.dump(sr, file)
+
+        with open(valid_gt_dir + file_name, "wb") as file:
+            pickle.dump(hr, file)
         
         # Preload the next batch of data
         batch_data = val_prefetcher.next()
@@ -338,11 +342,15 @@ def main(config_index):
         f.write(f"config loaded: {config_file_path}\n")
     config.load(config_index)
 
-    train_prefetcher, val_prefetcher = load_hrtf(config)
-
+    train_prefetcher, val_prefetcher = get_train_val_loader(config)
     train_vae_gan(config, config_index, train_prefetcher)
+    eval_vae(config, val_prefetcher)
+
+    run_lsd_evaluation(config, config.valid_path)
+    run_localisation_evaluation(config, config.valid_path)
+
     
-    
+
 
 
 # def ray_main(config, num_samples=20, gpus_per_trial=1):

@@ -199,17 +199,9 @@ def main(config, mode):
         # clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
-        id_file_dir = config.train_val_id_dir
-        id_filename = id_file_dir + '/train_val_id.pickle'
-        with open(id_filename, "rb") as file:
-            train_ids, val_ids = pickle.load(file)
-
-        train_size = int(len(train_ids) * 0.8)
-        print("train ids: ", len(train_ids))
-        print("num train: ", train_size)
-        train_samples = train_ids[:train_size]
-        print(len(train_samples))
-        # test_train(config, train_prefetcher)
+        
+        train_prefetcher, _ = load_hrtf(config)
+        test_train(config, train_prefetcher)
 
     print("finished")
 

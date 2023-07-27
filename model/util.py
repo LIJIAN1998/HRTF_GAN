@@ -47,6 +47,55 @@ def compute_sh_degree(config):
     degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
     return degree
 
+def get_train_val_loader(config):
+    data_dir = config.raw_hrtf_dir / config.dataset
+    imp = importlib.import_module('hrtfdata.full')
+    load_function = getattr(imp, config.dataset)
+
+    id_file_dir = config.train_val_id_dir
+    id_filename = id_file_dir + '/train_val_id.pickle'
+    with open(id_filename, "rb") as file:
+        train_ids, _ = pickle.load(file)
+
+    train_size = int(len(train_ids) * 0.8)
+    train_samples = train_ids[:train_size]
+    val_samples = train_ids[train_size:]
+    left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}},
+                               subject_ids=train_samples)
+    right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}},
+                                subject_ids=train_samples)
+    left_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude'}},
+                                subject_ids=val_samples)
+    right_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude'}},
+                                subject_ids=val_samples)
+    train_dataset = MergeHRTFDataset(left_train, right_train, config.upscale_factor)
+    val_dataset = MergeHRTFDataset(left_val, right_val, config.upscale_factor)
+
+    train_dataloader = DataLoader(train_dataset,
+                                  batch_size=config.batch_size,
+                                  shuffle=True,
+                                  num_workers=config.num_workers,
+                                  pin_memory=True,
+                                  drop_last=False,
+                                  persistent_workers=True)
+    test_dataloader = DataLoader(val_dataset,
+                                  batch_size=1,
+                                  shuffle=False,
+                                  num_workers=1,
+                                  pin_memory=True,
+                                  drop_last=False,
+                                  persistent_workers=True)
+    
+    if torch.cuda.is_available() and config.ngpu > 0:
+        device = torch.device(config.device_name)
+        train_prefetcher = CUDAPrefetcher(train_dataloader, device)
+        test_prefetcher = CUDAPrefetcher(test_dataloader, device)
+    else:
+        train_prefetcher = CPUPrefetcher(train_dataloader)
+        test_prefetcher = CPUPrefetcher(test_dataloader)
+    return train_prefetcher, test_prefetcher
+
+
 def load_hrtf(config):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
