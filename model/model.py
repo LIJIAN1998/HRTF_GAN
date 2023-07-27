@@ -80,24 +80,18 @@ class Encoder(nn.Module):
         in_channels = self.nbins
         out_channels = 256
 
-        if self.coefficient == 9:
+        if self.coefficient == 4:
             self.encode_blocks = nn.Sequential(
                 EncodingBlock(in_channels, out_channels),
-                nn.Conv1d(out_channels, out_channels*2, kernel_size=2, stride=1),
+                nn.Conv1d(out_channels, out_channels*2, kernel_size=3, padding=1, stride=1),
                 nn.BatchNorm1d(out_channels*2),
                 nn.ReLU(),
-            )
-        elif self.coefficient == 4:
-            self.encode_blocks = nn.Sequential(
-                nn.Conv1d(in_channels, out_channels, kernel_size=3, padding=1, stride=1),
-                nn.BatchNorm1d(out_channels),
-                nn.ReLU(),
-                nn.Conv1d(out_channels, out_channels*2, kernel_size=3, padding=1, stride=1),
+                nn.Conv1d(out_channels*2, out_channels*2, kernel_size=3, padding=1, stride=1),
                 nn.BatchNorm1d(out_channels*2),
                 nn.ReLU(),
             )
         else:
-            self.num_encode_blocks = int(np.log2(self.coefficient // 4)) + 1
+            self.num_encode_blocks = int(np.log2(self.coefficient // 2)) + 1
             encode_layers = []
             for _ in range(self.num_encode_blocks):
                 encode_layers.append(EncodingBlock(in_channels, out_channels))
@@ -137,9 +131,9 @@ class Decoder(nn.Module):
         self.num_coefficient = (out_degree + 1) ** 2
         
         self.decoder = nn.Sequential(
-            nn.Linear(self.latent_dim, 512*4),
-            Reshape(-1, 512, 4),
-            nn.ConvTranspose1d(512, 512, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.Linear(self.latent_dim, 512*2),
+            Reshape(-1, 512, 2),
+            nn.ConvTranspose1d(512, 512, kernel_size=4, stride=2, padding=1, bias=False),
             nn.BatchNorm1d(512),
             nn.PReLU(),
             nn.ConvTranspose1d(512, 512, kernel_size=3, stride=2, padding=1, bias=False),
@@ -195,7 +189,7 @@ class Decoder(nn.Module):
             nn.BatchNorm1d(self.nbins),
             nn.PReLU(),
             # nbins x 874
-            Trim(self.num_coefficient)
+            Trim(self.num_coefficient) # nbins x 841
         )
 
         self.classifier = nn.Softplus()

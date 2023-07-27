@@ -75,8 +75,8 @@ def test(config, val_prefetcher):
     # Clear/Create directories
     shutil.rmtree(Path(valid_dir), ignore_errors=True)
     Path(valid_dir).mkdir(parents=True, exist_ok=True)
-    shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
-    Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+    # shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+    # Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
 
     while batch_data is not None:
         # Transfer in-memory data to CUDA devices to speed up validation 
@@ -96,13 +96,13 @@ def test(config, val_prefetcher):
         sr = F.softplus(sr.reshape(-1, nbins, num_radii, num_row_angles, num_col_angles))
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
-        hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
+        # hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
 
         with open(valid_dir + file_name, "wb") as file:
             pickle.dump(sr, file)
 
-        with open(valid_gt_dir + file_name, "wb") as file:
-            pickle.dump(hr, file)
+        # with open(valid_gt_dir + file_name, "wb") as file:
+        #     pickle.dump(hr, file)
         
         # Preload the next batch of data
         batch_data = val_prefetcher.next()

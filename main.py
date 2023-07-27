@@ -200,7 +200,14 @@ def main(config, mode):
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
         train_prefetcher, _ = load_hrtf(config)
-        test_train(config, train_prefetcher)
+        print("train_prefetcher: ", len(train_prefetcher))
+        train_size = int(len(train_prefetcher) * 0.8)
+        print(train_size)
+        train_data = train_prefetcher[:train_size]
+        print(len(train_data))
+        val_data = train_prefetcher[train_size:]
+        print(len(val_data))
+        # test_train(config, train_prefetcher)
 
     print("finished")
 

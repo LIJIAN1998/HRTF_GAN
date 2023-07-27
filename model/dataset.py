@@ -18,14 +18,24 @@ def downsample_hrtf(hr_hrtf, hrtf_size, upscale_factor):
     return lr_hrtf
 
 def get_sample_ratio(upscale_factor):
-    if upscale_factor == 16:
-        return 8, 2
-    if upscale_factor == 8:
-        return 4, 2
-    if upscale_factor == 4:
-        return 2, 2
     if upscale_factor == 2:
         return 2, 1
+    if upscale_factor == 4:
+        return 2, 2
+    if upscale_factor == 8:
+        return 4, 2
+    if upscale_factor == 16:
+        return 8, 2
+    if upscale_factor == 32:
+        return 8, 4
+    if upscale_factor == 48:
+        return 12, 4
+    if upscale_factor == 72:
+        return 12, 6
+    if upscale_factor == 108:
+        return 18, 6
+    if upscale_factor == 216:
+        return 36, 6
 
 class CustomHRTFDataset(Dataset):
     def __init__(self, original_hrtf_dataset, upscale_factor, max_degree=28) -> None:
