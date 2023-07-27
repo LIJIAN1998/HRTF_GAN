@@ -18,6 +18,7 @@ def main():
     tag = 'ari-upscale-4'
     config = Config(tag, using_hpc=True)
     for combination in combinations:
+        n += 1
         with open("cust_log.txt", "a") as f:
             f.write(f"{n}\n")
         print("index: ", n)
