@@ -78,9 +78,9 @@ class Config:
         self.lr = 0.0001
         self.alpha = 0.01
         self.lambda_feature = 1e-3
-        # self.lr_encoder = 0.0002
-        # self.lr_decoder = 0.0002
-        # self.lr_dis = 0.0000015
+        self.lr_encoder = 0.0002
+        self.lr_decoder = 0.0002
+        self.lr_dis = 0.0000015
         self.latent_dim = 10
         # how often to train the generator
         self.critic_iters = 4
