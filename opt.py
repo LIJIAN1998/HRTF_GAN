@@ -105,7 +105,7 @@ def train_vae_gan(config, config_index, train_prefetcher):
     num_epochs = config.num_epochs
     for epoch in range(num_epochs):
         if epoch % 20 == 0:
-            with open("optimize.txt", "a") as f:
+            with open(f"optimize_{config_index}.txt", "a") as f:
                 f.write(f"Epoch: {epoch}\n")
         times = []
         train_loss_Dis = 0.
@@ -210,7 +210,7 @@ def train_vae_gan(config, config_index, train_prefetcher):
                 err_enc.backward()
                 optEncoder.step()
 
-                with open("optimize.txt", "a") as f:
+                with open(f"optimize_{config_index}.txt", "a") as f:
                     f.write(f"{batch_index}/{len(train_prefetcher)}\n")
                     f.write(f"dis: {gan_loss.item()}\t dec: {err_dec.item()}\t enc: {err_enc.item()}\n")
                     f.write(f"D_real: {loss_D_hr.item()}, D_fake: {loss_D_recon.item()}\n")
@@ -339,7 +339,7 @@ def main(config_index):
     tag = 'ari-upscale-4'
     config = Config(tag, using_hpc=True)
     config_file_path = f"{config.path}/config_files/config_{config_index}.json"
-    with open("optimize.txt", "a") as f:
+    with open(f"optimize_{config_index}.txt", "a") as f:
         f.write(f"config loaded: {config_file_path}\n")
     config.load(config_index)
 
