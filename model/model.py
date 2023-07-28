@@ -99,8 +99,8 @@ class Encoder(nn.Module):
                 out_channels = min(out_channels*2, 512)
             self.encode_blocks = nn.Sequential(*encode_layers)
 
-        self.compute_mean = nn.Linear(512*4, latent_dim)
-        self.compute_log_var = nn.Linear(512*4, latent_dim)
+        self.compute_mean = nn.Linear(512*2, latent_dim)
+        self.compute_log_var = nn.Linear(512*2, latent_dim)
 
     def encode(self, x):
         x = self.encode_blocks(x)
