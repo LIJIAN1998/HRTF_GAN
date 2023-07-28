@@ -78,9 +78,9 @@ class Config:
         self.lr = 0.0001
         self.alpha = 0.01
         self.lambda_feature = 1e-3
-        self.lr_encoder = 0.0002
-        self.lr_decoder = 0.0002
-        self.lr_dis = 0.0000015
+        # self.lr_encoder = 0.0002
+        # self.lr_decoder = 0.0002
+        # self.lr_dis = 0.0000015
         self.latent_dim = 10
         # how often to train the generator
         self.critic_iters = 4
@@ -92,8 +92,8 @@ class Config:
         self.beta = 5
 
         # betas for Adam optimizer
-        self.beta1 = 0.9
-        self.beta2 = 0.999
+        # self.beta1 = 0.9
+        # self.beta2 = 0.999
 
         self.ngpu = 1
         if self.ngpu > 0:
@@ -117,4 +117,4 @@ class Config:
         self.raw_hrtf_dir = Path(self.raw_hrtf_dir)
 
     def get_train_params(self):
-        return self.batch_size, self.beta1, self.beta2, self.num_epochs, self.lr_encoder, self.lr_decoder, self.lr_dis, self.critic_iters
+        return self.batch_size, self.optimizer, self.lr, self.alpha, self.lambda_feature, self.latent_dim, self.critic_iters

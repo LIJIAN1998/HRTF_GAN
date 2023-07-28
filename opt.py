@@ -104,9 +104,8 @@ def train_vae_gan(config, config_index, train_prefetcher):
     #     start_epoch = 0
     num_epochs = config.num_epochs
     for epoch in range(num_epochs):
-        if epoch % 20 == 0:
-            with open(f"optimize_{config_index}.txt", "a") as f:
-                f.write(f"Epoch: {epoch}\n")
+        with open(f"optimize_{config_index}.txt", "a") as f:
+            f.write(f"Epoch: {epoch}\n")
         times = []
         train_loss_Dis = 0.
         train_loss_Dis_hr = 0.
@@ -201,6 +200,9 @@ def train_vae_gan(config, config_index, train_prefetcher):
                 train_loss_Enc_prior += prior_loss.item()
                 feature_recon = netD(recon)[1]
                 feature_real = netD(hr_coefficient)[1]
+                with open(f"optimize_{config_index}.txt", "a") as f:
+                    f.write(f"feature recon: ", torch.isnan(feature_recon).any())
+                    f.write(f"feature real: ", torch.isnan(feature_real).any())
                 feature_sim_loss_E = ((feature_recon - feature_real) ** 2).mean() # feature loss
                 train_loss_Enc_sim += feature_sim_loss_E.item()
                 err_enc = prior_loss + feature_sim_loss_E
@@ -339,10 +341,18 @@ def main(config_index):
     tag = 'ari-upscale-4'
     config = Config(tag, using_hpc=True)
     config_file_path = f"{config.path}/config_files/config_{config_index}.json"
+    config.load(config_index)
+    bs, optmizer, lr, alpha, lambda_feature, latent_dim, critic_iters = config.get_train_params()
     with open(f"optimize_{config_index}.txt", "a") as f:
         f.write(f"config loaded: {config_file_path}\n")
-    config.load(config_index)
-
+        f.write(f"batch size: {bs}\n")
+        f.write(f"optimizer: {optmizer}\n")
+        f.write(f"lr: {lr}\n")
+        f.write(f"alpha: {alpha}\n")
+        f.write(f"lambda: {lambda_feature}\n")
+        f.write(f"latent_dim: {latent_dim}")
+        f.write(f"critic iters: {critic_iters}\n")
+    
     train_prefetcher, val_prefetcher = get_train_val_loader(config)
     train_vae_gan(config, config_index, train_prefetcher)
     eval_vae(config, val_prefetcher)
