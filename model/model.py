@@ -108,7 +108,7 @@ class Encoder(nn.Module):
         return out
     
     def reparametrize(self, mu, logvar):
-        epsilon = torch.randn(mu.size(0), mu.size(1)).to(mu.get_device())
+        epsilon = torch.randn(mu.size(0), mu.size(1)).to(mu.device)
         z = mu + epsilon * torch.exp(logvar/2.)
         return z
 
