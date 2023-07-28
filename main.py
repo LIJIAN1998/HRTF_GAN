@@ -201,6 +201,7 @@ def main(config, mode):
         # print("clean_hrtf", clean_hrtf.shape)
         
         train_prefetcher, _ = get_train_val_loader(config)
+        print("train size: ", len(train_prefetcher))
         test_train(config, train_prefetcher)
 
     print("finished")

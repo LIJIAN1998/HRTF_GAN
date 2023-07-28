@@ -1,3 +1,4 @@
+import argparse
 from functools import partial
 import os
 import torch
@@ -349,10 +350,6 @@ def main(config_index):
     run_lsd_evaluation(config, config.valid_path)
     run_localisation_evaluation(config, config.valid_path)
 
-    
-
-
-
 # def ray_main(config, num_samples=20, gpus_per_trial=1):
     # hyperparameters = {
     #     "batch_size": tune.choice([2, 4, 8, 16]),
@@ -415,9 +412,10 @@ def main(config_index):
     # run_localisation_evaluation(config, config.valid_path)
 
 if __name__ == "__main__":
-    print("using cuda? ", torch.cuda.is_available())
-    tag = "ari-upscale-4"
-    config = Config(tag, using_hpc=True)
-    main(config)
+    # print("using cuda? ", torch.cuda.is_available())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config_index")
+    args = parser.parse_args()
+    main(args.config_index)
 
     
