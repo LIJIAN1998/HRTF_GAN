@@ -8,7 +8,7 @@ import importlib
 from config import Config
 from model.train import train, test_train
 from model.test import test
-from model.util import load_dataset, load_hrtf
+from model.util import load_dataset, load_hrtf, get_train_val_loader
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.hrtf_sphere import HRTF_Sphere
@@ -200,7 +200,7 @@ def main(config, mode):
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
         
-        train_prefetcher, _ = load_hrtf(config)
+        train_prefetcher, _ = get_train_val_loader(config)
         test_train(config, train_prefetcher)
 
     print("finished")
