@@ -206,7 +206,7 @@ def my_barycentric_interpolation(config, barycentric_output_path):
     mask = ds[0]['features'].mask
     whole_sphere = HRTF_Sphere(mask=mask, row_angles=row_angles, column_angles=column_angles)
     sphere_coords = whole_sphere.get_sphere_coords()
-    with open("log.txt", "a") as f:
+    with open("bary_log.txt", "a") as f:
         f.write(f"num coords: {len(sphere_coords)}\n")
 
     row_ratio, column_ratio = get_sample_ratio(config.upscale_factor)
@@ -248,7 +248,7 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                                                   closest_points=triangle_vertices)
             euclidean_sphere_triangles.append(triangle_vertices)
             euclidean_sphere_coeffs.append(coeffs)
-        with open("log.txt", "a") as f:
+        with open("bary_log.txt", "a") as f:
             f.write(f"num files: {num_file}\n")
 
         lr_sphere = HRTF_Sphere(sphere_coords=sphere_coords_lr, indices=sphere_coords_lr_index)
