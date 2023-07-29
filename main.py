@@ -187,18 +187,18 @@ def main(config, mode):
         run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
 
     elif mode == "debug":
-        # ds = load_function(data_dir, features_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
-        # cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
-        # projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
-        # with open(projection_filename, "rb") as file:
-        #     cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
-        # features = ds[0]['features'].data
-        # print("features: ", features.shape)
-        # print(*ds[0]['features'].shape[:-2])
-        # features = features.reshape(*ds[0]['features'].shape[:-2], -1)
-        # clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
-        #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
-        # print("clean_hrtf", clean_hrtf.shape)
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
+        cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
+        projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
+        with open(projection_filename, "rb") as file:
+            cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
+        features = ds[0]['features'].data
+        print("features: ", type(features), features.shape)
+        print(*ds[0]['features'].shape[:-2])
+        features = features.reshape(*ds[0]['features'].shape[:-2], -1)
+        clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
+                                     cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
+        print("clean_hrtf", clean_hrtf.shape)
 
         # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
         # subject_ids = list(ds.subject_ids)
@@ -212,9 +212,9 @@ def main(config, mode):
         #         print("group: ", ds[i]['group'])
         #         print()
             
-        train_prefetcher, _ = get_train_val_loader(config)
-        print("train size: ", len(train_prefetcher))
-        test_train(config, train_prefetcher)
+        # train_prefetcher, _ = get_train_val_loader(config)
+        # print("train size: ", len(train_prefetcher))
+        # test_train(config, train_prefetcher)
 
     print("finished")
 
