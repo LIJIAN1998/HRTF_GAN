@@ -199,10 +199,22 @@ def main(config, mode):
         # clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
-        
-        train_prefetcher, _ = get_train_val_loader(config)
-        print("train size: ", len(train_prefetcher))
-        test_train(config, train_prefetcher)
+
+        ds = load_function(data_dir, features_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
+        subject_ids = list(ds.subject_ids)
+        hrtf = ds[0]['features'][:, :, :, 1:]
+        for i in range(len(subject_ids)):
+            hrtf = ds[i]['features'][:, :, :, 1:]
+            data = torch.from_numpy(hrtf.data)
+            if torch.isnan(data).any():
+                print("id: ", subject_ids[i])
+                print("target: ", ds[i]['target'])
+                print("group: ", ds[i]['group'])
+                print()
+            
+        # train_prefetcher, _ = get_train_val_loader(config)
+        # print("train size: ", len(train_prefetcher))
+        # test_train(config, train_prefetcher)
 
     print("finished")
 

@@ -1,5 +1,5 @@
 #PBS -l walltime=01:00:00
-#PBS -lselect=1:ncpus=50:mem=512gb:ngpus=1:gpu_type=RTX6000
+#PBS -lselect=1:ncpus=50:mem=512gb
 
 module load anaconda3/personal
 source activate env3_7
@@ -8,7 +8,7 @@ cd $PBS_O_WORKDIR
 # cd /rds/general/user/jl2622/projects/sonicom/live/matlab/R2021a/extern/engines/python
 # python setup.py build --build-base="/rds/general/user/jl2622/home/matlab/" install --user
 # python model/model.py > output.txt
-python main.py debug --hpc True --tag ari-upscale-4 > train_output.txt
+python main.py debug --hpc True --tag ari-upscale-4 > debug_output.txt
 # python test.py -i $PBS_ARRAY_INDEX
 # python opt.py > output.txt
 # cp output.txt $PBS_O_WORKDIR
