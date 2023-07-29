@@ -201,8 +201,10 @@ def train_vae_gan(config, config_index, train_prefetcher):
                 feature_recon = netD(recon)[1]
                 feature_real = netD(hr_coefficient)[1]
                 with open(f"optimize_{config_index}.txt", "a") as f:
-                    f.write(f"feature recon: {torch.isnan(feature_recon).any()}")
-                    f.write(f"feature real: {torch.isnan(feature_real).any()}")
+                    f.write(f"lr coef nan? {torch.isnan(lr_coefficient.any())}\n")
+                    f.write(f"recon nan? {torch.isnan(recon).any()}\n")
+                    f.write(f"feature recon: {torch.isnan(feature_recon).any()}\n")
+                    f.write(f"feature real: {torch.isnan(feature_real).any()}\n")
                 feature_sim_loss_E = ((feature_recon - feature_real) ** 2).mean() # feature loss
                 train_loss_Enc_sim += feature_sim_loss_E.item()
                 err_enc = prior_loss + feature_sim_loss_E
