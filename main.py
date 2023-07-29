@@ -200,7 +200,7 @@ def main(config, mode):
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
 
-        ds = load_function(data_dir, features_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
         subject_ids = list(ds.subject_ids)
         hrtf = ds[0]['features'][:, :, :, 1:]
         for i in range(len(subject_ids)):
