@@ -1,4 +1,4 @@
-#PBS -l walltime=05:00:00
+#PBS -l walltime=15:00:00
 #PBS -lselect=1:ncpus=50:mem=512gb
 #PBS -J 1-5
 
