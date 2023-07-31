@@ -180,7 +180,8 @@ def train(config, train_prefetcher):
     cudnn.benchmark = True
 
     # Get train params
-    batch_size, beta1, beta2, num_epochs, lr_encoder, lr_decoder, lr_dis, critic_iters = config.get_train_params()
+    bs, optmizer, lr, alpha, lambda_feature, latent_dim, critic_iters = config.get_train_params()
+    # batch_size, beta1, beta2, num_epochs, lr_encoder, lr_decoder, lr_dis, critic_iters = config.get_train_params()
 
     # # get list of positive frequencies of HRTF for plotting magnitude spectrum
     # all_freqs = scipy.fft.fftfreq(256, 1 / config.hrir_samplerate)
@@ -195,9 +196,9 @@ def train(config, train_prefetcher):
         vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
 
     # Define optimizers
-    optD = optim.Adam(netD.parameters(), lr=lr_dis, betas=(beta1, beta2))
-    optEncoder = optim.Adam(vae.encoder.parameters(), lr=lr_encoder, betas=(beta1, beta2))
-    optDecoder = optim.Adam(vae.decoder.parameters(), lr=lr_decoder, betas=(beta1, beta2))
+    optD = optim.Adam(netD.parameters(), lr=lr*alpha)
+    optEncoder = optim.Adam(vae.encoder.parameters(), lr=lr)
+    optDecoder = optim.Adam(vae.decoder.parameters(), lr=lr)
 
     # Define loss functions
     adversarial_criterion = nn.BCEWithLogitsLoss()
@@ -227,6 +228,7 @@ def train(config, train_prefetcher):
     train_loss_Enc_prior_list = []
     train_loss_Enc_sim_list = []
 
+    num_epochs = config.num_epochs
     for epoch in range(num_epochs):
         with open("log.txt", "a") as f:
             f.write(f"Epoch: {epoch}\n")
@@ -334,6 +336,11 @@ def train(config, train_prefetcher):
                 train_loss_Enc_prior += prior_loss.item()
                 feature_recon = netD(recon)[1]
                 feature_real = netD(hr_coefficient)[1]
+                with open(f"log.txt", "a") as f:
+                    f.write(f"lr coef nan? {torch.isnan(lr_coefficient.any())}\n")
+                    f.write(f"recon nan? {torch.isnan(recon).any()}\n")
+                    f.write(f"feature recon: {torch.isnan(feature_recon).any()}\n")
+                    f.write(f"feature real: {torch.isnan(feature_real).any()}\n")
                 feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
                 train_loss_Enc_sim += feature_sim_loss_E.item()
                 err_enc = prior_loss + feature_sim_loss_E
@@ -343,14 +350,16 @@ def train(config, train_prefetcher):
                 err_enc.backward()
                 optEncoder.step()
 
-                if batch_index % 10 == 0:
-                    with open("log.txt", "a") as f:
-                        f.write(f"{batch_index}/{len(train_prefetcher)}\n")
-                        f.write(f"dis: {train_loss_Dis}\t dec: {train_loss_Dec}\t enc: {train_loss_Enc}\n")
-
-                        f.write(f"D_real: {train_loss_Dis_hr}, D_fake: {train_loss_Dis_recon}\n")
-                        f.write(f"content loss: {train_loss_Dec_content}, sim_D: {train_loss_Dec_sim}, gan loss: {train_loss_Dec_gan}\n")
-                        f.write(f"prior: {train_loss_Enc_prior}, sim_E: {train_loss_Enc_sim}\n\n")
+                with open("log.txt", "a") as f:
+                    f.write(f"{batch_index}/{len(train_prefetcher)}\n")
+                    f.write(f"dis: {gan_loss.item()}\t dec: {err_dec.item()}\t enc: {err_enc.item()}\n")
+                    f.write(f"D_real: {loss_D_hr.item()}, D_fake: {loss_D_recon.item()}\n")
+                    f.write(f"content loss: {content_loss.item()}, sim_D: {feature_sim_loss_D.item()}, gan loss: {gan_loss_dec.item()}\n")
+                    f.write(f"prior: {prior_loss.item()}, sim_E: {feature_sim_loss_E.item()}\n\n")
+                    # f.write(f"dis: {train_loss_Dis}\t dec: {train_loss_Dec}\t enc: {train_loss_Enc}\n")
+                    # f.write(f"D_real: {train_loss_Dis_hr}, D_fake: {train_loss_Dis_recon}\n")
+                    # f.write(f"content loss: {train_loss_Dec_content}, sim_D: {train_loss_Dec_sim}, gan loss: {train_loss_Dec_gan}\n")
+                    # f.write(f"prior: {train_loss_Enc_prior}, sim_E: {train_loss_Enc_sim}\n\n")
 
             if ('cuda' in str(device)) and (ngpu > 1):
                 end_overall.record()

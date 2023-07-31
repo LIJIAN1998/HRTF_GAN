@@ -129,10 +129,22 @@ def main(config, mode):
 
     elif mode == 'train':
         # print("using cuda? ", torch.cuda.is_available())
+        config_file_path = f"{config.path}/config_files/config_100.json"
+        config.load(100)
+        bs, optmizer, lr, alpha, lambda_feature, latent_dim, critic_iters = config.get_train_params()
+        with open(f"log.txt", "a") as f:
+            f.write(f"config loaded: {config_file_path}\n")
+            f.write(f"batch size: {bs}\n")
+            f.write(f"optimizer: {optmizer}\n")
+            f.write(f"lr: {lr}\n")
+            f.write(f"alpha: {alpha}\n")
+            f.write(f"lambda: {lambda_feature}\n")
+            f.write(f"latent_dim: {latent_dim}\n")
+            f.write(f"critic iters: {critic_iters}\n")
         train_prefetcher, _ = load_hrtf(config)
         print("train fetcher: ", len(train_prefetcher))
         # Trains the model, according to the parameters specified in Config
-        util.initialise_folders(config, overwrite=True)
+        # util.initialise_folders(config, overwrite=True)
         train(config, train_prefetcher)
 
     elif mode == 'test':
@@ -206,7 +218,7 @@ def main(config, mode):
         train_batch = train_prefetcher.next()
         while train_batch is not None:
             lr_coefficient = train_batch["lr_coefficient"]
-            if torch.isnan(lr_coefficient):
+            if torch.isnan(lr_coefficient).any():
                 id = train_batch["id"]
                 print("nan coef in train sample ", id)
             train_batch = train_prefetcher.next()
@@ -215,7 +227,7 @@ def main(config, mode):
         test_batch = test_prefetcher.next()
         while test_batch is not None:
             lr_coefficient = test_batch["lr_coefficient"]
-            if torch.isnan(lr_coefficient):
+            if torch.isnan(lr_coefficient).any():
                 id = test_batch["id"]
                 print("nan in test sample ", id)
             test_batch = test_prefetcher.next()
