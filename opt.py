@@ -269,11 +269,11 @@ def train_vae_gan(config, config_index, train_prefetcher):
         #     checkpoint=checkpoint,
         # )
     with torch.no_grad():
-        torch.save(vae.state_dict(), f'{path}/weight_{config.upscale_factor}/vae_{config_index}.pt')
-        torch.save(netD.state_dict(), f'{path}/weight_{config.upscale_factor}/Disc_{config_index}.pt')
+        torch.save(vae.state_dict(), f'{path}/result_{config.upscale_factor}/vae_{config_index}.pt')
+        torch.save(netD.state_dict(), f'{path}/result_{config.upscale_factor}/Disc_{config_index}.pt')
     print("Finished Training")
 
-def eval_vae(config, val_prefetcher):
+def eval_vae(config, config_index, val_prefetcher):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
@@ -297,7 +297,7 @@ def eval_vae(config, val_prefetcher):
     model = VAE(nbins=nbins, max_degree=degree, latent_dim=10).to(device)
     print("Build VAE model successfully.")
 
-    model.load_state_dict(torch.load(f"{config.model_path}/vae.pt", map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(f"{config.model_path}/result_{config.upscale_factor}/vae_{config_index}.pt", map_location=torch.device('cpu')))
     print(f"Load VAE model weights `{os.path.abspath(config.model_path)}` successfully.")
 
     model.eval()
@@ -309,6 +309,8 @@ def eval_vae(config, val_prefetcher):
     # Clear/Create directories
     shutil.rmtree(Path(valid_dir), ignore_errors=True)
     Path(valid_dir).mkdir(parents=True, exist_ok=True)
+    shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+    Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
 
     while batch_data is not None:
         # Transfer in-memory data to CUDA devices to speed up validation 
@@ -344,6 +346,7 @@ def main(config_index):
     config = Config(tag, using_hpc=True)
     config_file_path = f"{config.path}/config_files/config_{config_index}.json"
     config.load(config_index)
+    config.upscale_factor = 32
     bs, optmizer, lr, alpha, lambda_feature, latent_dim, critic_iters = config.get_train_params()
     with open(f"optimize_{config_index}.txt", "a") as f:
         f.write(f"config loaded: {config_file_path}\n")
@@ -357,10 +360,12 @@ def main(config_index):
     
     train_prefetcher, val_prefetcher = get_train_val_loader(config)
     train_vae_gan(config, config_index, train_prefetcher)
-    # eval_vae(config, val_prefetcher)
+    eval_vae(config, config_index, val_prefetcher)
 
-    # run_lsd_evaluation(config, config.valid_path)
-    # run_localisation_evaluation(config, config.valid_path)
+    lsd_file = f"result_{config.upscale_factor}/lsd_errors.pickle"
+    run_lsd_evaluation(config, config.valid_path, lsd_file)
+    loc_file = f"result_{config.upscale_factor}/loc_errors.pickle"
+    run_localisation_evaluation(config, config.valid_path, loc_file)
 
 # def ray_main(config, num_samples=20, gpus_per_trial=1):
     # hyperparameters = {
