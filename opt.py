@@ -294,7 +294,8 @@ def eval_vae(config, config_index, val_prefetcher):
 
     device = torch.device(config.device_name if (
             torch.cuda.is_available() and ngpu > 0) else "cpu")
-    model = VAE(nbins=nbins, max_degree=degree, latent_dim=10).to(device)
+    
+    model = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).to(device)
     print("Build VAE model successfully.")
 
     model.load_state_dict(torch.load(f"{config.model_path}/result_{config.upscale_factor}/vae_{config_index}.pt", map_location=torch.device('cpu')))
