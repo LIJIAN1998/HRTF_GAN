@@ -130,7 +130,7 @@ def main(config, mode):
     elif mode == 'train':
         # print("using cuda? ", torch.cuda.is_available())
         config_file_path = f"{config.path}/config_files/config_100.json"
-        config.load(100)
+        config.load(150)
         bs, optmizer, lr, alpha, lambda_feature, latent_dim, critic_iters = config.get_train_params()
         with open(f"log.txt", "a") as f:
             f.write(f"config loaded: {config_file_path}\n")
