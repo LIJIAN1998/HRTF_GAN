@@ -42,23 +42,101 @@ class UpsampleBlock(nn.Module):
 
         return torch.permute(out, dims=(0, 2, 1, 3, 4))
 
-# class EncodingBlock(nn.Module):
-#     def __init__(self, in_channels: int, out_channels: int) -> None:
-#         super(EncodingBlock, self).__init__()
-#         self.encode_block = nn.Sequential(
-#             CubeSpherePadding2D(1),
-#             CubeSphereConv2D(in_channels, out_channels, (3, 3), (1, 1), bias=False),
-#             nn.BatchNorm3d(out_channels),
-#             nn.ReLU(),
-#             CubeSpherePadding2D(1),
-#             CubeSphereConv2D(out_channels, out_channels, (3, 3), (2, 2), bias=False),
-#         )
+
+class ResBlock(nn.Module):
+    def __init__(self, in_channnels, out_channels, identity_downsample=None, stride=1, expansion=1):
+        super(ResBlock, self).__init__()
+        self.expansion = expansion
+        self.conv1 = nn.Sequential(
+            nn.Conv1d(in_channnels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
+            nn.BatchNorm1d(out_channels),
+        ) 
+        self.conv2 = nn.Sequential(
+            nn.Conv1d(out_channels, out_channels * self.expansion, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm1d(out_channels * self.expansion)
+        )
+        self.relu = nn.ReLU()
+        self.identity_downsample = identity_downsample
+        self.stride = stride
+
+    def forward(self, x):
+        identity = x.clone()
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.conv2(x)
+        
+        if self.identity_downsample is not None:
+            identity = self.identity_downsample(identity)
+
+        x += identity
+        x = self.relu(x)
+        return x
+
+class ResEncoder(nn.Module):
+    def __init__(self, block, nbins: int, max_degree: int, latent_dim: int) -> None:
+        super(ResEncoder, self).__init__()
+        self.coefficient = (max_degree + 1) ** 2
+        num_blocks = 2
+        self.expansion = 1
+        self.in_channels = 256
+        self.conv1 = nn.Sequential(
+            nn.Conv1d(nbins, self.in_channels, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm1d(self.in_channels),
+            nn.ReLU(),
+        )
+        res_layers = []
+        self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
+        if self.coefficient == 4:
+            self.num_encode_layers -= 1
+        res_layers.append(self._make_layer(block, 256, num_blocks))
+        for i in range(self.num_encode_layers):
+            res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
+        self.res_layers = nn.Sequential(*res_layers)
+
+        self.compute_mean = nn.Linear(512*2, latent_dim)
+        self.compute_log_var = nn.Linear(512*2, latent_dim)
+    
+    def _make_layer(self, block, out_channels, num_blocks, stride=1):
+        downsample = None
+        if stride != 1:
+            downsample = nn.Sequential(
+                nn.Conv1d(self.in_channels, out_channels * self.expansion, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm1d(out_channels * self.expansion)
+            )
+        layers = []
+        layers.append(block(self.in_channels, out_channels, stride, self.expansion, downsample))
+        self.in_channels = out_channels * self.expansion
+
+        for i in range(num_blocks-1):
+            layers.append(block(self.in_channels, out_channels, expansion=self.expansion))
+        return nn.Sequential(*layers)
+    
+    def encode(self, x):
+        x = self.conv1(x)
+        x = self.res_layers(x)
+        out = x.view(x.size(0), -1)
+        return out
+    
+    def reparametrize(self, mu, logvar):
+        epsilon = torch.randn(mu.size(0), mu.size(1)).to(mu.device)
+        z = mu + epsilon * torch.exp(logvar/2.)
+        return z
+    
+    def forward(self, x):
+        x = self.encode(x)
+        mu, log_var = self.compute_mean(x), self.compute_log_var(x)
+        z = self.reparametrize(mu, log_var)
+        return mu, log_var, z
+
 
 class EncodingBlock(nn.Module):
     def __init__(self, in_channels: int, out_channels: int) -> None:
         super(EncodingBlock, self).__init__()
         self.encode_block = nn.Sequential(
             nn.Conv1d(in_channels, out_channels, kernel_size=3, padding=1, stride=1),
+            nn.BatchNorm1d(out_channels),
+            nn.ReLU(),
+            nn.Conv1d(out_channels, out_channels, kernel_size=3, padding=1, stride=1),
             nn.BatchNorm1d(out_channels),
             nn.ReLU(),
             nn.Conv1d(out_channels, out_channels, kernel_size=3, padding=1, stride=2),
