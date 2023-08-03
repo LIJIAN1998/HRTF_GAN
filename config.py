@@ -39,8 +39,8 @@ class Config:
             self.amt_dir = '/rds/general/user/jl2622/home/amt'
         else:
             # local data dirs
-            self.data_dirs_path = '/home/aos13/HRTF-GANs-27Sep22-prep-for-publication'
-            self.raw_hrtf_dir = '/home/aos13/HRTF_datasets'
+            self.data_dirs_path = '/homes/jl2622/HRTF-results'
+            self.raw_hrtf_dir = '/vol/bitbucket/jl2622'
             self.amt_dir = '/home/aos13/AMT/amt_code'
 
         self.runs_folder = '/runs-hpc'

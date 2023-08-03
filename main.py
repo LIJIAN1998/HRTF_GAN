@@ -212,26 +212,32 @@ def main(config, mode):
         # clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                             'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+        row_angles = ds.row_angles
+        column_angles = ds.column_angles
+        print("num row: ", len(row_angles))
+        with open('log.txt', 'a') as f:
+            f.write('dataset loaded')
+        # config.batch_size = 1
+        # train_prefetcher, test_prefetcher = load_hrtf(config)
+        # train_prefetcher.reset()
+        # train_batch = train_prefetcher.next()
+        # while train_batch is not None:
+        #     lr_coefficient = train_batch["lr_coefficient"]
+        #     if torch.isnan(lr_coefficient).any():
+        #         id = train_batch["id"]
+        #         print("nan coef in train sample ", id)
+        #     train_batch = train_prefetcher.next()
 
-        config.batch_size = 1
-        train_prefetcher, test_prefetcher = load_hrtf(config)
-        train_prefetcher.reset()
-        train_batch = train_prefetcher.next()
-        while train_batch is not None:
-            lr_coefficient = train_batch["lr_coefficient"]
-            if torch.isnan(lr_coefficient).any():
-                id = train_batch["id"]
-                print("nan coef in train sample ", id)
-            train_batch = train_prefetcher.next()
-
-        test_prefetcher.reset()
-        test_batch = test_prefetcher.next()
-        while test_batch is not None:
-            lr_coefficient = test_batch["lr_coefficient"]
-            if torch.isnan(lr_coefficient).any():
-                id = test_batch["id"]
-                print("nan in test sample ", id)
-            test_batch = test_prefetcher.next()
+        # test_prefetcher.reset()
+        # test_batch = test_prefetcher.next()
+        # while test_batch is not None:
+        #     lr_coefficient = test_batch["lr_coefficient"]
+        #     if torch.isnan(lr_coefficient).any():
+        #         id = test_batch["id"]
+        #         print("nan in test sample ", id)
+        #     test_batch = test_prefetcher.next()
 
 
         # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
