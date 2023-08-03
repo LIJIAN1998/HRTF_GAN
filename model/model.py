@@ -340,7 +340,8 @@ class VAE(nn.Module):
         self.latent_dim = latent_dim
         self.out_degree = out_degree
 
-        self.encoder = Encoder(self.nbins, self.max_degree, self.latent_dim)
+        # self.encoder = Encoder(self.nbins, self.max_degree, self.latent_dim)
+        self.encoder = ResEncoder(ResBlock, self.nbins, self.max_degree, self.latent_dim)
         self.decoder = Decoder(self.nbins, self.latent_dim, self.out_degree)
         self.discriminator = Discriminator(self.nbins)
 
