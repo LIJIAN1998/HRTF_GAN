@@ -2,6 +2,7 @@ import argparse
 import os
 import pickle
 import torch
+import torch.nn.functional as F
 import numpy as np
 import importlib
 
@@ -23,6 +24,9 @@ from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from scipy.ndimage import binary_dilation
 
 # import matlab.engine
+
+import shutil
+from pathlib import Path
 
 PI_4 = np.pi / 4
 
@@ -50,6 +54,23 @@ def main(config, mode):
         generate_euclidean_cube(config, cs.get_sphere_coords(), edge_len=config.hrtf_size)
 
     elif mode == 'preprocess':
+        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                             'side': 'left', 'domain': 'magnitude'}})
+        sphere = HRTF_Sphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
+
+        # Split data into train and test sets
+        train_size = int(len(set(ds.subject_ids)) * config.train_samples_ratio)
+        train_sample = np.random.choice(list(set(ds.subject_ids)), train_size, replace=False)
+        val_sample = list(set(ds.subject_ids) - set(train_sample))
+        id_file_dir = config.train_val_id_dir
+        if not os.path.exists(id_file_dir):
+            os.makedirs(id_file_dir)
+        id_filename = id_file_dir + '/train_val_id.pickle'
+        with open(id_filename, "wb") as file:
+            pickle.dump((train_sample, val_sample), file)
+
+
+
         # Interpolates data to find HRIRs on cubed sphere, then FFT to obtain HRTF, finally splits data into train and
         # val sets and saves processed data
         ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
@@ -212,13 +233,52 @@ def main(config, mode):
         # clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+        left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                             'side': 'left', 'domain': 'magnitude'}})
+        right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                             'side': 'right', 'domain': 'magnitude'}})
+        left_ids = left_hrtf.subject_ids
+        right_ids = right_hrtf.subject_ids
+        print(left_ids)
+        print(right_ids)
+
         row_angles = ds.row_angles
         column_angles = ds.column_angles
-        print("num row: ", len(row_angles))
-        with open('log.txt', 'a') as f:
-            f.write('dataset loaded')
+        # print("num row: ", len(row_angles))
+        # with open('log.txt', 'a') as f:
+        #     f.write('dataset loaded')
+
+
+        valid_dir = config.valid_path
+        valid_gt_dir = config.valid_gt_path
+        shutil.rmtree(Path(valid_dir), ignore_errors=True)
+        Path(valid_dir).mkdir(parents=True, exist_ok=True)
+        shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+        Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+        
+        left = left_hrtf[0]['features'][:, :, :, 1:]
+        right = right_hrtf[0]['features'][:, :, :, 1:]
+        merge = np.ma.concatenate([left, right], axis=3)
+        original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
+        SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, original_mask.numpy().astype(bool))
+        sh_coef = torch.from_numpy(SHT(merge))
+        print("coef: ", sh_coef.shape)
+        merge = torch.from_numpy(merge.data) # w x h x r x nbins
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        inverse = harmonics @ sh_coef
+        recon = F.softplus(inverse.reshape(-1, 256, 1, 72, 12))
+        recon = torch.permute(recon[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
+        print("recon: ", recon.shape)
+        file_name = '/' + f"{config.dataset}_{0}.pickle"
+        with open(valid_dir + file_name, "wb") as file:
+            pickle.dump(recon, file)
+        hr = torch.permute(merge, (2, 0, 1, 3)).detach().cpu()   # r x w x h x nbins
+        print("gt: ", hr.shape)
+        with open(valid_gt_dir + file_name, "wb") as file:
+            pickle.dump(hr, file)
+
+        
+        
         # config.batch_size = 1
         # train_prefetcher, test_prefetcher = load_hrtf(config)
         # train_prefetcher.reset()
