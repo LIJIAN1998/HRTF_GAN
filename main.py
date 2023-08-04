@@ -279,8 +279,9 @@ def main(config, mode):
         #     pickle.dump(hr, file)
 
         x = recon[0, 0, 0, 1]
-        plt.plot(x)
-        plt.savefig("recon0001.png")
+        y = merge[0, 0, 0, 1]
+        plt.plot(y)
+        plt.savefig("merge0001.png")
 
 
         
