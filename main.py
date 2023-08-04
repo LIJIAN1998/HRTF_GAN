@@ -271,8 +271,8 @@ def main(config, mode):
         print("inverse: ", inverse.shape)
         inverse2 = torch.from_numpy(SHT.inverse(sh_coef.numpy()))
         print("inverse2: ", inverse2.shape) 
-        recon = inverse.reshape(-1, 72, 12, 1, 256).detach().cpu() # w x h x r x nbins
-        recon2 = inverse2.reshape(-1, 72, 12, 1, 256).detach().cpu()
+        recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
+        recon2 = inverse2.reshape(72, 12, 1, 256).detach().cpu()
         # recon = torch.permute(recon[0], (2, 3, 1, 0)).detach().cpu() 
         # recon2 = torch.permute(recon2[0], (2, 3, 1, 0)).detach().cpu()
         print("recon: ", recon.shape)
@@ -286,15 +286,21 @@ def main(config, mode):
 
         x = recon2[0, 1, 0, :]
         y = merge[0, 1, 0, :]
-        print("x: ", x)
+        mean_recon1 = torch.mean(recon)
+        mean_recon2 = torch.mean(recon2)
+        mean_original = torch.mean(merge)
+        # print("x: ", x)
+        print("mean 1: ", mean_recon1)
+        print("mean 2: ", mean_recon2)
+        print("original mean: ", mean_original)
         # print("y: ", y)
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        ax1.plot(x)
-        ax1.set_title('recon')
-        ax2.plot(y)
-        ax2.set_title('original')
-        # plt.plot(x)
-        plt.savefig("output.png")
+        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        # ax1.plot(x)
+        # ax1.set_title('recon')
+        # ax2.plot(y)
+        # ax2.set_title('original')
+        # # plt.plot(x)
+        # plt.savefig("output.png")
 
 
         
