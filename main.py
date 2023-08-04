@@ -278,9 +278,9 @@ def main(config, mode):
         # with open(valid_gt_dir + file_name, "wb") as file:
         #     pickle.dump(hr, file)
 
-        x = recon[0][0][0][0]
+        x = recon[0, 0, 1, 0]
         plt.plot(x)
-        plt.savefig("recon0000.png")
+        plt.savefig("recon0010.png")
 
 
         
