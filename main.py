@@ -271,10 +271,10 @@ def main(config, mode):
         print("inverse: ", inverse.shape)
         inverse2 = torch.from_numpy(SHT.inverse(sh_coef.numpy()))
         print("inverse2: ", inverse2.shape) 
-        recon = inverse.reshape(-1, 256, 1, 72, 12)
-        recon2 = inverse2.reshape(-1, 256, 1, 72, 12)
-        recon = torch.permute(recon[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
-        recon2 = torch.permute(recon2[0], (2, 3, 1, 0)).detach().cpu()
+        recon = inverse.reshape(-1, 72, 12, 1, 256).detach().cpu() # w x h x r x nbins
+        recon2 = inverse2.reshape(-1, 72, 12, 1, 256).detach().cpu()
+        # recon = torch.permute(recon[0], (2, 3, 1, 0)).detach().cpu() 
+        # recon2 = torch.permute(recon2[0], (2, 3, 1, 0)).detach().cpu()
         print("recon: ", recon.shape)
         # file_name = '/' + f"{config.dataset}_{0}.pickle"
         # with open(valid_dir + file_name, "wb") as file:
