@@ -269,7 +269,7 @@ def main(config, mode):
         print("harmonics shape: ", harmonics.shape)
         inverse = harmonics @ sh_coef
         print("inverse: ", inverse.shape)
-        inverse2 = torch.from_numpy(SHT.inverse(sh_coef.numpy()))
+        inverse2 = torch.from_numpy(SHT.inverse(sh_coef.numpy())).float()
         print("inverse2: ", inverse2.shape) 
         recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
         recon2 = inverse2.reshape(72, 12, 1, 256).detach().cpu()
