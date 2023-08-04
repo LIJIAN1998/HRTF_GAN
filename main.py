@@ -280,6 +280,8 @@ def main(config, mode):
 
         x = recon[0, 0, 0, 1]
         y = merge[0, 0, 0, 1]
+        print("x: ", x)
+        print("y: ", y)
         plt.plot(y)
         plt.savefig("merge0001.png")
 
