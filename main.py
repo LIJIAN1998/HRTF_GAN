@@ -260,7 +260,7 @@ def main(config, mode):
         right = right_hrtf[0]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
-        SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.numpy().astype(bool))
+        SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
         sh_coef = torch.from_numpy(SHT(merge))
         print("coef: ", sh_coef.shape)
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
