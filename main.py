@@ -282,8 +282,8 @@ def main(config, mode):
         y = merge[0, 0, 0, :]
         print("x: ", x)
         print("y: ", y)
-        plt.plot(y)
-        plt.savefig("merge0001.png")
+        plt.plot(x)
+        plt.savefig("recon0001.png")
 
 
         
