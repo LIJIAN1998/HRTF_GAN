@@ -242,8 +242,8 @@ def main(config, mode):
         print(left_ids)
         print(right_ids)
 
-        row_angles = ds.row_angles
-        column_angles = ds.column_angles
+        # row_angles = ds.row_angles
+        # column_angles = ds.column_angles
         # print("num row: ", len(row_angles))
         # with open('log.txt', 'a') as f:
         #     f.write('dataset loaded')
