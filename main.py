@@ -286,7 +286,7 @@ def main(config, mode):
 
         x = recon2[0, 1, 0, :]
         y = merge[0, 1, 0, :]
-        # print("x: ", x)
+        print("x: ", x)
         # print("y: ", y)
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
         ax1.plot(x)
