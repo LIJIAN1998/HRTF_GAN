@@ -266,6 +266,7 @@ def main(config, mode):
         print("coef: ", sh_coef.shape)
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        print("harmonics shape: ", harmonics.shape)
         inverse = harmonics @ sh_coef
         recon = inverse.reshape(-1, 256, 1, 72, 12)
         recon = torch.permute(recon[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
@@ -278,12 +279,17 @@ def main(config, mode):
         # with open(valid_gt_dir + file_name, "wb") as file:
         #     pickle.dump(hr, file)
 
-        x = recon[0, 0, 0, :]
-        y = merge[0, 0, 0, :]
-        print("x: ", x)
-        print("y: ", y)
-        plt.plot(x)
-        plt.savefig("recon0001.png")
+        x = recon[0, 1, 0, :]
+        y = merge[0, 1, 0, :]
+        # print("x: ", x)
+        # print("y: ", y)
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x)
+        ax1.set_title('recon')
+        ax2.plot(y)
+        ax2.set_title('original')
+        # plt.plot(x)
+        plt.savefig("output.png")
 
 
         
