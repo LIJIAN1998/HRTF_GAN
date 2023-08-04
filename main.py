@@ -27,6 +27,7 @@ from scipy.ndimage import binary_dilation
 
 import shutil
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 PI_4 = np.pi / 4
 
@@ -269,13 +270,20 @@ def main(config, mode):
         recon = F.softplus(inverse.reshape(-1, 256, 1, 72, 12))
         recon = torch.permute(recon[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
         print("recon: ", recon.shape)
-        file_name = '/' + f"{config.dataset}_{0}.pickle"
-        with open(valid_dir + file_name, "wb") as file:
-            pickle.dump(recon, file)
-        hr = torch.permute(merge, (2, 0, 1, 3)).detach().cpu()   # r x w x h x nbins
-        print("gt: ", hr.shape)
-        with open(valid_gt_dir + file_name, "wb") as file:
-            pickle.dump(hr, file)
+        # file_name = '/' + f"{config.dataset}_{0}.pickle"
+        # with open(valid_dir + file_name, "wb") as file:
+        #     pickle.dump(recon, file)
+        # hr = torch.permute(merge, (2, 0, 1, 3)).detach().cpu()   # r x w x h x nbins
+        # print("gt: ", hr.shape)
+        # with open(valid_gt_dir + file_name, "wb") as file:
+        #     pickle.dump(hr, file)
+
+        x = recon[0][0][0][0][0][0]
+        plt.plot(x)
+        plt.savefig("recon00000.png")
+
+
+        
 
         
         
