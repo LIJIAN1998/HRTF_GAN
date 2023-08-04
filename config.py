@@ -40,7 +40,7 @@ class Config:
         else:
             # local data dirs
             self.data_dirs_path = '/homes/jl2622/HRTF-results'
-            self.raw_hrtf_dir = '/vol/bitbucket/jl2622'
+            self.raw_hrtf_dir = Path('/vol/bitbucket/jl2622')
             self.amt_dir = '/home/aos13/AMT/amt_code'
 
         self.runs_folder = '/runs-hpc'
