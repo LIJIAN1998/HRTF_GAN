@@ -17,12 +17,12 @@ from preprocessing.utils import interpolate_fft, generate_euclidean_cube, conver
 
 from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation, debug_barycentric
 from baselines.hrtf_selection import run_hrtf_selection
-from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
+# from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from scipy.ndimage import binary_dilation
 
-import matlab.engine
+# import matlab.engine
 
 PI_4 = np.pi / 4
 
@@ -154,8 +154,8 @@ def main(config, mode):
 
         test(config, test_prefetcher)
 
-        run_lsd_evaluation(config, config.valid_path)
-        run_localisation_evaluation(config, config.valid_path)
+        # run_lsd_evaluation(config, config.valid_path)
+        # run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
@@ -172,10 +172,10 @@ def main(config, mode):
 
         config.path = config.barycentric_hrtf_dir
         file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        run_lsd_evaluation(config, barycentric_output_path, file_ext)
+        # run_lsd_evaluation(config, barycentric_output_path, file_ext)
 
         file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        run_localisation_evaluation(config, barycentric_output_path, file_ext)
+        # run_localisation_evaluation(config, barycentric_output_path, file_ext)
 
     elif mode == 'hrtf_selection_baseline':
         run_hrtf_selection(config, config.hrtf_selection_dir)
@@ -190,14 +190,14 @@ def main(config, mode):
         config.path = config.hrtf_selection_dir
 
         file_ext = f'lsd_errors_hrtf_selection_minimum_data.pickle'
-        run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
+        # run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
         file_ext = f'loc_errors_hrtf_selection_minimum_data.pickle'
-        run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
+        # run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
 
         file_ext = f'lsd_errors_hrtf_selection_maximum_data.pickle'
-        run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
+        # run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
         file_ext = f'loc_errors_hrtf_selection_maximum_data.pickle'
-        run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
+        # run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
 
     elif mode == "debug":
         # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
