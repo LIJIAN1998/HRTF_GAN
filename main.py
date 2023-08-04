@@ -267,7 +267,7 @@ def main(config, mode):
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         inverse = harmonics @ sh_coef
-        recon = F.softplus(inverse.reshape(-1, 256, 1, 72, 12))
+        recon = inverse.reshape(-1, 256, 1, 72, 12)
         recon = torch.permute(recon[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
         print("recon: ", recon.shape)
         # file_name = '/' + f"{config.dataset}_{0}.pickle"
@@ -278,8 +278,8 @@ def main(config, mode):
         # with open(valid_gt_dir + file_name, "wb") as file:
         #     pickle.dump(hr, file)
 
-        x = recon[0, 0, 0, 1]
-        y = merge[0, 0, 0, 1]
+        x = recon[0, 0, 0, :]
+        y = merge[0, 0, 0, :]
         print("x: ", x)
         print("y: ", y)
         plt.plot(y)
