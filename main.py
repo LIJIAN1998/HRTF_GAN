@@ -90,14 +90,14 @@ def main(config, mode):
             right = ds_right[i]['features'][:, :, :, 1:]
             merge = np.ma.concatenate([left, right], axis=3)
             merge = torch.from_numpy(merge.data).permute(2, 0, 1, 3) # r x w x h x nbins
-            if left_hrtf.subject_ids[i] in train_sample:
+            if ds_left.subject_ids[i] in train_sample:
                 train_hrtfs[j] = merge[:, :, :, :config.nbins_hrtf] # add left
                 j += 1
                 train_hrtfs[j] = merge[:, :, :, config.nbins_hrtf:] # add right
                 j += 1
             else:
-                subject_id = str(left_hrtf.subject_ids[i])
-                file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
+                subject_id = str(ds_left.subject_ids[i])
+                file_name = '/' + f"{config.dataset}_{subject_id}.pickle"
                 with open(valid_gt_dir + file_name, "wb") as file:
                     pickle.dump(merge, file)
 
