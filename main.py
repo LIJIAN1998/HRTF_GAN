@@ -257,8 +257,8 @@ def main(config, mode):
         shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
         Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
         
-        left = left_hrtf[0]['features'][:, :, :, 1:]
-        right = right_hrtf[0]['features'][:, :, :, 1:]
+        left = left_hrtf[32]['features'][:, :, :, 1:]
+        right = right_hrtf[32]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
