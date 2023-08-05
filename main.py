@@ -227,7 +227,7 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         # print(original_mask)
-        order = 40
+        order = 35
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape, sh_coef.dtype)
@@ -250,7 +250,8 @@ def main(config, mode):
         # print("gt: ", hr.shape)
         # with open(valid_gt_dir + file_name, "wb") as file:
         #     pickle.dump(hr, file)
-        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        margin = 1.8670232e-08
+        generated = F.relu(recon[None,:].permute(0, 4, 3, 1, 2)) +  margin # 1 x nbins x r x w x h
         target = merge[None,:].permute(0,4,3,1,2)
         print(generated.shape, target.shape)
         error = spectral_distortion_metric(generated, target)
