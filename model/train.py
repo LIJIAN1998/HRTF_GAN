@@ -262,11 +262,11 @@ def train(config, train_prefetcher):
 
             # Transfer in-memory data to CUDA devices to speed up training
             lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
-                                                             non_blocking=True, dtype=torch.float)
+                                                             non_blocking=True)
             hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
-                                                             non_blocking=True, dtype=torch.float)
+                                                             non_blocking=True)
             hrtf = batch_data["hrtf"].to(device=device, memory_format=torch.contiguous_format,
-                                         non_blocking=True, dtype=torch.float)
+                                         non_blocking=True)
             masks = batch_data["mask"]
             
             bs = lr_coefficient.size(0)
@@ -312,7 +312,7 @@ def train(config, train_prefetcher):
                 harmonics_list = []
                 for i in range(masks.size(0)):
                     SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
-                    harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+                    harmonics = torch.from_numpy(SHT.get_harmonics())
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
                 recons = harmonics_tensor @ recon.permute(0, 2, 1)

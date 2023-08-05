@@ -9,7 +9,7 @@ import importlib
 from config import Config
 from model.train import train, test_train
 from model.test import test
-from model.util import load_dataset, load_hrtf, get_train_val_loader
+from model.util import load_dataset, load_hrtf, get_train_val_loader, spectral_distortion_metric
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.hrtf_sphere import HRTF_Sphere
@@ -55,20 +55,30 @@ def main(config, mode):
         generate_euclidean_cube(config, cs.get_sphere_coords(), edge_len=config.hrtf_size)
 
     elif mode == 'preprocess':
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
-                                                             'side': 'left', 'domain': 'magnitude'}})
-        sphere = HRTF_Sphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
+        ds_left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                                  'side': 'left', 'domain': 'magnitude'}})
+        ds_right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                                  'side': 'left', 'domain': 'magnitude'}})
+        sphere = HRTF_Sphere(mask=ds_left[0]['features'].mask, row_angles=ds_left.row_angles, column_angles=ds_left.column_angles)
 
         # Split data into train and test sets
-        train_size = int(len(set(ds.subject_ids)) * config.train_samples_ratio)
-        train_sample = np.random.choice(list(set(ds.subject_ids)), train_size, replace=False)
-        val_sample = list(set(ds.subject_ids) - set(train_sample))
+        train_size = int(len(set(ds_left.subject_ids)) * config.train_samples_ratio)
+        train_sample = np.random.choice(list(set(ds_left.subject_ids)), train_size, replace=False)
+        val_sample = list(set(ds_left.subject_ids) - set(train_sample))
         id_file_dir = config.train_val_id_dir
         if not os.path.exists(id_file_dir):
             os.makedirs(id_file_dir)
         id_filename = id_file_dir + '/train_val_id.pickle'
         with open(id_filename, "wb") as file:
             pickle.dump((train_sample, val_sample), file)
+
+        for id in val_sample:
+            left = left_hrtf[id]['features'][:, :, :, 1:]
+            right = right_hrtf[id]['features'][:, :, :, 1:]
+
+        valid_gt_dir = config.valid_gt_path
+        shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+        Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
 
 
 
@@ -252,10 +262,10 @@ def main(config, mode):
 
         valid_dir = config.valid_path
         valid_gt_dir = config.valid_gt_path
-        # shutil.rmtree(Path(valid_dir), ignore_errors=True)
-        # Path(valid_dir).mkdir(parents=True, exist_ok=True)
-        # shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
-        # Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+        shutil.rmtree(Path(valid_dir), ignore_errors=True)
+        Path(valid_dir).mkdir(parents=True, exist_ok=True)
+        shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+        Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
         # min_list = []
         # for sample_id in list(left_ids):
         #     sample_id -= 1
@@ -295,17 +305,20 @@ def main(config, mode):
         # with open(valid_gt_dir + file_name, "wb") as file:
         #     pickle.dump(hr, file)
 
-        x = recon[24, 8, 0, :]
-        y = merge[24, 8, 0, :]
-        mean_recon1 = torch.mean(recon)
-        max1 = torch.max(recon)
-        min1 = torch.min(recon)
-        mean_recon2 = torch.mean(recon2)
-        max2 = torch.max(recon2)
-        min2 = torch.min(recon2)
-        mean_original = torch.mean(merge)
-        max_original = torch.max(merge)
-        min_original = torch.min(merge)
+        error = spectral_distortion_metric(recon, merge)
+        print("lsd error: ", error)
+
+        # x = recon[24, 8, 0, :]
+        # y = merge[24, 8, 0, :]
+        # mean_recon1 = torch.mean(recon)
+        # max1 = torch.max(recon)
+        # min1 = torch.min(recon)
+        # mean_recon2 = torch.mean(recon2)
+        # max2 = torch.max(recon2)
+        # min2 = torch.min(recon2)
+        # mean_original = torch.mean(merge)
+        # max_original = torch.max(merge)
+        # min_original = torch.min(merge)
         # print("x: ", x)
         # print("mean 1: ", mean_recon1)
         # print("mean 2: ", mean_recon2)
@@ -318,13 +331,13 @@ def main(config, mode):
         # print("min original: ", min_original)
 
         # print("y: ", y)
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        ax1.plot(x)
-        ax1.set_title('recon')
-        ax2.plot(y)
-        ax2.set_title('original')
-        # plt.plot(x)
-        plt.savefig("output.png")
+        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        # ax1.plot(x)
+        # ax1.set_title('recon')
+        # ax2.plot(y)
+        # ax2.set_title('original')
+        # # plt.plot(x)
+        # plt.savefig("output.png")
 
 
         
