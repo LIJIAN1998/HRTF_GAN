@@ -227,7 +227,8 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         # print(original_mask)
-        SHT = SphericalHarmonicsTransform(35, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
+        order = 40
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape, sh_coef.dtype)
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
@@ -267,6 +268,7 @@ def main(config, mode):
         max_original = torch.max(merge)
         min_original = torch.min(merge)
         # print("x: ", x)
+        print("order: ", order)
         print("mean 1: ", mean_recon1)
         # print("mean 2: ", mean_recon2)
         print("original mean: ", mean_original)
