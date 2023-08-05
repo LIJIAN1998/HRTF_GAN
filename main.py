@@ -238,9 +238,9 @@ def main(config, mode):
         # print(original_mask)
         SHT = SphericalHarmonicsTransform(50, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
         sh_coef = torch.from_numpy(SHT(merge))
-        print("coef: ", sh_coef.shape)
+        print("coef: ", sh_coef.shape, type(sh_coef))
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
-        harmonics = torch.from_numpy(SHT.get_harmonics())
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         print("harmonics shape: ", harmonics.shape)
         inverse = harmonics @ sh_coef
         print("inverse: ", inverse.shape)
@@ -264,8 +264,8 @@ def main(config, mode):
         error = spectral_distortion_metric(generated, target)
         print("lsd error: ", error)
 
-        # x = recon[24, 8, 0, :]
-        # y = merge[24, 8, 0, :]
+        x = recon[24, 8, 0, :]
+        y = merge[24, 8, 0, :]
         # mean_recon1 = torch.mean(recon)
         # max1 = torch.max(recon)
         min1 = torch.min(recon)
@@ -287,13 +287,12 @@ def main(config, mode):
         # print("min original: ", min_original)
 
         # print("y: ", y)
-        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        # ax1.plot(x)
-        # ax1.set_title('recon')
-        # ax2.plot(y)
-        # ax2.set_title('original')
-        # # plt.plot(x)
-        # plt.savefig("output.png")
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x)
+        ax1.set_title('recon')
+        ax2.plot(y)
+        ax2.set_title('original')
+        plt.savefig("output.png")
 
 
         

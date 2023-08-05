@@ -8,4 +8,4 @@ source /vol/cuda/11.0.3-cudnn8.0.5.39/setup.sh
 TERM=vt100 # or TERM=xterm
 /usr/bin/nvidia-smi
 uptime
-python main.py train --hpc False --tag ari-upscale-4
+python main.py debug --hpc False --tag ari-upscale-4
