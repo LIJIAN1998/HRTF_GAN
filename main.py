@@ -204,22 +204,13 @@ def main(config, mode):
                                                              'side': 'right', 'domain': 'magnitude'}})
         left_ids = left_hrtf.subject_ids
         right_ids = right_hrtf.subject_ids
-        print(left_ids)
-        print(right_ids)
-
-        # row_angles = ds.row_angles
-        # column_angles = ds.column_angles
-        # print("num row: ", len(row_angles))
-        # with open('log.txt', 'a') as f:
-        #     f.write('dataset loaded')
-
 
         valid_dir = config.valid_path
         valid_gt_dir = config.valid_gt_path
-        shutil.rmtree(Path(valid_dir), ignore_errors=True)
-        Path(valid_dir).mkdir(parents=True, exist_ok=True)
-        shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
-        Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+        # shutil.rmtree(Path(valid_dir), ignore_errors=True)
+        # Path(valid_dir).mkdir(parents=True, exist_ok=True)
+        # shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+        # Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
         # min_list = []
         # for sample_id in list(left_ids):
         #     sample_id -= 1
@@ -236,7 +227,7 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         # print(original_mask)
-        SHT = SphericalHarmonicsTransform(50, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
+        SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape, sh_coef.dtype)
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
@@ -266,25 +257,25 @@ def main(config, mode):
 
         x = recon[24, 8, 0, :]
         y = merge[24, 8, 0, :]
-        # mean_recon1 = torch.mean(recon)
-        # max1 = torch.max(recon)
+        mean_recon1 = torch.mean(recon)
+        max1 = torch.max(recon)
         min1 = torch.min(recon)
         # mean_recon2 = torch.mean(recon2)
         # max2 = torch.max(recon2)
         # min2 = torch.min(recon2)
-        # mean_original = torch.mean(merge)
-        # max_original = torch.max(merge)
-        # min_original = torch.min(merge)
+        mean_original = torch.mean(merge)
+        max_original = torch.max(merge)
+        min_original = torch.min(merge)
         # print("x: ", x)
-        # print("mean 1: ", mean_recon1)
+        print("mean 1: ", mean_recon1)
         # print("mean 2: ", mean_recon2)
-        # print("original mean: ", mean_original)
-        # print("max 1: ", max1)
+        print("original mean: ", mean_original)
+        print("max 1: ", max1)
         # print("max 2: ", max2)
-        # print("max original: ", max_original)
+        print("max original: ", max_original)
         print("min 1: ", min1)
         # print("min 2: ", min2)
-        # print("min original: ", min_original)
+        print("min original: ", min_original)
 
         # print("y: ", y)
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
