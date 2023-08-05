@@ -307,13 +307,13 @@ def main(config, mode):
         print("min original: ", min_original)
 
         # print("y: ", y)
-        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        # ax1.plot(x)
-        # ax1.set_title('recon')
-        # ax2.plot(y)
-        # ax2.set_title('original')
-        # # plt.plot(x)
-        # plt.savefig("output.png")
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x)
+        ax1.set_title('recon')
+        ax2.plot(y)
+        ax2.set_title('original')
+        # plt.plot(x)
+        plt.savefig("output.png")
 
 
         
