@@ -252,25 +252,26 @@ def main(config, mode):
 
         valid_dir = config.valid_path
         valid_gt_dir = config.valid_gt_path
-        shutil.rmtree(Path(valid_dir), ignore_errors=True)
-        Path(valid_dir).mkdir(parents=True, exist_ok=True)
-        shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
-        Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
-        min_list = []
-        for sample_id in list(left_ids):
-            sample_id -= 1
-            left = left_hrtf[sample_id]['features'][:, :, :, 1:]
-            right = right_hrtf[sample_id]['features'][:, :, :, 1:]
-            merge = np.ma.concatenate([left, right], axis=3)
-            merge = torch.from_numpy(merge.data)
-            min_list.append(torch.min(merge))
-        print(min_list)
-        print("avg min: ", np.average(min_list))
+        # shutil.rmtree(Path(valid_dir), ignore_errors=True)
+        # Path(valid_dir).mkdir(parents=True, exist_ok=True)
+        # shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+        # Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+        # min_list = []
+        # for sample_id in list(left_ids):
+        #     sample_id -= 1
+        #     left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+        #     right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+        #     merge = np.ma.concatenate([left, right], axis=3)
+        #     merge = torch.from_numpy(merge.data)
+        #     min_list.append(torch.min(merge))
+        # print(min_list)
+        # print("avg min: ", np.average(min_list))
         sample_id = 108
         left = left_hrtf[sample_id]['features'][:, :, :, 1:]
         right = right_hrtf[sample_id]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
+        print(original_mask)
         SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
         sh_coef = torch.from_numpy(SHT(merge))
         print("coef: ", sh_coef.shape)
