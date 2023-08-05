@@ -258,6 +258,7 @@ def main(config, mode):
         Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
         min_list = []
         for sample_id in list(left_ids):
+            sample_id -= 1
             left = left_hrtf[sample_id]['features'][:, :, :, 1:]
             right = right_hrtf[sample_id]['features'][:, :, :, 1:]
             merge = np.ma.concatenate([left, right], axis=3)
