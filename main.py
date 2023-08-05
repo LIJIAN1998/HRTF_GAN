@@ -284,8 +284,8 @@ def main(config, mode):
         # with open(valid_gt_dir + file_name, "wb") as file:
         #     pickle.dump(hr, file)
 
-        x = recon[12, 1, 0, :]
-        y = merge[12, 1, 0, :]
+        x = recon[30, 9, 0, :]
+        y = merge[30, 9, 0, :]
         mean_recon1 = torch.mean(recon)
         max1 = torch.max(recon)
         min1 = torch.min(recon)
