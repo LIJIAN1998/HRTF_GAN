@@ -262,14 +262,14 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
-        sh_coef = torch.from_numpy(SHT(merge)).float()
+        sh_coef = torch.from_numpy(SHT(merge))
         print("coef: ", sh_coef.shape)
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
-        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        harmonics = torch.from_numpy(SHT.get_harmonics())
         print("harmonics shape: ", harmonics.shape)
         inverse = harmonics @ sh_coef
         print("inverse: ", inverse.shape)
-        inverse2 = torch.from_numpy(SHT.inverse(sh_coef.numpy())).float()
+        inverse2 = torch.from_numpy(SHT.inverse(sh_coef.numpy()))
         print("inverse2: ", inverse2.shape) 
         recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
         recon2 = inverse2.reshape(72, 12, 1, 256).detach().cpu()
