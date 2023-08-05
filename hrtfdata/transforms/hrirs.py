@@ -325,7 +325,6 @@ class SphericalPlaneTransform(PlaneTransform):
 
         return super().__call__(single_plane)
 
-
 class SphericalHarmonicsTransform:
 
     def __init__(self, max_degree, row_angles, column_angles, radii, selection_mask, coordinate_system='spherical'):
@@ -348,7 +347,6 @@ class SphericalHarmonicsTransform:
 
 
     def __call__(self, hrirs):
-        # return self._harmonics.shape, self._valid_mask.shape, hrirs.shape
         return np.linalg.lstsq(self._harmonics, hrirs[self._valid_mask].data, rcond=None)[0]
 
 
