@@ -256,9 +256,9 @@ def main(config, mode):
         Path(valid_dir).mkdir(parents=True, exist_ok=True)
         shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
         Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
-        
-        left = left_hrtf[32]['features'][:, :, :, 1:]
-        right = right_hrtf[32]['features'][:, :, :, 1:]
+        sample_id = 108
+        left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+        right = right_hrtf[sample_id]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
@@ -284,8 +284,8 @@ def main(config, mode):
         # with open(valid_gt_dir + file_name, "wb") as file:
         #     pickle.dump(hr, file)
 
-        x = recon[30, 5, 0, :]
-        y = merge[30, 5, 0, :]
+        x = recon[24, 8, 0, :]
+        y = merge[24, 8, 0, :]
         mean_recon1 = torch.mean(recon)
         max1 = torch.max(recon)
         min1 = torch.min(recon)
