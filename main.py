@@ -256,6 +256,15 @@ def main(config, mode):
         Path(valid_dir).mkdir(parents=True, exist_ok=True)
         shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
         Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+        min_list = []
+        for sample_id in list(left_ids):
+            left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+            right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+            merge = np.ma.concatenate([left, right], axis=3)
+            merge = torch.from_numpy(merge.data)
+            min_list.append(torch.min(merge))
+        print(min_list)
+        print("avg min: ", np.average(min_list))
         sample_id = 108
         left = left_hrtf[sample_id]['features'][:, :, :, 1:]
         right = right_hrtf[sample_id]['features'][:, :, :, 1:]
@@ -296,24 +305,24 @@ def main(config, mode):
         max_original = torch.max(merge)
         min_original = torch.min(merge)
         # print("x: ", x)
-        print("mean 1: ", mean_recon1)
-        print("mean 2: ", mean_recon2)
-        print("original mean: ", mean_original)
-        print("max 1: ", max1)
-        print("max 2: ", max2)
-        print("max original: ", max_original)
-        print("min 1: ", min1)
-        print("min 2: ", min2)
-        print("min original: ", min_original)
+        # print("mean 1: ", mean_recon1)
+        # print("mean 2: ", mean_recon2)
+        # print("original mean: ", mean_original)
+        # print("max 1: ", max1)
+        # print("max 2: ", max2)
+        # print("max original: ", max_original)
+        # print("min 1: ", min1)
+        # print("min 2: ", min2)
+        # print("min original: ", min_original)
 
-        # print("y: ", y)
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        ax1.plot(x)
-        ax1.set_title('recon')
-        ax2.plot(y)
-        ax2.set_title('original')
-        # plt.plot(x)
-        plt.savefig("output.png")
+        # # print("y: ", y)
+        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        # ax1.plot(x)
+        # ax1.set_title('recon')
+        # ax2.plot(y)
+        # ax2.set_title('original')
+        # # plt.plot(x)
+        # plt.savefig("output.png")
 
 
         
