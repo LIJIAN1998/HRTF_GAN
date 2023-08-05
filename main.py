@@ -221,13 +221,13 @@ def main(config, mode):
         #     min_list.append(torch.min(merge))
         # print(min_list)
         # print("avg min: ", np.average(min_list))
-        sample_id = 108
+        sample_id = 55
         left = left_hrtf[sample_id]['features'][:, :, :, 1:]
         right = right_hrtf[sample_id]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         # print(original_mask)
-        order = 80
+        order = 45
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape, sh_coef.dtype)
