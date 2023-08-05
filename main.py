@@ -237,8 +237,8 @@ def main(config, mode):
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
         # print(original_mask)
         SHT = SphericalHarmonicsTransform(50, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
-        sh_coef = torch.from_numpy(SHT(merge))
-        print("coef: ", sh_coef.shape, type(sh_coef))
+        sh_coef = torch.from_numpy(SHT(merge)).float()
+        print("coef: ", sh_coef.shape, sh_coef.dtype)
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         print("harmonics shape: ", harmonics.shape)
