@@ -44,7 +44,7 @@ class UpsampleBlock(nn.Module):
 
 
 class ResBlock(nn.Module):
-    def __init__(self, in_channnels, out_channels, identity_downsample=None, stride=1, expansion=1):
+    def __init__(self, in_channnels, out_channels, stride=1, expansion=1, identity_downsample=None):
         super(ResBlock, self).__init__()
         self.expansion = expansion
         self.conv1 = nn.Sequential(
