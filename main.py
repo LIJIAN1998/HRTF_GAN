@@ -304,8 +304,10 @@ def main(config, mode):
         # print("gt: ", hr.shape)
         # with open(valid_gt_dir + file_name, "wb") as file:
         #     pickle.dump(hr, file)
-
-        error = spectral_distortion_metric(recon, merge)
+        generated = recon[None,:].permute(0, 4, 3, 1, 2)
+        target = merge[None,:].permute(0,4,3,1,2)
+        print(generated.shape, target.shape)
+        error = spectral_distortion_metric(generated, target)
         print("lsd error: ", error)
 
         # x = recon[24, 8, 0, :]
