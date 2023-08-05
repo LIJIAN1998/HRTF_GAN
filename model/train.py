@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import time
 
-from plot import plot_losses, plot_magnitude_spectrums
+from plot import plot_losses, plot_magnitude_spectrums, plot_hrtf
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 
@@ -277,8 +277,7 @@ def train(config, train_prefetcher):
             mu, log_var, recon = vae(lr_coefficient)
 
             # # during every 25th epoch and last epoch, save filename for mag spectrum plot
-            # if epoch % 25 == 0 or epoch == (num_epochs - 1):
-            #     filename = batch_data["filename"]
+            
 
             # Discriminator Training
             # train on real coefficient
@@ -316,7 +315,12 @@ def train(config, train_prefetcher):
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
                 recons = harmonics_tensor @ recon.permute(0, 2, 1)
-                recons = F.softplus(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles))
+                recons = F.relu(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles))
+                if epoch % 25 == 0 or epoch == (num_epochs - 1):
+                    generated = recons[0].permute(2, 3, 1, 0)
+                    target = hrtf[0].permute(2, 3, 1, 0)
+                    filename = f"magnitude_{epoch}"
+                    plot_hrtf(generated, target, path, filename)
                 unweighted_content_loss = content_criterion(config, recons, hrtf, sd_mean, sd_std, ild_mean, ild_std)
                 # with open('log.txt', "a") as f:
                 #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")

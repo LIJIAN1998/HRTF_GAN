@@ -335,6 +335,17 @@ def plot_losses(losses, labels, colors, path, filename, title="Loss Curves"):
     frame.set_edgecolor('0.9')
     plt.savefig(f'{path}/{filename}.png')
 
+
+def plot_hrtf(generated, target, path, filename):
+    x = generated[24, 8, 0, :]
+    y = target[24, 8, 0, :]
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+    ax1.plot(x)
+    ax1.set_title('recon')
+    ax2.plot(y)
+    ax2.set_title('original')
+    plt.savefig(f"{path}/{filename}.png")
+
 # def plot_losses(train_losses_1, train_losses_2, label_1, label_2, color_1, color_2,
 #                 path, filename, title="Loss Curves"):
 #     """Plot the discriminator and generator loss over time"""
