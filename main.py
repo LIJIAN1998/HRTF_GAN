@@ -65,90 +65,44 @@ def main(config, mode):
         train_size = int(len(set(ds_left.subject_ids)) * config.train_samples_ratio)
         train_sample = np.random.choice(list(set(ds_left.subject_ids)), train_size, replace=False)
         val_sample = list(set(ds_left.subject_ids) - set(train_sample))
+        print("num train samples: ", len(train_sample))
+        print(train_sample)
+        print("num validation samples: ", len(val_sample))
+        print(val_sample)
         id_file_dir = config.train_val_id_dir
         if not os.path.exists(id_file_dir):
             os.makedirs(id_file_dir)
         id_filename = id_file_dir + '/train_val_id.pickle'
         with open(id_filename, "wb") as file:
             pickle.dump((train_sample, val_sample), file)
-
-        for id in val_sample:
-            left = left_hrtf[id]['features'][:, :, :, 1:]
-            right = right_hrtf[id]['features'][:, :, :, 1:]
 
         valid_gt_dir = config.valid_gt_path
         shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
         Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
 
-
-
-        # Interpolates data to find HRIRs on cubed sphere, then FFT to obtain HRTF, finally splits data into train and
-        # val sets and saves processed data
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
-        cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
-
-        # need to use protected member to get this data, no getters
-        projection_filename = f'{config.projection_dir}/{config.dataset}_projection_{config.hrtf_size}'
-        with open(projection_filename, "rb") as file:
-            cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
-
-        # Clear/Create directories
-        clear_create_directories(config)
-
-        # Split data into train and test sets
-        train_size = int(len(set(ds.subject_ids)) * config.train_samples_ratio)
-        train_sample = np.random.choice(list(set(ds.subject_ids)), train_size, replace=False)
-        val_sample = list(set(ds.subject_ids) - set(train_sample))
-        id_file_dir = config.train_val_id_dir
-        if not os.path.exists(id_file_dir):
-            os.makedirs(id_file_dir)
-        id_filename = id_file_dir + '/train_val_id.pickle'
-        with open(id_filename, "wb") as file:
-            pickle.dump((train_sample, val_sample), file)
-
         # collect all train_hrtfs to get mean and sd
-        train_hrtfs = torch.empty(size=(2 * train_size, 5, config.hrtf_size, config.hrtf_size, config.nbins_hrtf))
+        num_rows = len(ds_left.row_angles)
+        num_columns = len(ds_left.column_angles)
         j = 0
-        for i in range(len(ds)):
-            if i % 10 == 0:
-                print(f"HRTF {i} out of {len(ds)} ({round(100 * i / len(ds))}%)")
-
-            # Verification that HRTF is valid
-            if np.isnan(ds[i]['features']).any():
-                print(f'HRTF (Subject ID: {i}) contains nan values')
-                continue
-
-            features = ds[i]['features'].data.reshape(*ds[i]['features'].shape[:-2], -1)
-            clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
-                                             cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
-            hrtf_original, phase_original, sphere_original = get_hrtf_from_ds(config, ds, i)
-
-            # save cleaned hrtfdata
-            if ds.subject_ids[i] in train_sample:
-                projected_dir = config.train_hrtf_dir
-                projected_dir_original = config.train_original_hrtf_dir
-                train_hrtfs[j] = clean_hrtf
+        train_hrtfs = torch.empty(size=(2 * train_size, 1, num_rows, num_columns, config.nbins_hrtf))
+        for i in range(len(ds_left)):
+            left = ds_left[i]['features'][:, :, :, 1:]
+            right = ds_right[i]['features'][:, :, :, 1:]
+            merge = np.ma.concatenate([left, right], axis=3)
+            merge = torch.from_numpy(merge.data).permute(2, 0, 1, 3) # r x w x h x nbins
+            if left_hrtf.subject_ids[i] in train_sample:
+                train_hrtfs[j] = merge[:, :, :, :config.nbins_hrtf] # add left
+                j += 1
+                train_hrtfs[j] = merge[:, :, :, config.nbins_hrtf:] # add right
                 j += 1
             else:
-                projected_dir = config.valid_hrtf_dir
-                projected_dir_original = config.valid_original_hrtf_dir
-
-            subject_id = str(ds.subject_ids[i])
-            side = ds.sides[i]
-            with open('%s/%s_mag_%s%s.pickle' % (projected_dir, config.dataset, subject_id, side), "wb") as file:
-                pickle.dump(clean_hrtf, file)
-
-            with open('%s/%s_mag_%s%s.pickle' % (projected_dir_original, config.dataset, subject_id, side), "wb") as file:
-                pickle.dump(hrtf_original, file)
-
-            with open('%s/%s_phase_%s%s.pickle' % (projected_dir_original, config.dataset, subject_id, side), "wb") as file:
-                pickle.dump(phase_original, file)
-
-        if config.merge_flag:
-            merge_files(config)
+                subject_id = str(left_hrtf.subject_ids[i])
+                file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
+                with open(valid_gt_dir + file_name, "wb") as file:
+                    pickle.dump(merge, file)
 
         if config.gen_sofa_flag:
-            gen_sofa_preprocess(config, cube, sphere, sphere_original)
+            my_convert_to_sofa(valid_gt_dir, config, ds_left.row_angles, ds_left.column_angles)
 
         # save dataset mean and standard deviation for each channel, across all HRTFs in the training data
         mean = torch.mean(train_hrtfs, [0, 1, 2, 3])
@@ -281,7 +235,7 @@ def main(config, mode):
         right = right_hrtf[sample_id]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
-        print(original_mask)
+        # print(original_mask)
         SHT = SphericalHarmonicsTransform(50, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask.astype(bool))
         sh_coef = torch.from_numpy(SHT(merge))
         print("coef: ", sh_coef.shape)
