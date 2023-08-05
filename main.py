@@ -304,7 +304,7 @@ def main(config, mode):
         # print("gt: ", hr.shape)
         # with open(valid_gt_dir + file_name, "wb") as file:
         #     pickle.dump(hr, file)
-        generated = recon[None,:].permute(0, 4, 3, 1, 2)
+        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
         target = merge[None,:].permute(0,4,3,1,2)
         print(generated.shape, target.shape)
         error = spectral_distortion_metric(generated, target)
@@ -314,7 +314,7 @@ def main(config, mode):
         # y = merge[24, 8, 0, :]
         # mean_recon1 = torch.mean(recon)
         # max1 = torch.max(recon)
-        # min1 = torch.min(recon)
+        min1 = torch.min(recon)
         # mean_recon2 = torch.mean(recon2)
         # max2 = torch.max(recon2)
         # min2 = torch.min(recon2)
@@ -328,7 +328,7 @@ def main(config, mode):
         # print("max 1: ", max1)
         # print("max 2: ", max2)
         # print("max original: ", max_original)
-        # print("min 1: ", min1)
+        print("min 1: ", min1)
         # print("min 2: ", min2)
         # print("min original: ", min_original)
 
