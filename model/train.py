@@ -324,7 +324,7 @@ def train(config, train_prefetcher):
                     generated = recons[0].permute(2, 3, 1, 0)
                     target = hrtf[0].permute(2, 3, 1, 0)
                     filename = f"magnitude_{epoch}"
-                    plot_hrtf(generated, target, path, filename)
+                    plot_hrtf(generated.detach().cpu(), target.detach().cpu(), path, filename)
                 unweighted_content_loss = content_criterion(config, recons, hrtf, sd_mean, sd_std, ild_mean, ild_std)
                 # with open('log.txt', "a") as f:
                 #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
