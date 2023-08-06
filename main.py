@@ -2,6 +2,7 @@ import argparse
 import os
 import pickle
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import importlib
@@ -198,6 +199,17 @@ def main(config, mode):
         # clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
+        x = torch.randn(1, 256, 2116)
+        print(x.shape)
+        conv1 = nn.Sequential(
+            nn.Conv1d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+        )
+        x = conv1(x)
+        print(x.shape)
+        return
+
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                              'side': 'left', 'domain': 'magnitude'}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
