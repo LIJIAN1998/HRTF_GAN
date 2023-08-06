@@ -80,12 +80,14 @@ class ResEncoder(nn.Module):
         self.expansion = 1
         self.in_channels = 256
         self.conv1 = nn.Sequential(
-            nn.Conv1d(nbins, self.in_channels, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.Conv1d(nbins, self.in_channels, kernel_size=7, stride=2, padding=3, bias=False),
             nn.BatchNorm1d(self.in_channels),
             nn.ReLU(),
         )
+        self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
-        self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
+        # self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
+        self.num_encode_layers = 4
         if self.coefficient == 4:
             self.num_encode_layers -= 1
         res_layers.append(self._make_layer(block, 256, num_blocks))
@@ -93,8 +95,8 @@ class ResEncoder(nn.Module):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
 
-        self.compute_mean = nn.Linear(512*2, latent_dim)
-        self.compute_log_var = nn.Linear(512*2, latent_dim)
+        self.compute_mean = nn.Linear(512*34, latent_dim)
+        self.compute_log_var = nn.Linear(512*34, latent_dim)
     
     def _make_layer(self, block, out_channels, num_blocks, stride=1):
         downsample = None
@@ -202,72 +204,57 @@ class Encoder(nn.Module):
         return mu, log_var, z
     
 class Decoder(nn.Module):
-    def __init__(self, nbins: int, latent_dim: int, out_degree: int=28) -> None:
+    def __init__(self, nbins: int, latent_dim: int, out_degree: int=45) -> None:
         super(Decoder, self).__init__()
         self.nbins = nbins
         self.latent_dim = latent_dim
         self.num_coefficient = (out_degree + 1) ** 2
         
         self.decoder = nn.Sequential(
-            nn.Linear(self.latent_dim, 512*2),
-            Reshape(-1, 512, 2),
-            nn.ConvTranspose1d(512, 512, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.Linear(self.latent_dim, 512*32),
+            Reshape(-1, 512, 32),
+            nn.ConvTranspose1d(512, 512, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(512),
             nn.PReLU(),
-            nn.ConvTranspose1d(512, 512, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.ConvTranspose1d(512, 512, kernel_size=3, stride=2, output_padding=1, bias=False),
             nn.BatchNorm1d(512),
             nn.PReLU(),
-            # 512x7
+            # 512x66
             nn.ConvTranspose1d(512, 256, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(256),
             nn.PReLU(),
-            nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, output_padding=1, bias=False),
             nn.BatchNorm1d(256),
             nn.PReLU(),
-            # 512x13
+            # 512x134
             nn.ConvTranspose1d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(256),
             nn.PReLU(),
             nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm1d(256),
             nn.PReLU(),
-            # 256x25
-            nn.ConvTranspose1d(256, self.nbins, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm1d(self.nbins),
+            # 256x267
+            nn.ConvTranspose1d(256, nbins, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
             nn.PReLU(),
-            nn.ConvTranspose1d(self.nbins, self.nbins, kernel_size=3, stride=2, padding=1, bias=False),
-            nn.BatchNorm1d(self.nbins),
+            nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
             nn.PReLU(),
-            # nbins x 49
-            nn.ConvTranspose1d(self.nbins, self.nbins, kernel_size=3, stride=1, padding=0, bias=False), # nbins x 51 
-            nn.BatchNorm1d(self.nbins),
+            # nbins x 533
+            nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
             nn.PReLU(),
-            nn.ConvTranspose1d(self.nbins, self.nbins, kernel_size=3, stride=2, output_padding=1, bias=False),
-            nn.BatchNorm1d(self.nbins),
+            nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
             nn.PReLU(),
-            # nbins x 104
-            nn.ConvTranspose1d(self.nbins, self.nbins, kernel_size=3, stride=1, padding=0, bias=False), # nbins x 106
-            nn.BatchNorm1d(self.nbins),
+            # nbins x 1065
+            nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
             nn.PReLU(),
-            nn.ConvTranspose1d(self.nbins, self.nbins, kernel_size=3, stride=2, output_padding=1, bias=False),
-            nn.BatchNorm1d(self.nbins),
+            nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
             nn.PReLU(),
-            # nbins x 214
-            nn.ConvTranspose1d(self.nbins, self.nbins, kernel_size=3, stride=1, padding=0, bias=False), # nbins x 216
-            nn.BatchNorm1d(self.nbins),
-            nn.PReLU(),
-            nn.ConvTranspose1d(self.nbins, self.nbins, kernel_size=3, stride=2, output_padding=1, bias=False),
-            nn.BatchNorm1d(self.nbins),
-            nn.PReLU(),
-            # nbins x 434
-            nn.ConvTranspose1d(self.nbins, self.nbins, kernel_size=3, stride=1, padding=0, bias=False), # nbins x 436
-            nn.BatchNorm1d(self.nbins),
-            nn.PReLU(),
-            nn.ConvTranspose1d(self.nbins, self.nbins, kernel_size=3, stride=2, output_padding=1, bias=False),
-            nn.BatchNorm1d(self.nbins),
-            nn.PReLU(),
-            # nbins x 874
-            Trim(self.num_coefficient) # nbins x 841
+            Trim(self.num_coefficient) # nbins x 2116
         )
 
         self.classifier = nn.Softplus()
@@ -284,7 +271,7 @@ class Discriminator(nn.Module):
         self.nbins = nbins
 
         self.features = nn.Sequential(
-            # input size: nbins x 841
+            # input size: nbins x 2116
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
@@ -294,32 +281,46 @@ class Discriminator(nn.Module):
             nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
-            # nbins x 421
+            # nbins x 1058
             nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
-            # nbins x 211
+            # nbins x 529
             nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
-            # nbins x 106
+            # nbins x 265
             nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
-            # nbins x 53
+            # nbins x 133
+            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            # nbins x 67
+            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            # nbins x 34
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 53, 512),
+            nn.Linear(512 * 34, 512),
             nn.LeakyReLU(0.2, True),
             nn.Linear(512, 1),
             nn.Sigmoid()
@@ -333,7 +334,7 @@ class Discriminator(nn.Module):
         return out, x1
 
 class VAE(nn.Module):
-    def __init__(self, nbins: int, max_degree: int, latent_dim: int, out_degree: int=28) -> None:
+    def __init__(self, nbins: int, max_degree: int, latent_dim: int, out_degree: int=45) -> None:
         super(VAE, self).__init__()
         self.nbins = nbins
         self.max_degree = max_degree
@@ -352,27 +353,29 @@ class VAE(nn.Module):
        
 
 if __name__ == '__main__':
-    x1 = torch.randn(1, 128, 49)
-    x2 = torch.randn(1, 128, 100)
-    x3 = torch.randn(1, 128, 196)
-    x4 = torch.randn(1, 128, 400)
-    inputs = [x1, x2, x3, x4]
-    degrees = [6, 9, 13, 19]
+    x = torch.randn(1, 256, 2116)
+    vae = VAE(256, 45, 10, 45)
+    mu, log_var, recon = vae(x)
+    print("mu: ", mu.shape)
+    print("log var: ", log_var.shape)
+    print("recon: ", recon.shape)
+    D = Discriminator(256)
+    feature, out = D(x)
+    print("feature shape: ", feature.shape)
+    print("classify result: ", out.shape)
+
+    # x1 = torch.randn(1, 128, 49)
+    # x2 = torch.randn(1, 128, 100)
+    # x3 = torch.randn(1, 128, 196)
+    # x4 = torch.randn(1, 128, 400)
+    # inputs = [x1, x2, x3, x4]
+    # degrees = [6, 9, 13, 19]
+
     # for i, d in enumerate(degrees):
-    #     model = Encoder(128, d, 10)
+    #     model = VAE(128, d, 10)
     #     x = inputs[i]
     #     out = model(x)
     #     print("out: ", out.shape)
-
-    # model = Decoder(128, 10)
-    # z = torch.randn(1, 10)
-    # out = model(z)
-    # print(out.shape)
-    for i, d in enumerate(degrees):
-        model = VAE(128, d, 10)
-        x = inputs[i]
-        out = model(x)
-        print("out: ", out.shape)
 
     # x = torch.randn(1, 128, 841)
     # D = Discriminator(28, 128)
