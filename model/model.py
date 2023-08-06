@@ -115,6 +115,7 @@ class ResEncoder(nn.Module):
     
     def encode(self, x):
         x = self.conv1(x)
+        x = self.maxpool(x)
         x = self.res_layers(x)
         out = x.view(x.size(0), -1)
         return out
