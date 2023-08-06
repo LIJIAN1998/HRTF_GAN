@@ -202,6 +202,7 @@ def main(config, mode):
         ngpu = config.ngpu
         device = torch.device(config.device_name if (
             torch.cuda.is_available() and ngpu > 0) else "cpu")
+        print("device: ", device)
         x = torch.randn(1, 256, 2116).to(device)
         print(x.shape)
         conv1 = nn.Sequential(
