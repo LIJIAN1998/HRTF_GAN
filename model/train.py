@@ -212,6 +212,8 @@ def train(config, train_prefetcher):
     ild_mean = 3.6508303231127868
     ild_std = 0.5261339271318863
 
+    margin = 1.8670232e-08
+
     if config.start_with_existing_model:
         print(f'Initialized weights using an existing model - {config.existing_model_path}')
         vae.load_state_dict(torch.load(f'{config.existing_model_path}/Vae.pt'))
@@ -318,8 +320,8 @@ def train(config, train_prefetcher):
                     harmonics = torch.from_numpy(SHT.get_harmonics()).float()
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
-                recons = harmonics_tensor @ recon.permute(0, 2, 1)
-                recons = F.relu(recons.reshape(bs, nbins, num_radii, num_row_angles, num_col_angles))
+                recons = (harmonics_tensor @ recon.permute(0, 2, 1)).reshape(bs, num_row_angles, num_col_angles, num_radii, nbins)
+                recons = F.relu(recons.permute(0, 4, 3, 1, 2)) + margin
                 if epoch % 25 == 0 or epoch == (num_epochs - 1):
                     generated = recons[0].permute(2, 3, 1, 0)
                     target = hrtf[0].permute(2, 3, 1, 0)
