@@ -223,6 +223,7 @@ def train(config, train_prefetcher):
     train_loss_Dec_list = []
     train_loss_Dec_gan_list = []
     train_loss_Dec_sim_list = []
+    train_loss_Dec_sh_list = []
     train_loss_Dec_content_list = []
     train_loss_Enc_list = []
     train_loss_Enc_prior_list = []
@@ -240,6 +241,7 @@ def train(config, train_prefetcher):
         train_loss_Dec = 0.
         train_loss_Dec_gan = 0.
         train_loss_Dec_sim = 0.
+        train_loss_Dec_sh = 0.
         train_loss_Dec_content = 0.
         train_loss_Enc = 0.
         train_loss_Enc_prior = 0.
@@ -262,11 +264,11 @@ def train(config, train_prefetcher):
 
             # Transfer in-memory data to CUDA devices to speed up training
             lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
-                                                             non_blocking=True)
+                                                             non_blocking=True, dtype=torch.float)
             hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
-                                                             non_blocking=True)
+                                                             non_blocking=True, dtype=torch.float)
             hrtf = batch_data["hrtf"].to(device=device, memory_format=torch.contiguous_format,
-                                         non_blocking=True)
+                                         non_blocking=True, dtype=torch.float)
             masks = batch_data["mask"]
             
             bs = lr_coefficient.size(0)
@@ -307,11 +309,13 @@ def train(config, train_prefetcher):
                 train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
                 feature_sim_loss_D = config.lambda_feature * ((feature_recon - feature_real) ** 2).mean() # feature loss
                 train_loss_Dec_sim += feature_sim_loss_D.item()
+                sh_loss = ((recon - hr_coefficient) ** 2).mean()  # sh coefficient loss
+                train_loss_Dec_sh += sh_loss.item()
                 # convert reconstructed coefficient back to hrtf
                 harmonics_list = []
                 for i in range(masks.size(0)):
                     SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
-                    harmonics = torch.from_numpy(SHT.get_harmonics())
+                    harmonics = torch.from_numpy(SHT.get_harmonics()).float()
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
                 recons = harmonics_tensor @ recon.permute(0, 2, 1)
@@ -326,7 +330,7 @@ def train(config, train_prefetcher):
                 #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
                 content_loss = config.content_weight * unweighted_content_loss
                 train_loss_Dec_content += content_loss.item()
-                err_dec = feature_sim_loss_D + content_loss - gan_loss_dec
+                err_dec = feature_sim_loss_D + sh_loss + content_loss - gan_loss_dec
                 train_loss_Dec += err_dec.item()
                 # Update decoder
                 optDecoder.zero_grad()
@@ -358,7 +362,7 @@ def train(config, train_prefetcher):
                     f.write(f"{batch_index}/{len(train_prefetcher)}\n")
                     f.write(f"dis: {gan_loss.item()}\t dec: {err_dec.item()}\t enc: {err_enc.item()}\n")
                     f.write(f"D_real: {loss_D_hr.item()}, D_fake: {loss_D_recon.item()}\n")
-                    f.write(f"content loss: {content_loss.item()}, sim_D: {feature_sim_loss_D.item()}, gan loss: {gan_loss_dec.item()}\n")
+                    f.write(f"content loss: {content_loss.item()}, sim_D: {feature_sim_loss_D.item()}, sh loss: {sh_loss.item()}, gan loss: {gan_loss_dec.item()}\n")
                     f.write(f"prior: {prior_loss.item()}, sim_E: {feature_sim_loss_E.item()}\n\n")
                     # f.write(f"dis: {train_loss_Dis}\t dec: {train_loss_Dec}\t enc: {train_loss_Enc}\n")
                     # f.write(f"D_real: {train_loss_Dis_hr}, D_fake: {train_loss_Dis_recon}\n")
@@ -396,12 +400,13 @@ def train(config, train_prefetcher):
         train_loss_Dec_gan_list.append(train_loss_Dec_gan / len(train_prefetcher))
         train_loss_Dec_content_list.append(train_loss_Dec_content / len(train_prefetcher))
         train_loss_Dec_sim_list.append(train_loss_Dec_sim / len(train_prefetcher))
+        train_loss_Dec_sh_list.append(train_loss_Dec_sh / len(train_prefetcher))
         train_loss_Enc_list.append(train_loss_Enc / len(train_prefetcher))
         train_loss_Enc_prior_list.append(train_loss_Enc_prior / len(train_prefetcher))
         train_loss_Enc_sim_list.append(train_loss_Enc_sim / len(train_prefetcher))
         print(f"Avearge epoch loss, discriminator: {train_loss_Dis_list[-1]}, decoder: {train_loss_Dec_list[-1]}, encoder: {train_loss_Enc_list[-1]}")
         print(f"Avearge epoch loss, D_real: {train_loss_Dis_hr_list[-1]}, D_fake: {train_loss_Dis_recon_list[-1]}")
-        print(f"Avearge content loss: {train_loss_Dec_content_list[-1]},  decoder similarity loss: {train_loss_Dec_sim_list[-1]}, gan loss: {train_loss_Dec_gan_list[-1]}")
+        print(f"Avearge content loss: {train_loss_Dec_content_list[-1]},  decoder similarity loss: {train_loss_Dec_sim_list[-1]}, sh loss:{train_loss_Dec_sh_list[-1]}, gan loss: {train_loss_Dec_gan_list[-1]}")
         print(f"Average prior loss: {train_loss_Enc_prior_list[-1]}, encoder similarity loss: {train_loss_Enc_sim_list[-1]}\n")
 
 
@@ -429,13 +434,16 @@ def train(config, train_prefetcher):
                 ['Discriminator loss', 'Decoder loss', 'Encoder loss'],
                 ['red', 'green', 'blue'], 
                 path=path, filename='loss_curves', title="Loss curves")
+    plot_losses([train_loss_Dis_list],['Discriminator loss'],['red'], path=path, filename='Discriminator_loss', title="Dis loss")
+    plot_losses([train_loss_Dec_list],['Decoder loss'],['green'], path=path, filename='Decoder_loss', title="Dec loss")
+    plot_losses([train_loss_Enc_list],['Encoder loss'],['blue'], path=path, filename='Encoder_loss', title="Enc loss")
     plot_losses([train_loss_Dis_hr_list, train_loss_Dis_recon_list],
                 ['Discriminator loss real', 'Discriminator loss fake'],
                 ["#5ec962", "#440154"], 
                 path=path, filename='loss_curves_Dis', title="Discriminator loss curves")
-    plot_losses([train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list],
-                ['Decoder sim loss', 'Decoder content loss', 'Decoder gan loss'],
-                ['red', 'green', 'blue'], 
+    plot_losses([train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list, train_loss_Dec_sh_list],
+                ['Decoder sim loss', 'Decoder content loss', 'Decoder gan loss', 'sh loss'],
+                ['red', 'green', 'blue', 'purple'], 
                 path=path, filename='loss_curves_Dec', title="Decoder loss curves")
     plot_losses([train_loss_Enc_prior_list, train_loss_Enc_sim_list], 
                 ['Encoder prior loss', 'Encoder sim loss'],
@@ -457,7 +465,7 @@ def train(config, train_prefetcher):
 
     with open(f'{path}/train_losses.pickle', "wb") as file:
         pickle.dump((train_loss_Dis_list, train_loss_Dis_hr_list, train_loss_Dis_recon_list,
-                     train_loss_Dec_list, train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list,
+                     train_loss_Dec_list, train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list, train_loss_Dec_sh_list,
                      train_loss_Enc_list, train_loss_Enc_sim_list, train_loss_Enc_prior_list), file)
         # pickle.dump((train_losses_G, train_losses_G_adversarial, train_losses_G_content,
         #              train_losses_D, train_losses_D_hr, train_losses_D_sr, train_SD_metric), file)

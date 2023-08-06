@@ -38,13 +38,14 @@ def get_sample_ratio(upscale_factor):
         return 36, 6
 
 class CustomHRTFDataset(Dataset):
-    def __init__(self, original_hrtf_dataset, upscale_factor, max_degree=28) -> None:
+    def __init__(self, original_hrtf_dataset, upscale_factor, max_degree=45) -> None:
         super(CustomHRTFDataset, self).__init__()
         self.original_hrtf_dataset = original_hrtf_dataset
         self.upscale_factor = upscale_factor
         self.num_row_angles, self.num_col_angles = len(self.original_hrtf_dataset.row_angles), len(self.original_hrtf_dataset.column_angles)
         self.num_radii = len(self.original_hrtf_dataset.radii)
-        self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
+        # self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
+        self.degree = max_degree
         self.max_dgree = max_degree
 
     def __getitem__(self, index: int):
@@ -76,14 +77,15 @@ class CustomHRTFDataset(Dataset):
         return len(self.original_hrtf_dataset)
     
 class MergeHRTFDataset(Dataset):
-    def __init__(self, left_hrtf, right_hrtf, upscale_factor, max_degree=28) -> None:
+    def __init__(self, left_hrtf, right_hrtf, upscale_factor, max_degree=45) -> None:
         super(MergeHRTFDataset, self).__init__()
         self.left_hrtf = left_hrtf
         self.right_hrtf = right_hrtf
         self.upscale_factor = upscale_factor
         self.num_row_angles, self.num_col_angles = len(self.left_hrtf.row_angles), len(self.left_hrtf.column_angles)
         self.num_radii = len(self.left_hrtf.radii)
-        self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
+        # self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
+        self.degree = max_degree
         self.max_degree = max_degree
 
     def __getitem__(self, index: int):
