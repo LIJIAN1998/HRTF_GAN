@@ -226,12 +226,12 @@ def main(config, mode):
             for j in range(12 // col_ratio):
                 mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
         # print(original_mask)
-        order = 38
+        order = 28
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        sh_coef = torch.from_numpy(SHT(merge)).float()
+        sh_coef = torch.from_numpy(SHT(merge))
         print("coef: ", sh_coef.shape, sh_coef.dtype)
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
-        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        harmonics = torch.from_numpy(SHT.get_harmonics())
         print("harmonics shape: ", harmonics.shape, harmonics.dtype)
         inverse = harmonics @ sh_coef
         print("inverse: ", inverse.shape)
