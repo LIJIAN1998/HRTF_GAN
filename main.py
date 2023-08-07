@@ -226,7 +226,7 @@ def main(config, mode):
             for j in range(12 // col_ratio):
                 mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
         # print(original_mask)
-        order = 28
+        order = 45
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape, sh_coef.dtype)
@@ -243,7 +243,7 @@ def main(config, mode):
         # recon2 = torch.permute(recon2[0], (2, 3, 1, 0)).detach().cpu()
         print("recon: ", recon.shape)
         margin = 1.8670232e-08
-        generated = F.relu(recon[None,:].permute(0, 4, 3, 1, 2)) +  margin # 1 x nbins x r x w x h
+        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
         target = merge[None,:].permute(0,4,3,1,2)
         # print(generated.shape, target.shape)
         error = spectral_distortion_metric(generated, target)
