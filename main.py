@@ -199,35 +199,11 @@ def main(config, mode):
         # clean_hrtf = interpolate_fft(config, cs, features, sphere, sphere_triangles, sphere_coeffs,
         #                              cube, fs_original=ds.hrir_samplerate, edge_len=config.hrtf_size)
         # print("clean_hrtf", clean_hrtf.shape)
-        ngpu = config.ngpu
-        device = torch.device(config.device_name if (
-            torch.cuda.is_available() and ngpu > 0) else "cpu")
-        print("device: ", device)
-        x = torch.randn(1, 256, 2116).to(device)
-        print(x.shape)
-        conv1 = nn.Sequential(
-            nn.Conv1d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm1d(256),
-            nn.ReLU(),
-        ).to(device)
-        x = conv1(x)
-        print(x.shape)
-        print('done')
-        return
 
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'left', 'domain': 'magnitude'}})
+                                                             'side': 'left', 'domain': 'magnitude_db'}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'right', 'domain': 'magnitude'}})
-        left_ids = left_hrtf.subject_ids
-        right_ids = right_hrtf.subject_ids
-
-        valid_dir = config.valid_path
-        valid_gt_dir = config.valid_gt_path
-        # shutil.rmtree(Path(valid_dir), ignore_errors=True)
-        # Path(valid_dir).mkdir(parents=True, exist_ok=True)
-        # shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
-        # Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+                                                             'side': 'right', 'domain': 'magnitude_db'}})
         # min_list = []
         # for sample_id in list(left_ids):
         #     sample_id -= 1
@@ -243,87 +219,65 @@ def main(config, mode):
         right = right_hrtf[sample_id]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         mask = np.ones((72, 12, 1), dtype=bool)
-        original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
-        print("get mask")
-        m = np.ma.getmaskarray(merge)
-        print(m.shape)
-        print(m)
-        print("np.all result:")
-        print(original_mask)
-        m2 = np.any(np.ma.getmaskarray(merge), axis=3)
-        print("np any result")
-        print(m2)
+        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
         row_ratio = 8
         col_ratio = 4
         for i in range(72 // row_ratio):
             for j in range(12 // col_ratio):
                 mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
         # print(original_mask)
-        # order = 50
-
-        # # SHT
-        # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
-        # sh_coef = torch.from_numpy(SHT(merge)).float()
-        # print("coef: ", sh_coef.shape, sh_coef.dtype)
-        # merge = torch.from_numpy(merge.data) # w x h x r x nbins
-
-        # # inverse SHT
-        # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        # harmonics = torch.from_numpy(SHT.get_harmonics()).float()
-        # print("harmonics shape: ", harmonics.shape, harmonics.dtype)
-        # inverse = harmonics @ sh_coef
-        # print("inverse: ", inverse.shape)
+        order = 28
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        sh_coef = torch.from_numpy(SHT(merge)).float()
+        print("coef: ", sh_coef.shape, sh_coef.dtype)
+        merge = torch.from_numpy(merge.data) # w x h x r x nbins
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        print("harmonics shape: ", harmonics.shape, harmonics.dtype)
+        inverse = harmonics @ sh_coef
+        print("inverse: ", inverse.shape)
         # inverse2 = torch.from_numpy(SHT.inverse(sh_coef.numpy()))
         # print("inverse2: ", inverse2.shape) 
-        # recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
+        recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
         # recon2 = inverse2.reshape(72, 12, 1, 256).detach().cpu()
-        # # recon = torch.permute(recon[0], (2, 3, 1, 0)).detach().cpu() 
-        # # recon2 = torch.permute(recon2[0], (2, 3, 1, 0)).detach().cpu()
-        # print("recon: ", recon.shape)
-        # # file_name = '/' + f"{config.dataset}_{0}.pickle"
-        # # with open(valid_dir + file_name, "wb") as file:
-        # #     pickle.dump(recon, file)
-        # # hr = torch.permute(merge, (2, 0, 1, 3)).detach().cpu()   # r x w x h x nbins
-        # # print("gt: ", hr.shape)
-        # # with open(valid_gt_dir + file_name, "wb") as file:
-        # #     pickle.dump(hr, file)
-        # margin = 1.8670232e-08
-        # generated = F.relu(recon[None,:].permute(0, 4, 3, 1, 2)) +  margin # 1 x nbins x r x w x h
-        # target = merge[None,:].permute(0,4,3,1,2)
+        # recon = torch.permute(recon[0], (2, 3, 1, 0)).detach().cpu() 
+        # recon2 = torch.permute(recon2[0], (2, 3, 1, 0)).detach().cpu()
+        print("recon: ", recon.shape)
+        margin = 1.8670232e-08
+        generated = F.relu(recon[None,:].permute(0, 4, 3, 1, 2)) +  margin # 1 x nbins x r x w x h
+        target = merge[None,:].permute(0,4,3,1,2)
         # print(generated.shape, target.shape)
-        # error = spectral_distortion_metric(generated, target)
-        # print("id: ", sample_id)
-        # print("lsd error: ", error)
+        error = spectral_distortion_metric(generated, target)
+        print("id: ", sample_id)
+        print("lsd error: ", error)
 
-        # x = recon[24, 8, 0, :]
-        # y = merge[24, 8, 0, :]
-        # mean_recon1 = torch.mean(recon)
-        # max1 = torch.max(recon)
-        # min1 = torch.min(recon)
+        x = recon[24, 8, 0, :]
+        y = merge[24, 8, 0, :]
+        mean_recon1 = torch.mean(recon)
+        max1 = torch.max(recon)
+        min1 = torch.min(recon)
         # # mean_recon2 = torch.mean(recon2)
         # # max2 = torch.max(recon2)
         # # min2 = torch.min(recon2)
-        # mean_original = torch.mean(merge)
-        # max_original = torch.max(merge)
-        # min_original = torch.min(merge)
-        # # print("x: ", x)
-        # print("order: ", order)
-        # print("mean 1: ", mean_recon1)
-        # # print("mean 2: ", mean_recon2)
-        # print("original mean: ", mean_original)
-        # print("max 1: ", max1)
+        mean_original = torch.mean(merge)
+        max_original = torch.max(merge)
+        min_original = torch.min(merge)
+        print("order: ", order)
+        print("mean 1: ", mean_recon1)
+        # print("mean 2: ", mean_recon2)
+        print("original mean: ", mean_original)
+        print("max 1: ", max1)
         # # print("max 2: ", max2)
-        # print("max original: ", max_original)
-        # print("min 1: ", min1)
+        print("max original: ", max_original)
+        print("min 1: ", min1)
         # # print("min 2: ", min2)
-        # print("min original: ", min_original)
+        print("min original: ", min_original)
 
-        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        # ax1.plot(x)
-        # ax1.set_title('recon')
-        # ax2.plot(y)
-        # ax2.set_title('original')
-        # plt.savefig("output.png")
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x)
+        ax1.set_title('recon')
+        ax2.plot(y)
+        ax2.set_title('original')
+        plt.savefig("output.png")
 
 
         
