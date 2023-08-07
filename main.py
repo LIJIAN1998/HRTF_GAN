@@ -220,6 +220,7 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         mask = np.ones((72, 12, 1), dtype=bool)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        print(original_mask)
         row_ratio = 8
         col_ratio = 4
         for i in range(72 // row_ratio):
