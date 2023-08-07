@@ -370,13 +370,6 @@ class VAE(nn.Module):
         mu, log_var, z = self.encoder(x)
         recon = self.decoder(z)
         return mu, log_var, recon
-    
-    def __call__(self, *args, **kwds):
-        return super(VAE, self).__call__(*args, **kwds)
-    
-    @staticmethod
-    def loss(original, recon, inter_original, inter_recon, mu, )
-
 
 
 if __name__ == '__main__':
