@@ -75,8 +75,9 @@ class Config:
         self.num_workers = 1
         self.optimizer = 'adam'
         self.num_epochs = 200  # was originally 250
-        self.lr = 0.0001
+        self.lr = 0.0003
         self.alpha = 0.01
+        self.decay_lr = 0.75
         self.lambda_feature = 1e-3
         # self.lr_encoder = 0.0002
         # self.lr_decoder = 0.0002

@@ -9,6 +9,7 @@ from model.model import *
 
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
+from torch.optim.lr_scheduler import ExponentialLR
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
@@ -181,6 +182,7 @@ def train(config, train_prefetcher):
 
     # Get train params
     bs, optmizer, lr, alpha, lambda_feature, latent_dim, critic_iters = config.get_train_params()
+    decay_lr = config.decay_lr
     # batch_size, beta1, beta2, num_epochs, lr_encoder, lr_decoder, lr_dis, critic_iters = config.get_train_params()
 
     # # get list of positive frequencies of HRTF for plotting magnitude spectrum
@@ -196,9 +198,15 @@ def train(config, train_prefetcher):
         vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
 
     # Define optimizers
-    optD = optim.Adam(netD.parameters(), lr=lr*alpha)
-    optEncoder = optim.Adam(vae.encoder.parameters(), lr=lr)
-    optDecoder = optim.Adam(vae.decoder.parameters(), lr=lr)
+    # optD = optim.Adam(netD.parameters(), lr=lr*alpha)
+    # optEncoder = optim.Adam(vae.encoder.parameters(), lr=lr)
+    # optDecoder = optim.Adam(vae.decoder.parameters(), lr=lr)
+    optEncoder = optim.RMSprop(vae.encoder.parameters(), lr=lr, alpha=0.9, eps=1e-8, weight_decay=0, momentum=0, centered=False)
+    lr_encoder = ExponentialLR(optEncoder, gamma=decay_lr)
+    optDecoder = optim.RMSprop(vae.decoder.parameters(), lr=lr, alpha=0.9, eps=1e-8, weight_decay=0, momentum=0, centered=False)
+    lr_decoder = ExponentialLR(optDecoder, gamma=decay_lr)
+    optD = optim.RMSprop(netD.parameters(), lr=lr, alpha=0.9, eps=1e-8, weight_decay=0, momentum=0, centered=False)
+    lr_discriminator = ExponentialLR(optD, gamma=decay_lr)
 
     # Define loss functions
     adversarial_criterion = nn.BCEWithLogitsLoss()
@@ -230,6 +238,7 @@ def train(config, train_prefetcher):
     train_loss_Enc_list = []
     train_loss_Enc_prior_list = []
     train_loss_Enc_sim_list = []
+    train_loss_feature_list = []
 
     num_epochs = config.num_epochs
     for epoch in range(num_epochs):
@@ -248,6 +257,7 @@ def train(config, train_prefetcher):
         train_loss_Enc = 0.
         train_loss_Enc_prior = 0.
         train_loss_Enc_sim = 0.
+        train_loss_feature = 0.
 
         # Initialize the number of data batches to print logs on the terminal
         batch_index = 0
@@ -280,38 +290,40 @@ def train(config, train_prefetcher):
             # Generate fake samples using VAE
             mu, log_var, recon = vae(lr_coefficient)
 
-            # # during every 25th epoch and last epoch, save filename for mag spectrum plot
-            
-
             # Discriminator Training
+            pred, inter_feature = netD(recon, hr_coefficient)
+            # split to real and fake output
+            pred_recon = pred[:bs]
+            pred_real = pred[bs:]
+
             # train on real coefficient
-            pred_real = netD(hr_coefficient)[0]
+            # pred_real = netD(hr_coefficient)[0]
             loss_D_hr = adversarial_criterion(pred_real, ones_label)
             train_loss_Dis_hr += loss_D_hr.item()
             # train on reconstructed coefficient 
-            pred_recon = netD(recon.detach().clone())[0]
+            # pred_recon = netD(recon.detach().clone())[0]
             loss_D_recon = adversarial_criterion(pred_recon, zeros_label)
             train_loss_Dis_recon += loss_D_recon.item()
-            # Compute the discriminator loss
-            gan_loss = loss_D_hr + loss_D_recon
+            gan_loss = loss_D_hr + loss_D_recon # Compute the discriminator loss
             train_loss_Dis += gan_loss.item()
-            # Update D
-            netD.zero_grad()
-            gan_loss.backward()
-            optD.step()
+            
 
             # training VAE
             if batch_index % int(critic_iters) == 0:
                 # train decoder
-                pred_real, feature_real = netD(hr_coefficient)
-                err_dec_real = adversarial_criterion(pred_real, ones_label)
-                pred_recon, feature_recon = netD(recon)
-                err_dec_recon = adversarial_criterion(pred_recon, zeros_label)
-                gan_loss_dec = err_dec_real + err_dec_recon
-                train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
-                feature_sim_loss_D = ((feature_recon - feature_real) ** 2).mean() # feature loss
-                train_loss_Dec_sim += feature_sim_loss_D.item()
-                sh_loss = 0.0001 * ((recon - hr_coefficient) ** 2).mean()  # sh coefficient loss
+                # pred_real, feature_real = netD(hr_coefficient)
+                # err_dec_real = adversarial_criterion(pred_real, ones_label)
+                # pred_recon, feature_recon = netD(recon)
+                # err_dec_recon = adversarial_criterion(pred_recon, zeros_label)
+                # gan_loss_dec = err_dec_real + err_dec_recon
+                # train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
+                feature_recon = inter_feature[:bs]
+                feature_real = inter_feature[bs:]
+                feature_loss = ((feature_recon - feature_real) ** 2).mean()
+                train_loss_feature += feature_loss
+                # feature_sim_loss_D = ((feature_recon - feature_real) ** 2).mean() # feature loss
+                # train_loss_Dec_sim += feature_sim_loss_D.item()
+                sh_loss = 0.001 * ((recon - hr_coefficient) ** 2).mean()  # sh coefficient loss
                 train_loss_Dec_sh += sh_loss.item()
                 # convert reconstructed coefficient back to hrtf
                 harmonics_list = []
@@ -321,9 +333,10 @@ def train(config, train_prefetcher):
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
                 recons = (harmonics_tensor @ recon.permute(0, 2, 1)).reshape(bs, num_row_angles, num_col_angles, num_radii, nbins)
-                recons = F.relu(recons.permute(0, 4, 3, 1, 2)) + margin
+                recons = F.relu(recons.permute(0, 4, 3, 1, 2)) + margin   # bs x nbins x r x w x h
+                # during every 25th epoch and last epoch, save filename for mag spectrum plot
                 if epoch % 25 == 0 or epoch == (num_epochs - 1):
-                    generated = recons[0].permute(2, 3, 1, 0)
+                    generated = recons[0].permute(2, 3, 1, 0)  # w x h x r x nbins
                     target = hrtf[0].permute(2, 3, 1, 0)
                     filename = f"magnitude_{epoch}"
                     plot_hrtf(generated.detach().cpu(), target.detach().cpu(), path, filename)
@@ -332,44 +345,50 @@ def train(config, train_prefetcher):
                 #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
                 content_loss = config.content_weight * unweighted_content_loss
                 train_loss_Dec_content += content_loss.item()
-                err_dec = feature_sim_loss_D + sh_loss + content_loss - gan_loss_dec
+                err_dec = feature_loss + sh_loss + content_loss - gan_loss
                 train_loss_Dec += err_dec.item()
-                # Update decoder
-                optDecoder.zero_grad()
-                err_dec.backward()
-                optDecoder.step()
 
                 # train encoder
-                mu, log_var, recon = vae(lr_coefficient)
+                # mu, log_var, recon = vae(lr_coefficient)
                 prior_loss = 1 + log_var - mu.pow(2) - log_var.exp()
-                prior_loss = (-0.5 * torch.sum(prior_loss))/torch.numel(mu.data) # prior loss
+                prior_loss = (-0.5 * torch.sum(prior_loss)).mean() # prior loss
                 train_loss_Enc_prior += prior_loss.item()
-                feature_recon = netD(recon)[1]
-                feature_real = netD(hr_coefficient)[1]
+                # feature_recon = netD(recon)[1]
+                # feature_real = netD(hr_coefficient)[1]
                 with open(f"log.txt", "a") as f:
                     f.write(f"lr coef nan? {torch.isnan(lr_coefficient.any())}\n")
                     f.write(f"recon nan? {torch.isnan(recon).any()}\n")
                     f.write(f"feature recon: {torch.isnan(feature_recon).any()}\n")
                     f.write(f"feature real: {torch.isnan(feature_real).any()}\n")
-                feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
-                train_loss_Enc_sim += feature_sim_loss_E.item()
-                err_enc = prior_loss + feature_sim_loss_E
+                # feature_sim_loss_E = config.beta * ((feature_recon - feature_real) ** 2).mean() # feature loss
+                # train_loss_Enc_sim += feature_sim_loss_E.item()
+                err_enc = prior_loss + feature_loss
                 train_loss_Enc += err_enc.item()
+
                 # Update encoder
                 optEncoder.zero_grad()
-                err_enc.backward()
+                err_enc.backward(retain_graph=True)
                 optEncoder.step()
+
+                # Update decoder
+                optDecoder.zero_grad()
+                err_dec.backward(retain_graph=True)
+                optDecoder.step()
 
                 with open("log.txt", "a") as f:
                     f.write(f"{batch_index}/{len(train_prefetcher)}\n")
                     f.write(f"dis: {gan_loss.item()}\t dec: {err_dec.item()}\t enc: {err_enc.item()}\n")
                     f.write(f"D_real: {loss_D_hr.item()}, D_fake: {loss_D_recon.item()}\n")
-                    f.write(f"content loss: {content_loss.item()}, sim_D: {feature_sim_loss_D.item()}, sh loss: {sh_loss.item()}, gan loss: {gan_loss_dec.item()}\n")
-                    f.write(f"prior: {prior_loss.item()}, sim_E: {feature_sim_loss_E.item()}\n\n")
-                    # f.write(f"dis: {train_loss_Dis}\t dec: {train_loss_Dec}\t enc: {train_loss_Enc}\n")
-                    # f.write(f"D_real: {train_loss_Dis_hr}, D_fake: {train_loss_Dis_recon}\n")
-                    # f.write(f"content loss: {train_loss_Dec_content}, sim_D: {train_loss_Dec_sim}, gan loss: {train_loss_Dec_gan}\n")
-                    # f.write(f"prior: {train_loss_Enc_prior}, sim_E: {train_loss_Enc_sim}\n\n")
+                    f.write(f"feature loss: {feature_loss.item()}\n")
+                    f.write(f"content loss: {content_loss.item()}, sh loss: {sh_loss.item()}\n")
+                    f.write(f"prior: {prior_loss.item()}\n\n")
+                    # f.write(f"content loss: {content_loss.item()}, sim_D: {feature_sim_loss_D.item()}, sh loss: {sh_loss.item()}, gan loss: {gan_loss_dec.item()}\n")
+                    # f.write(f"prior: {prior_loss.item()}, sim_E: {feature_sim_loss_E.item()}\n\n")
+
+            # Update D
+            netD.zero_grad()
+            gan_loss.backward()
+            optD.step()
 
             if ('cuda' in str(device)) and (ngpu > 1):
                 end_overall.record()
@@ -394,33 +413,29 @@ def train(config, train_prefetcher):
             # After training a batch of data, add 1 to the number of data batches to ensure that the
             # terminal print data normally
             batch_index += 1
+        lr_encoder.step()
+        lr_decoder.step()
+        lr_discriminator.step()
 
         train_loss_Dis_list.append(train_loss_Dis / len(train_prefetcher))
         train_loss_Dis_hr_list.append(train_loss_Dis_hr / len(train_prefetcher))
         train_loss_Dis_recon_list.append(train_loss_Dis_recon / len(train_prefetcher))
         train_loss_Dec_list.append(train_loss_Dec / len(train_prefetcher))
-        train_loss_Dec_gan_list.append(train_loss_Dec_gan / len(train_prefetcher))
+        # train_loss_Dec_gan_list.append(train_loss_Dec_gan / len(train_prefetcher))
         train_loss_Dec_content_list.append(train_loss_Dec_content / len(train_prefetcher))
-        train_loss_Dec_sim_list.append(train_loss_Dec_sim / len(train_prefetcher))
+        # train_loss_Dec_sim_list.append(train_loss_Dec_sim / len(train_prefetcher))
         train_loss_Dec_sh_list.append(train_loss_Dec_sh / len(train_prefetcher))
         train_loss_Enc_list.append(train_loss_Enc / len(train_prefetcher))
         train_loss_Enc_prior_list.append(train_loss_Enc_prior / len(train_prefetcher))
-        train_loss_Enc_sim_list.append(train_loss_Enc_sim / len(train_prefetcher))
+        # train_loss_Enc_sim_list.append(train_loss_Enc_sim / len(train_prefetcher))
+        train_loss_feature_list.append(train_loss_feature / len(train_prefetcher))
         print(f"Avearge epoch loss, discriminator: {train_loss_Dis_list[-1]}, decoder: {train_loss_Dec_list[-1]}, encoder: {train_loss_Enc_list[-1]}")
         print(f"Avearge epoch loss, D_real: {train_loss_Dis_hr_list[-1]}, D_fake: {train_loss_Dis_recon_list[-1]}")
-        print(f"Avearge content loss: {train_loss_Dec_content_list[-1]},  decoder similarity loss: {train_loss_Dec_sim_list[-1]}, sh loss:{train_loss_Dec_sh_list[-1]}, gan loss: {train_loss_Dec_gan_list[-1]}")
-        print(f"Average prior loss: {train_loss_Enc_prior_list[-1]}, encoder similarity loss: {train_loss_Enc_sim_list[-1]}\n")
-
-
-        # train_losses_D.append(train_loss_D / len(train_prefetcher))
-        # train_losses_D_hr.append(train_loss_D_hr / len(train_prefetcher))
-        # train_losses_D_sr.append(train_loss_D_sr / len(train_prefetcher))
-        # train_losses_G.append(train_loss_G / len(train_prefetcher))
-        # train_losses_G_adversarial.append(train_loss_G_adversarial / len(train_prefetcher))
-        # train_losses_G_content.append(train_loss_G_content / len(train_prefetcher))
-        # print(f"Average epoch loss, discriminator: {train_losses_D[-1]}, generator: {train_losses_G[-1]}")
-        # print(f"Average epoch loss, D_real: {train_losses_D_hr[-1]}, D_fake: {train_losses_D_sr[-1]}")
-        # print(f"Average epoch loss, G_adv: {train_losses_G_adversarial[-1]}, train_losses_G_content: {train_losses_G_content[-1]}")
+        print(f"Average feature loss: {train_loss_feature_list[-1]}")
+        print(f"Avearge content loss: {train_loss_Dec_content_list[-1]},sh loss:{train_loss_Dec_sh_list[-1]}")
+        print(f"Average prior loss: {train_loss_Enc_prior_list[-1]}\n")
+        # print(f"Avearge content loss: {train_loss_Dec_content_list[-1]},  decoder similarity loss: {train_loss_Dec_sim_list[-1]}, sh loss:{train_loss_Dec_sh_list[-1]}, gan loss: {train_loss_Dec_gan_list[-1]}")
+        # print(f"Average prior loss: {train_loss_Enc_prior_list[-1]}, encoder similarity loss: {train_loss_Enc_sim_list[-1]}\n")
 
         # # create magnitude spectrum plot every 25 epochs and last epoch
         # if epoch % 25 == 0 or epoch == (num_epochs - 1):
@@ -443,14 +458,20 @@ def train(config, train_prefetcher):
                 ['Discriminator loss real', 'Discriminator loss fake'],
                 ["#5ec962", "#440154"], 
                 path=path, filename='loss_curves_Dis', title="Discriminator loss curves")
-    plot_losses([train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list, train_loss_Dec_sh_list],
-                ['Decoder sim loss', 'Decoder content loss', 'Decoder gan loss', 'sh loss'],
-                ['red', 'green', 'blue', 'purple'], 
+    plot_losses([train_loss_feature_list],['Feature loss'],['blue'], path=path, filename='Feature_loss', title="Feature loss")
+    plot_losses([train_loss_Dec_content_list, train_loss_Dec_sh_list],
+                ['Decoder content loss', 'sh loss'],
+                ['green', 'purple'], 
                 path=path, filename='loss_curves_Dec', title="Decoder loss curves")
-    plot_losses([train_loss_Enc_prior_list, train_loss_Enc_sim_list], 
-                ['Encoder prior loss', 'Encoder sim loss'],
-                ['#b5de2b', '#1f9e89'],
-                path=path, filename='loss_curves_Enc', title="Encoder loss curves")
+    plot_losses([train_loss_Enc_prior_list],['Prior loss'],['blue'], path=path, filename='Prior_loss', title="Prior loss")
+    # plot_losses([train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list, train_loss_Dec_sh_list],
+    #             ['Decoder sim loss', 'Decoder content loss', 'Decoder gan loss', 'sh loss'],
+    #             ['red', 'green', 'blue', 'purple'], 
+    #             path=path, filename='loss_curves_Dec', title="Decoder loss curves")
+    # plot_losses([train_loss_Enc_prior_list, train_loss_Enc_sim_list], 
+    #             ['Encoder prior loss', 'Encoder sim loss'],
+    #             ['#b5de2b', '#1f9e89'],
+    #             path=path, filename='loss_curves_Enc', title="Encoder loss curves")
 
     # plot_losses(train_losses_D, train_losses_G,
     #             label_1='Discriminator loss', label_2='Generator loss',
@@ -466,10 +487,11 @@ def train(config, train_prefetcher):
     #             path=path, filename='loss_curves_G', title="Generator loss curves")
 
     with open(f'{path}/train_losses.pickle', "wb") as file:
-        pickle.dump((train_loss_Dis_list, train_loss_Dis_hr_list, train_loss_Dis_recon_list,
-                     train_loss_Dec_list, train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list, train_loss_Dec_sh_list,
-                     train_loss_Enc_list, train_loss_Enc_sim_list, train_loss_Enc_prior_list), file)
-        # pickle.dump((train_losses_G, train_losses_G_adversarial, train_losses_G_content,
-        #              train_losses_D, train_losses_D_hr, train_losses_D_sr, train_SD_metric), file)
+        pickle.dump((train_loss_Dis_list, train_loss_Dis_hr_list, train_loss_Dis_recon_list, train_loss_feature_list,
+                     train_loss_Dec_list, train_loss_Dec_content_list, train_loss_Dec_sh_list,
+                     train_loss_Enc_list, train_loss_Enc_prior_list), file)
+        # pickle.dump((train_loss_Dis_list, train_loss_Dis_hr_list, train_loss_Dis_recon_list,
+        #              train_loss_Dec_list, train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list, train_loss_Dec_sh_list,
+        #              train_loss_Enc_list, train_loss_Enc_sim_list, train_loss_Enc_prior_list), file)
 
     print("TRAINING FINISHED")

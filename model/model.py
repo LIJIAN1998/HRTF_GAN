@@ -1,7 +1,9 @@
+from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from torch.autograd import Variable
 # from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
 
 class Reshape(nn.Module):
@@ -94,9 +96,11 @@ class ResEncoder(nn.Module):
         for i in range(self.num_encode_layers):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
-
-        self.compute_mean = nn.Linear(512*34, latent_dim)
-        self.compute_log_var = nn.Linear(512*34, latent_dim)
+        self.fc = nn.Sequential(nn.Linear(512*34, 1024, bias=False),
+                                nn.BatchNorm1d(1024, momentum=0.9),
+                                nn.ReLU(True))
+        self.compute_mean = nn.Linear(1024, latent_dim)
+        self.compute_log_var = nn.Linear(1024, latent_dim)
     
     def _make_layer(self, block, out_channels, num_blocks, stride=1):
         downsample = None
@@ -121,12 +125,13 @@ class ResEncoder(nn.Module):
         return out
     
     def reparametrize(self, mu, logvar):
-        epsilon = torch.randn(mu.size(0), mu.size(1)).to(mu.device)
+        epsilon = Variable(torch.randn(mu.size(0), mu.size(1)).to(mu.device), requires_grad=True)
         z = mu + epsilon * torch.exp(logvar/2.)
         return z
     
     def forward(self, x):
         x = self.encode(x)
+        x = self.fc(x)
         mu, log_var = self.compute_mean(x), self.compute_log_var(x)
         z = self.reparametrize(mu, log_var)
         return mu, log_var, z
@@ -327,7 +332,8 @@ class Discriminator(nn.Module):
             nn.Sigmoid()
         )
     
-    def forward(self,  x: torch.Tensor) -> torch.Tensor:
+    def forward(self,  recon: torch.Tensor, original: torch.Tensor) -> torch.Tensor:
+        x = torch.cat((recon, original), 0)
         x = self.features(x)
         x = x.view(x.size(0), -1)
         x1 = x
@@ -347,11 +353,31 @@ class VAE(nn.Module):
         self.decoder = Decoder(self.nbins, self.latent_dim, self.out_degree)
         self.discriminator = Discriminator(self.nbins)
 
+    def init_parameters(self):
+        for m in self.modules():
+            if isinstance(m, (nn.Conv1d, nn.ConvTranspose1d, nn.Linear)):
+                if hasattr(m, 'weight') and m.weight is not None and m.weight.requires_grad:
+                    scale = 1.0 /np.sqrt(np.prod(m.weight.shape[1:]))
+                    scale /= np.sqrt(3)
+                    nn.init.uniform(m.weight, -scale, scale)
+                if hasattr(m, 'bias') and m.bias is not None and m.bias.requires_grad:
+                    nn.init.constant(m.bias, 0.0)
+
     def forward(self,  x: torch.Tensor) -> torch.Tensor:
+        # save original input
+        x_original = x
+        # encode
         mu, log_var, z = self.encoder(x)
         recon = self.decoder(z)
         return mu, log_var, recon
-       
+    
+    def __call__(self, *args, **kwds):
+        return super(VAE, self).__call__(*args, **kwds)
+    
+    @staticmethod
+    def loss(original, recon, inter_original, inter_recon, mu, )
+
+
 
 if __name__ == '__main__':
     x = torch.randn(1, 256, 2116)
