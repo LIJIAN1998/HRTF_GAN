@@ -201,9 +201,9 @@ def main(config, mode):
         # print("clean_hrtf", clean_hrtf.shape)
 
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'left', 'domain': 'magnitude_db'}})
+                                                             'side': 'left', 'domain': 'magnitude'}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'right', 'domain': 'magnitude_db'}})
+                                                             'side': 'right', 'domain': 'magnitude'}})
         # min_list = []
         # all_valid = True
         # for sample_id in range(len(left_hrtf)):
