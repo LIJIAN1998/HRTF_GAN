@@ -205,14 +205,14 @@ def main(config, mode):
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                              'side': 'right', 'domain': 'magnitude_db'}})
         # min_list = []
-        all_valid = True
-        for sample_id in range(len(left_hrtf)):
-            left = left_hrtf[sample_id]['features'][:, :, :, 1:]
-            mask = np.all(np.ma.getmaskarray(left), axis=3)
-            if np.any(mask):
-                print("id: ", sample_id)
-                all_valid = False
-        print("all valid? ", all_valid)
+        # all_valid = True
+        # for sample_id in range(len(left_hrtf)):
+        #     left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+        #     mask = np.all(np.ma.getmaskarray(left), axis=3)
+        #     if np.any(mask):
+        #         print("id: ", sample_id)
+        #         all_valid = False
+        # print("all valid? ", all_valid)
         #     right = right_hrtf[sample_id]['features'][:, :, :, 1:]
         #     merge = np.ma.concatenate([left, right], axis=3)
         #     merge = torch.from_numpy(merge.data)
@@ -220,21 +220,24 @@ def main(config, mode):
         # print(min_list)
         # print("avg min: ", np.average(min_list))
 
-        # sample_id = 55
-        # left = left_hrtf[sample_id]['features'][:, :, :, 1:]
-        # right = right_hrtf[sample_id]['features'][:, :, :, 1:]
-        # merge = np.ma.concatenate([left, right], axis=3)
-        # mask = np.ones((72, 12, 1), dtype=bool)
-        # original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        # row_ratio = 8
-        # col_ratio = 4
-        # for i in range(72 // row_ratio):
-        #     for j in range(12 // col_ratio):
-        #         mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        # order = 28
-        # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        # sh_coef = torch.from_numpy(SHT(merge))
-        # print("coef: ", sh_coef.shape, sh_coef.dtype)
+        sample_id = 55
+        left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+        right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+        merge = np.ma.concatenate([left, right], axis=3)
+        mask = np.ones((72, 12, 1), dtype=bool)
+        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        row_ratio = 8
+        col_ratio = 4
+        for i in range(72 // row_ratio):
+            for j in range(12 // col_ratio):
+                mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
+        order = 28
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        sh_coef = torch.from_numpy(SHT(merge))
+        print("coef: ", sh_coef.shape, sh_coef.dtype)
+        print("max coef: ", torch.max(sh_coef))
+        print("min coef: ", torch.min(sh_coef))
+        print("avg coef: ", torch.mean(sh_coef))
         # merge = torch.from_numpy(merge.data) # w x h x r x nbins
         # harmonics = torch.from_numpy(SHT.get_harmonics())
         # print("harmonics shape: ", harmonics.shape, harmonics.dtype)
