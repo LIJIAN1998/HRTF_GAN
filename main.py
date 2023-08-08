@@ -210,11 +210,16 @@ def main(config, mode):
         with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
             train_ids, val_ids = pickle.load(f)
 
+        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude_db'}},
+                                   subject_ids=train_ids)
+        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
+                                   subject_ids=train_ids)
+
         means = []
         stds = []
-        for sample_id in train_ids:
-            left = left_hrtf[sample_id]['features'][:, :, :, 1:]
-            right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+        for sample_id in len(left_train):
+            left = left_train[sample_id]['features'][:, :, :, 1:]
+            right = right_train[sample_id]['features'][:, :, :, 1:]
             merge = np.ma.concatenate([left, right], axis=3)
             mask = np.all(np.ma.getmaskarray(left), axis=3)
             SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
