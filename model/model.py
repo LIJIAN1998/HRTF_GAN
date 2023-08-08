@@ -82,25 +82,25 @@ class ResEncoder(nn.Module):
         self.expansion = 1
         self.in_channels = 256
         self.conv1 = nn.Sequential(
-            nn.Conv1d(nbins, self.in_channels, kernel_size=7, stride=2, padding=3, bias=False),
+            nn.Conv1d(nbins, self.in_channels, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(self.in_channels),
             nn.ReLU(),
         )
         self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
-        # self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
-        self.num_encode_layers = 4
+        self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
+#         self.num_encode_layers = 4
         if self.coefficient == 4:
             self.num_encode_layers -= 1
         res_layers.append(self._make_layer(block, 256, num_blocks))
         for i in range(self.num_encode_layers):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
-        self.fc = nn.Sequential(nn.Linear(512*34, 1024, bias=False),
-                                nn.BatchNorm1d(1024, momentum=0.9),
+        self.fc = nn.Sequential(nn.Linear(512*2, 512, bias=False),
+                                nn.BatchNorm1d(512, momentum=0.9),
                                 nn.ReLU(True))
-        self.compute_mean = nn.Linear(1024, latent_dim)
-        self.compute_log_var = nn.Linear(1024, latent_dim)
+        self.compute_mean = nn.Linear(512, latent_dim)
+        self.compute_log_var = nn.Linear(512, latent_dim)
     
     def _make_layer(self, block, out_channels, num_blocks, stride=1):
         downsample = None
@@ -119,7 +119,7 @@ class ResEncoder(nn.Module):
     
     def encode(self, x):
         x = self.conv1(x)
-        x = self.maxpool(x)
+#         x = self.maxpool(x)
         x = self.res_layers(x)
         out = x.view(x.size(0), -1)
         return out
@@ -208,68 +208,131 @@ class Encoder(nn.Module):
         # print('log_var: ', log_var.shape)
         z = self.reparametrize(mu, log_var)
         return mu, log_var, z
-    
+
 class Decoder(nn.Module):
-    def __init__(self, nbins: int, latent_dim: int, out_degree: int=45) -> None:
+    def __init__(self, nbins: int, latent_dim: int, out_degree: int=28) -> None:
         super(Decoder, self).__init__()
         self.nbins = nbins
         self.latent_dim = latent_dim
         self.num_coefficient = (out_degree + 1) ** 2
-        
+
         self.decoder = nn.Sequential(
-            nn.Linear(self.latent_dim, 512*32),
-            Reshape(-1, 512, 32),
+            nn.Linear(latent_dim, 512*2),
+            nn.BatchNorm1d(512*2, momentum=0.9),
+            nn.ReLU(True),
+            Reshape(-1, 512, 2),
             nn.ConvTranspose1d(512, 512, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(512),
             nn.PReLU(),
             nn.ConvTranspose1d(512, 512, kernel_size=3, stride=2, output_padding=1, bias=False),
             nn.BatchNorm1d(512),
             nn.PReLU(),
-            # 512x66
+            # 512 x 6
             nn.ConvTranspose1d(512, 256, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(256),
             nn.PReLU(),
             nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, output_padding=1, bias=False),
             nn.BatchNorm1d(256),
             nn.PReLU(),
-            # 512x134
+            # 256 x 14
             nn.ConvTranspose1d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(256),
             nn.PReLU(),
-            nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, padding=1, output_padding=1, bias=False),
             nn.BatchNorm1d(256),
             nn.PReLU(),
-            # 256x267
+            # 256 x 28
             nn.ConvTranspose1d(256, nbins, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(nbins),
             nn.PReLU(),
             nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm1d(nbins),
             nn.PReLU(),
-            # nbins x 533
+            # nbins x 55
             nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(nbins),
             nn.PReLU(),
             nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm1d(nbins),
             nn.PReLU(),
-            # nbins x 1065
+            # nbins x 109
             nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(nbins),
             nn.PReLU(),
             nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm1d(nbins),
             nn.PReLU(),
-            Trim(self.num_coefficient) # nbins x 2116
+            # nbins x 217
+            nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
+            nn.PReLU(),
+            nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
+            nn.PReLU(),
+            # nbins x 433
+            nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
+            nn.PReLU(),
+            nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm1d(nbins),
+            # nbins x 865
+            Trim(self.num_coefficient)
         )
 
-        self.classifier = nn.Softplus()
+        # self.decoder = nn.Sequential(
+        #     nn.Linear(self.latent_dim, 512*32),
+        #     Reshape(-1, 512, 32),
+        #     nn.ConvTranspose1d(512, 512, kernel_size=3, stride=1, padding=1, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.PReLU(),
+        #     nn.ConvTranspose1d(512, 512, kernel_size=3, stride=2, output_padding=1, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.PReLU(),
+        #     # 512x66
+        #     nn.ConvTranspose1d(512, 256, kernel_size=3, stride=1, padding=1, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.PReLU(),
+        #     nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, output_padding=1, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.PReLU(),
+        #     # 512x134
+        #     nn.ConvTranspose1d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.PReLU(),
+        #     nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, padding=1, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.PReLU(),
+        #     # 256x267
+        #     nn.ConvTranspose1d(256, nbins, kernel_size=3, stride=1, padding=1, bias=False),
+        #     nn.BatchNorm1d(nbins),
+        #     nn.PReLU(),
+        #     nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
+        #     nn.BatchNorm1d(nbins),
+        #     nn.PReLU(),
+        #     # nbins x 533
+        #     nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=1, padding=1, bias=False),
+        #     nn.BatchNorm1d(nbins),
+        #     nn.PReLU(),
+        #     nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
+        #     nn.BatchNorm1d(nbins),
+        #     nn.PReLU(),
+        #     # nbins x 1065
+        #     nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=1, padding=1, bias=False),
+        #     nn.BatchNorm1d(nbins),
+        #     nn.PReLU(),
+        #     nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
+        #     nn.BatchNorm1d(nbins),
+        #     nn.PReLU(),
+        #     Trim(self.num_coefficient) # nbins x 2116
+        # )
+
+        # self.classifier = nn.Softplus()
 
     def forward(self,  x: torch.Tensor) -> torch.Tensor:
         x = self.decoder(x)
         # print(x.shape)
-        out = self.classifier(x)
-        return out
+        # out = self.classifier(x)
+        return x
 
 class Discriminator(nn.Module):
     def __init__(self, nbins: int) -> None:
@@ -341,7 +404,7 @@ class Discriminator(nn.Module):
         return out, x1
 
 class VAE(nn.Module):
-    def __init__(self, nbins: int, max_degree: int, latent_dim: int, out_degree: int=45) -> None:
+    def __init__(self, nbins: int, max_degree: int, latent_dim: int, out_degree: int=28) -> None:
         super(VAE, self).__init__()
         self.nbins = nbins
         self.max_degree = max_degree
@@ -352,6 +415,8 @@ class VAE(nn.Module):
         self.encoder = ResEncoder(ResBlock, self.nbins, self.max_degree, self.latent_dim)
         self.decoder = Decoder(self.nbins, self.latent_dim, self.out_degree)
         self.discriminator = Discriminator(self.nbins)
+
+        self.init_parameters()
 
     def init_parameters(self):
         for m in self.modules():

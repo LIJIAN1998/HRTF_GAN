@@ -191,8 +191,8 @@ def train(config, train_prefetcher):
 
     # Define VAE and transfer to CUDA
     degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
-    vae = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).to(device)
-    netD = Discriminator(nbins=nbins).to(device)
+    vae = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).double().to(device)
+    netD = Discriminator(nbins=nbins).double().to(device)
     if ('cuda' in str(device)) and (ngpu > 1):
         netD = (nn.DataParallel(netD, list(range(ngpu)))).to(device)
         vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
@@ -276,11 +276,11 @@ def train(config, train_prefetcher):
 
             # Transfer in-memory data to CUDA devices to speed up training
             lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
-                                                             non_blocking=True, dtype=torch.float)
+                                                             non_blocking=True)
             hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
-                                                             non_blocking=True, dtype=torch.float)
+                                                             non_blocking=True)
             hrtf = batch_data["hrtf"].to(device=device, memory_format=torch.contiguous_format,
-                                         non_blocking=True, dtype=torch.float)
+                                         non_blocking=True)
             masks = batch_data["mask"]
             
             bs = lr_coefficient.size(0)
@@ -329,11 +329,11 @@ def train(config, train_prefetcher):
                 harmonics_list = []
                 for i in range(masks.size(0)):
                     SHT = SphericalHarmonicsTransform(45, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
-                    harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+                    harmonics = torch.from_numpy(SHT.get_harmonics())
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
                 recons = (harmonics_tensor @ recon.permute(0, 2, 1)).reshape(bs, num_row_angles, num_col_angles, num_radii, nbins)
-                recons = F.relu(recons.permute(0, 4, 3, 1, 2)) + margin   # bs x nbins x r x w x h
+                recons = recons.permute(0, 4, 3, 1, 2)  # bs x nbins x r x w x h
                 # during every 25th epoch and last epoch, save filename for mag spectrum plot
                 if epoch % 25 == 0 or epoch == (num_epochs - 1):
                     generated = recons[0].permute(2, 3, 1, 0)  # w x h x r x nbins
@@ -345,7 +345,7 @@ def train(config, train_prefetcher):
                 #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
                 content_loss = config.content_weight * unweighted_content_loss
                 train_loss_Dec_content += content_loss.item()
-                err_dec = feature_loss + sh_loss + content_loss - gan_loss
+                err_dec = feature_loss + content_loss - gan_loss
                 train_loss_Dec += err_dec.item()
 
                 # train encoder
