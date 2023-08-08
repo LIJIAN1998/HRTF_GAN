@@ -241,6 +241,9 @@ def main(config, mode):
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         print("harmonics shape: ", harmonics.shape, harmonics.dtype)
+        print("max harmonics: ", torch.max(harmonics))
+        print("min harmonics: ", torch.min(harmonics))
+        print("avg harmonics: ", torch.mean(harmonics))
         inverse = harmonics @ sh_coef
         print("inverse: ", inverse.shape)
         recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
