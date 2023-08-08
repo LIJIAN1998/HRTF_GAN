@@ -136,6 +136,7 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
+        config.upscale_factor = 32
         _, test_prefetcher = load_hrtf(config)
         print("Loaded all datasets successfully.")
 
