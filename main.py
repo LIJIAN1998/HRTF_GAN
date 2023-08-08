@@ -217,7 +217,7 @@ def main(config, mode):
 
         means = []
         stds = []
-        for sample_id in len(left_train):
+        for sample_id in range(len(left_train)):
             left = left_train[sample_id]['features'][:, :, :, 1:]
             right = right_train[sample_id]['features'][:, :, :, 1:]
             merge = np.ma.concatenate([left, right], axis=3)
