@@ -93,8 +93,9 @@ def test(config, val_prefetcher):
         SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).to(device)
         sr = harmonics @ recon[0].T
-        sr = sr.reshape(-1, num_row_angles, num_col_angles, num_radii, nbins).detach().cpu()
+        sr = sr.reshape(-1, num_row_angles, num_col_angles, num_radii, nbins)
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
+        sr = sr[0].detach().cpu()
         # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
         hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
 

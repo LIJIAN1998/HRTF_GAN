@@ -19,12 +19,12 @@ from preprocessing.utils import interpolate_fft, generate_euclidean_cube, conver
 
 from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation, debug_barycentric
 from baselines.hrtf_selection import run_hrtf_selection
-# from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
+from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from scipy.ndimage import binary_dilation
 
-# import matlab.engine
+import matlab.engine
 
 import shutil
 from pathlib import Path
@@ -142,8 +142,8 @@ def main(config, mode):
 
         test(config, test_prefetcher)
 
-        # run_lsd_evaluation(config, config.valid_path)
-        # run_localisation_evaluation(config, config.valid_path)
+        run_lsd_evaluation(config, config.valid_path)
+        run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
