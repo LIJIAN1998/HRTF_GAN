@@ -238,42 +238,42 @@ def main(config, mode):
         print("max coef: ", torch.max(sh_coef))
         print("min coef: ", torch.min(sh_coef))
         print("avg coef: ", torch.mean(sh_coef))
-        # merge = torch.from_numpy(merge.data) # w x h x r x nbins
-        # harmonics = torch.from_numpy(SHT.get_harmonics())
-        # print("harmonics shape: ", harmonics.shape, harmonics.dtype)
-        # inverse = harmonics @ sh_coef
-        # print("inverse: ", inverse.shape)
-        # recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
-        # print("recon: ", recon.shape)
-        # margin = 1.8670232e-08
-        # generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
-        # target = merge[None,:].permute(0,4,3,1,2)
-        # error = spectral_distortion_metric(generated, target)
-        # print("id: ", sample_id)
-        # print("lsd error: ", error)
+        merge = torch.from_numpy(merge.data) # w x h x r x nbins
+        harmonics = torch.from_numpy(SHT.get_harmonics())
+        print("harmonics shape: ", harmonics.shape, harmonics.dtype)
+        inverse = harmonics @ sh_coef
+        print("inverse: ", inverse.shape)
+        recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
+        print("recon: ", recon.shape)
+        margin = 1.8670232e-08
+        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        target = merge[None,:].permute(0,4,3,1,2)
+        error = spectral_distortion_metric(generated, target)
+        print("id: ", sample_id)
+        print("lsd error: ", error)
 
-        # x = recon[24, 8, 0, :]
-        # y = merge[24, 8, 0, :]
-        # mean_recon1 = torch.mean(recon)
-        # max1 = torch.max(recon)
-        # min1 = torch.min(recon)
-        # mean_original = torch.mean(merge)
-        # max_original = torch.max(merge)
-        # min_original = torch.min(merge)
-        # print("order: ", order)
-        # print("mean 1: ", mean_recon1)
-        # print("original mean: ", mean_original)
-        # print("max 1: ", max1)
-        # print("max original: ", max_original)
-        # print("min 1: ", min1)
-        # print("min original: ", min_original)
+        x = recon[15, 6, 0, :]
+        y = merge[15, 6, 0, :]
+        mean_recon1 = torch.mean(recon)
+        max1 = torch.max(recon)
+        min1 = torch.min(recon)
+        mean_original = torch.mean(merge)
+        max_original = torch.max(merge)
+        min_original = torch.min(merge)
+        print("order: ", order)
+        print("mean 1: ", mean_recon1)
+        print("original mean: ", mean_original)
+        print("max 1: ", max1)
+        print("max original: ", max_original)
+        print("min 1: ", min1)
+        print("min original: ", min_original)
 
-        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        # ax1.plot(x)
-        # ax1.set_title('recon')
-        # ax2.plot(y)
-        # ax2.set_title('original')
-        # plt.savefig("output.png")
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x)
+        ax1.set_title('recon')
+        ax2.plot(y)
+        ax2.set_title('original')
+        plt.savefig("output.png")
 
 
         
