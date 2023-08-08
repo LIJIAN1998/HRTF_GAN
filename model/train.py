@@ -328,7 +328,7 @@ def train(config, train_prefetcher):
                 # convert reconstructed coefficient back to hrtf
                 harmonics_list = []
                 for i in range(masks.size(0)):
-                    SHT = SphericalHarmonicsTransform(45, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
+                    SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
                     harmonics = torch.from_numpy(SHT.get_harmonics())
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
