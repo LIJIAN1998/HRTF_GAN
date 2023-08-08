@@ -339,6 +339,8 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.nbins = nbins
 
+        self.features = 
+
         self.features = nn.Sequential(
             # input size: nbins x 2116
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
@@ -379,17 +381,17 @@ class Discriminator(nn.Module):
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             # nbins x 67
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
+            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+            # nn.BatchNorm1d(512),
+            # nn.LeakyReLU(0.2, True),
+            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+            # nn.BatchNorm1d(512),
+            # nn.LeakyReLU(0.2, True),
             # nbins x 34
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 34, 512),
+            nn.Linear(512 * 27, 512),
             nn.LeakyReLU(0.2, True),
             nn.Linear(512, 1),
             nn.Sigmoid()
