@@ -40,7 +40,7 @@ def test(config, val_prefetcher):
 
     device = torch.device(config.device_name if (
             torch.cuda.is_available() and ngpu > 0) else "cpu")
-    model = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).to(device)
+    model = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).double().to(device)
     print("Build VAE model successfully.")
 
     # Load vae model weights (always uses the CPU due to HPC having long wait times)
