@@ -320,7 +320,7 @@ def train(config, train_prefetcher):
                 feature_recon = inter_feature[:bs]
                 feature_real = inter_feature[bs:]
                 feature_loss = ((feature_recon - feature_real) ** 2).mean()
-                train_loss_feature += feature_loss
+                train_loss_feature += feature_loss.item()
                 # feature_sim_loss_D = ((feature_recon - feature_real) ** 2).mean() # feature loss
                 # train_loss_Dec_sim += feature_sim_loss_D.item()
                 sh_loss = 0.001 * ((recon - hr_coefficient) ** 2).mean()  # sh coefficient loss

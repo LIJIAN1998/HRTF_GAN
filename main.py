@@ -19,12 +19,12 @@ from preprocessing.utils import interpolate_fft, generate_euclidean_cube, conver
 
 from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation, debug_barycentric
 from baselines.hrtf_selection import run_hrtf_selection
-# from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
+from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from scipy.ndimage import binary_dilation
 
-# import matlab.engine
+import matlab.engine
 
 import shutil
 from pathlib import Path
@@ -141,8 +141,8 @@ def main(config, mode):
 
         test(config, test_prefetcher)
 
-        # run_lsd_evaluation(config, config.valid_path)
-        # run_localisation_evaluation(config, config.valid_path)
+        run_lsd_evaluation(config, config.valid_path)
+        run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
@@ -201,15 +201,26 @@ def main(config, mode):
         # print("clean_hrtf", clean_hrtf.shape)
 
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'left', 'domain': 'magnitude'}})
+                                                             'side': 'left', 'domain': 'magnitude_db'}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'right', 'domain': 'magnitude'}})
+                                                             'side': 'right', 'domain': 'magnitude_db'}})
         # min_list = []
         # all_valid = True
-        # for sample_id in range(len(left_hrtf)):
-        #     left = left_hrtf[sample_id]['features'][:, :, :, 1:]
-        #     right = right_hrtf[sample_id]['features'][:, :, :, 1:]
-        #     merge = np.ma.concatenate([left, right], axis=3)
+        with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
+            train_ids, val_ids = pickle.load(file)
+
+        temp = torch.zeros(256, 841)
+        for sample_id in train_ids:
+            left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+            right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+            merge = np.ma.concatenate([left, right], axis=3)
+            mask = np.all(np.ma.getmaskarray(left), axis=3)
+            SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+            sh_coef = torch.from_numpy(SHT(merge)).T
+            temp += sh_coef
+        print("mean: ", torch.mean(temp, 0))
+        print("std: ", torch.std)
+
         #     merge = torch.from_numpy(merge.data)
         #     min_list.append(torch.min(merge))
         # print(min_list)
