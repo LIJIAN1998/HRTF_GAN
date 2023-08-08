@@ -9,5 +9,5 @@ TERM=vt100 # or TERM=xterm
 /usr/bin/nvidia-smi
 nvcc -V
 uptime
-python main.py train --hpc False --tag ari-upscale-4
+python main.py debug --hpc False --tag ari-upscale-4
 # python model/model.py
