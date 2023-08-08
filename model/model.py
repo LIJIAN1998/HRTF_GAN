@@ -339,8 +339,6 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.nbins = nbins
 
-        self.features = 
-
         self.features = nn.Sequential(
             # input size: nbins x 2116
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
