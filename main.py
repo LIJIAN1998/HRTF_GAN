@@ -208,7 +208,7 @@ def main(config, mode):
         # min_list = []
         # all_valid = True
         with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
-            train_ids, val_ids = pickle.load(file)
+            train_ids, val_ids = pickle.load(f)
 
         means = []
         stds = []
