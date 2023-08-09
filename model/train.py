@@ -226,6 +226,8 @@ def train(config, train_prefetcher):
         mean_std_coef_filename = config.mean_std_coef_filename
         with open(mean_std_coef_filename, 'rb') as f:
             mean, std = pickle.load(f)
+        mean = mean.to(device)
+        std = std.to(device)
 
     if config.start_with_existing_model:
         print(f'Initialized weights using an existing model - {config.existing_model_path}')
