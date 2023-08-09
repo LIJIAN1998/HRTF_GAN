@@ -212,9 +212,9 @@ def main(config, mode):
         # print("clean_hrtf", clean_hrtf.shape)
 
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'left', 'domain': 'magnitude'}})
+                                                             'side': 'left', 'domain': 'magnitude_db'}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'right', 'domain': 'magnitude'}})
+                                                             'side': 'right', 'domain': 'magnitude_db'}})
 
         # with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
         #     train_ids, val_ids = pickle.load(f)
@@ -285,7 +285,7 @@ def main(config, mode):
         # print("recon: ", recon.shape)
         margin = 1.8670232e-08
         generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
-        generated = F.relu(generated) + margin
+        # generated = F.relu(generated) + margin
         target = merge[None,:].permute(0,4,3,1,2)
         error = spectral_distortion_metric(generated, target)
         print("id: ", sample_id)
