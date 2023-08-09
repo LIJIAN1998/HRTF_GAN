@@ -261,24 +261,24 @@ def main(config, mode):
         #         mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
         order = 28
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        sh_coef = torch.from_numpy(SHT(merge)).T
+        sh_coef = torch.from_numpy(SHT(merge))
         print("coef: ", sh_coef.shape, sh_coef.dtype)
-        norm_coef = (sh_coef - mean[:, None]) / std[:, None]
+        # norm_coef = (sh_coef - mean[:, None]) / std[:, None]
         print("max coef: ", torch.max(sh_coef))
         print("min coef: ", torch.min(sh_coef))
         print("avg coef: ", torch.mean(sh_coef))
         # print("max norm: ", torch.max(norm_coef))
         # print("min norm: ", torch.min(norm_coef))
         # print("avg norm: ", torch.mean(norm_coef))
-        un_norm = norm_coef * std[:, None] + mean[:, None]
-        merge = torch.from_numpy(merge.data).float() # w x h x r x nbins
+        # un_norm = norm_coef * std[:, None] + mean[:, None]
+        merge = torch.from_numpy(merge.data) # w x h x r x nbins
         harmonics = torch.from_numpy(SHT.get_harmonics())
         # inverse = harmonics @ un_norm.T
         # print("harmonics shape: ", harmonics.shape, harmonics.dtype)
         # print("max harmonics: ", torch.max(harmonics))
         # print("min harmonics: ", torch.min(harmonics))
         # print("avg harmonics: ", torch.mean(harmonics))
-        inverse = harmonics @ sh_coef.T
+        inverse = harmonics @ sh_coef
         # print("inverse: ", inverse.shape)
         recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
         # print("recon: ", recon.shape)
