@@ -273,7 +273,7 @@ def main(config, mode):
         # un_norm = norm_coef * std[:, None] + mean[:, None]
         merge = torch.from_numpy(merge.data).float() # w x h x r x nbins
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        harmonics = torch.from_numpy(SHT.get_harmonics())
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         # inverse = harmonics @ un_norm.T
         # print("harmonics shape: ", harmonics.shape, harmonics.dtype)
         # print("max harmonics: ", torch.max(harmonics))
