@@ -283,11 +283,11 @@ def train(config, train_prefetcher):
 
             # Transfer in-memory data to CUDA devices to speed up training
             lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
-                                                             non_blocking=True)
+                                                             non_blocking=True, dtype=torch.float)
             hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
-                                                             non_blocking=True)
+                                                             non_blocking=True, dtype=torch.float)
             hrtf = batch_data["hrtf"].to(device=device, memory_format=torch.contiguous_format,
-                                         non_blocking=True)
+                                         non_blocking=True, dtype=torch.float)
             masks = batch_data["mask"]
             
             bs = lr_coefficient.size(0)
@@ -336,13 +336,14 @@ def train(config, train_prefetcher):
                 harmonics_list = []
                 for i in range(masks.size(0)):
                     SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[i].numpy().astype(bool))
-                    harmonics = torch.from_numpy(SHT.get_harmonics())
+                    harmonics = torch.from_numpy(SHT.get_harmonics()).float()
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
                 if config.transform_flag:
                     recon = recon * std[:, None] + mean[:, None]
                 recons = (harmonics_tensor @ recon.permute(0, 2, 1)).reshape(bs, num_row_angles, num_col_angles, num_radii, nbins)
                 recons = recons.permute(0, 4, 3, 1, 2)  # bs x nbins x r x w x h
+                recons = F.relu(recons) + margin # filter out negative values and make it non-zero
                 # during every 25th epoch and last epoch, save filename for mag spectrum plot
                 if epoch % 25 == 0 or epoch == (num_epochs - 1):
                     generated = recons[0].permute(2, 3, 1, 0)  # w x h x r x nbins

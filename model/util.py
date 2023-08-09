@@ -112,21 +112,22 @@ def load_hrtf(config, mean=None, std=None):
     else:
         transform = (mean, std)
 
+    domain = 'magnitude'
     if config.merge_flag:
-        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude_db'}},
+        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': domain}},
                                    subject_ids=train_ids)
-        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
+        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': domain}},
                                     subject_ids=train_ids)
-        left_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude_db'}},
+        left_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': domain}},
                                  subject_ids=val_ids)
-        right_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
+        right_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': domain}},
                                   subject_ids=val_ids)
         train_dataset = MergeHRTFDataset(left_train, right_train, config.upscale_factor, max_degree=28, transform=transform)
         val_dataset = MergeHRTFDataset(left_val, right_val, config.upscale_factor, max_degree=28, transform=transform)
     else:
-        ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude_db'}},
+        ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': domain}},
                                  subject_ids=train_ids)
-        ds_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude_db'}},
+        ds_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': domain}},
                                subject_ids=val_ids)
         train_dataset = CustomHRTFDataset(ds_train, config.upscale_factor, max_degree=28, transform=transform)
         val_dataset = CustomHRTFDataset(ds_val, config.upscale_factor, max_degree=28, transform=transform)
