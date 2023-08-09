@@ -99,7 +99,7 @@ class MergeHRTFDataset(Dataset):
         right = self.right_hrtf[index]['features'][:, :, :, 1:]
         sample_id = self.left_hrtf.subject_ids[index]
         merge = np.ma.concatenate([left, right], axis=3)
-        original_mask = np.all(np.ma.getmaskarray(merge), axis=3)
+        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
         mask = np.ones((self.num_row_angles, self.num_col_angles, self.num_radii), dtype=bool)
         row_ratio, col_ratio = get_sample_ratio(self.upscale_factor)
         for i in range(self.num_row_angles // row_ratio):
@@ -113,13 +113,13 @@ class MergeHRTFDataset(Dataset):
         hr_SHT = SphericalHarmonicsTransform(self.max_degree, self.left_hrtf.row_angles,
                                              self.left_hrtf.column_angles,
                                              self.left_hrtf.radii,
-                                             np.all(np.ma.getmaskarray(merge), axis=3))
+                                             original_mask)
         hr_coefficient = hr_SHT(merge).T
 
         if self.transform is not None:
             mean, std = self.transform
-            # lr_coefficient = (lr_coefficient - mean[:, None]) / std[:, None]
-            # hr_coefficient = (hr_coefficient - mean[:, None]) / std[:, None]
+            lr_coefficient = (lr_coefficient - mean[:, None]) / std[:, None]
+            hr_coefficient = (hr_coefficient - mean[:, None]) / std[:, None]
 
         merge = torch.from_numpy(merge.data).permute(3, 2, 0, 1)  # nbins x r x w x h
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient,
