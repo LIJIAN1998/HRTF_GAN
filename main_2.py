@@ -216,32 +216,32 @@ def main(config, mode):
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                              'side': 'right', 'domain': 'magnitude_db'}})
 
-        # with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
-        #     train_ids, val_ids = pickle.load(f)
+        with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
+            train_ids, val_ids = pickle.load(f)
 
-        # left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude_db'}},
-        #                            subject_ids=train_ids)
-        # right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
-        #                            subject_ids=train_ids)
+        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude_db'}},
+                                   subject_ids=train_ids)
+        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
+                                   subject_ids=train_ids)
 
-        # means = []
-        # stds = []
-        # for sample_id in range(len(left_train)):
-        #     left = left_train[sample_id]['features'][:, :, :, 1:]
-        #     right = right_train[sample_id]['features'][:, :, :, 1:]
-        #     merge = np.ma.concatenate([left, right], axis=3)
-        #     mask = np.all(np.ma.getmaskarray(left), axis=3)
-        #     SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
-        #     sh_coef = torch.from_numpy(SHT(merge)).T
-        #     means.append(torch.mean(sh_coef, 1))
-        #     stds.append(torch.std(sh_coef, 1))
-        # means = torch.stack(means, 0)
-        # stds = torch.stack(stds, 0)
-        # print("mean shape: ", means.shape)
-        # mean = torch.mean(means, 0)
-        # std = torch.std(torch.tensor(stds), 0)
-        # print("mean: ", mean.shape)
-        # print("std: ", std.shape)
+        means = []
+        stds = []
+        for sample_id in range(len(left_train)):
+            left = left_train[sample_id]['features'][:, :, :, 1:]
+            right = right_train[sample_id]['features'][:, :, :, 1:]
+            merge = np.ma.concatenate([left, right], axis=3)
+            mask = np.all(np.ma.getmaskarray(left), axis=3)
+            SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+            sh_coef = torch.from_numpy(SHT(merge)).T
+            means.append(torch.mean(sh_coef, 1))
+            stds.append(torch.std(sh_coef, 1))
+        means = torch.stack(means, 0)
+        stds = torch.stack(stds, 0)
+        print("mean shape: ", means.shape)
+        mean = torch.mean(means, 0)
+        std = torch.std(stds, 0)
+        print("mean: ", mean.shape)
+        print("std: ", std.shape)
 
         mean_std_coef_filename = config.mean_std_coef_filename
         with open(mean_std_coef_filename, 'wb') as f:
