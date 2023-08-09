@@ -212,9 +212,9 @@ def main(config, mode):
         # print("clean_hrtf", clean_hrtf.shape)
 
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'left', 'domain': 'magnitude_db'}})
+                                                             'side': 'left', 'domain': 'magnitude'}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'right', 'domain': 'magnitude_db'}})
+                                                             'side': 'right', 'domain': 'magnitude'}})
 
         # with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
         #     train_ids, val_ids = pickle.load(f)
@@ -254,12 +254,12 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         mask = np.ones((72, 12, 1), dtype=bool)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        row_ratio = 8
-        col_ratio = 4
+        row_ratio = 1
+        col_ratio = 2
         for i in range(72 // row_ratio):
             for j in range(12 // col_ratio):
                 mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        order = 4
+        order = 15
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape, sh_coef.dtype)

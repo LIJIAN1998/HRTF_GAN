@@ -218,7 +218,7 @@ def progress(i, batches, n, num_epochs, timed):
 def spectral_distortion_inner(input_spectrum, target_spectrum):
     numerator = target_spectrum
     denominator = input_spectrum
-    return torch.mean((numerator - denominator) ** 2)
+    # return torch.mean((numerator - denominator) ** 2)
     return torch.mean((20 * torch.log10(numerator / denominator)) ** 2)
 
 
@@ -275,10 +275,10 @@ def ILD_metric_inner(config, input_spectrum, target_spectrum):
     input_right = input_spectrum[config.nbins_hrtf:]
     target_left = target_spectrum[:config.nbins_hrtf]
     target_right = target_spectrum[config.nbins_hrtf:]
-    # input_ILD = torch.mean((20 * torch.log10(input_left / input_right)))
-    # target_ILD = torch.mean((20 * torch.log10(target_left / target_right)))
-    input_ILD = torch.mean(input_left - input_right)
-    target_ILD = torch.mean(target_left - target_right)
+    input_ILD = torch.mean((20 * torch.log10(input_left / input_right)))
+    target_ILD = torch.mean((20 * torch.log10(target_left / target_right)))
+    # input_ILD = torch.mean(input_left - input_right)
+    # target_ILD = torch.mean(target_left - target_right)
     return torch.abs(input_ILD - target_ILD)
 
 
