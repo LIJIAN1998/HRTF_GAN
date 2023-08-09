@@ -191,8 +191,8 @@ def train(config, train_prefetcher):
 
     # Define VAE and transfer to CUDA
     degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
-    vae = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).double().to(device)
-    netD = Discriminator(nbins=nbins).double().to(device)
+    vae = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).to(device)
+    netD = Discriminator(nbins=nbins).to(device)
     if ('cuda' in str(device)) and (ngpu > 1):
         netD = (nn.DataParallel(netD, list(range(ngpu)))).to(device)
         vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
