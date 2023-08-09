@@ -118,8 +118,8 @@ class MergeHRTFDataset(Dataset):
 
         if self.transform is not None:
             mean, std = self.transform
-            lr_coefficient = (lr_coefficient - mean[:, None]) / std[:, None]
-            hr_coefficient = (hr_coefficient - mean[:, None]) / std[:, None]
+            # lr_coefficient = (lr_coefficient - mean[:, None]) / std[:, None]
+            # hr_coefficient = (hr_coefficient - mean[:, None]) / std[:, None]
 
         merge = torch.from_numpy(merge.data).permute(3, 2, 0, 1)  # nbins x r x w x h
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient,
