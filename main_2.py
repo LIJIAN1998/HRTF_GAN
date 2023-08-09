@@ -254,12 +254,12 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         mask = np.ones((72, 12, 1), dtype=bool)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        row_ratio = 2
-        col_ratio = 1
+        row_ratio = 8
+        col_ratio = 4
         for i in range(72 // row_ratio):
             for j in range(12 // col_ratio):
                 mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        order = 15
+        order = 4
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape, sh_coef.dtype)
@@ -272,7 +272,7 @@ def main(config, mode):
         # print("avg norm: ", torch.mean(norm_coef))
         # un_norm = norm_coef * std[:, None] + mean[:, None]
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
-        SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         # inverse = harmonics @ un_norm.T
         # print("harmonics shape: ", harmonics.shape, harmonics.dtype)
