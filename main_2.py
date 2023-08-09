@@ -243,9 +243,9 @@ def main(config, mode):
         # print(mean)
         print("std: ", std.shape)
         # print(std)
-        mean_std_coef_filename = config.mean_std_coef_filename
-        with open(mean_std_coef_filename, 'wb') as f:
-            pickle.dump((mean, std), f) 
+        # mean_std_coef_filename = config.mean_std_coef_filename
+        # with open(mean_std_coef_filename, 'wb') as f:
+        #     pickle.dump((mean, std), f) 
 
 
 
