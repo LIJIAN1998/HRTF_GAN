@@ -297,8 +297,8 @@ def main(config, mode):
         content_loss = sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std)
         print("content loss: ", content_loss)
 
-        x = recon[0, 0, 0, :]
-        y = merge[0, 0, 0, :]
+        x = recon[0, 1, 0, :]
+        y = merge[0, 1, 0, :]
         mean_recon1 = torch.mean(recon)
         max1 = torch.max(recon)
         min1 = torch.min(recon)
