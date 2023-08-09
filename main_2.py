@@ -259,7 +259,7 @@ def main(config, mode):
         for i in range(72 // row_ratio):
             for j in range(12 // col_ratio):
                 mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        order = 28
+        order = 15
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         sh_coef = torch.from_numpy(SHT(merge))
         print("coef: ", sh_coef.shape, sh_coef.dtype)
