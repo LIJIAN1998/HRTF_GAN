@@ -96,7 +96,7 @@ def get_train_val_loader(config):
     return train_prefetcher, test_prefetcher
 
 
-def load_hrtf(config):
+def load_hrtf(config, mean=None, std=None):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
@@ -105,6 +105,12 @@ def load_hrtf(config):
     id_filename = id_file_dir + '/train_val_id.pickle'
     with open(id_filename, "rb") as file:
         train_ids, val_ids = pickle.load(file)
+
+    # define transforms
+    if mean is None or std is None:
+        transform = None
+    else:
+        transform = (mean, std)
 
     if config.merge_flag:
         left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude_db'}},
@@ -115,15 +121,15 @@ def load_hrtf(config):
                                  subject_ids=val_ids)
         right_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
                                   subject_ids=val_ids)
-        train_dataset = MergeHRTFDataset(left_train, right_train, config.upscale_factor)
-        val_dataset = MergeHRTFDataset(left_val, right_val, config.upscale_factor)
+        train_dataset = MergeHRTFDataset(left_train, right_train, config.upscale_factor, transform)
+        val_dataset = MergeHRTFDataset(left_val, right_val, config.upscale_factor, transform)
     else:
         ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude_db'}},
                                  subject_ids=train_ids)
         ds_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude_db'}},
                                subject_ids=val_ids)
-        train_dataset = CustomHRTFDataset(ds_train, config.upscale_factor)
-        val_dataset = CustomHRTFDataset(ds_val, config.upscale_factor)
+        train_dataset = CustomHRTFDataset(ds_train, config.upscale_factor, transform)
+        val_dataset = CustomHRTFDataset(ds_val, config.upscale_factor, transform)
 
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=config.batch_size,

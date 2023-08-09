@@ -129,7 +129,15 @@ def main(config, mode):
             f.write(f"lambda: {lambda_feature}\n")
             f.write(f"latent_dim: {latent_dim}\n")
             f.write(f"critic iters: {critic_iters}\n")
-        train_prefetcher, _ = load_hrtf(config)
+
+        if config.transform_flag:
+            mean_std_coef_filename = config.mean_std_coef_filename
+            with open(mean_std_coef_filename, 'rb') as f:
+                mean, std = pickle.load(f)
+            train_prefetcher, _ = load_hrtf(config, mean, std)
+        else:
+            train_prefetcher, _ = load_hrtf(config)
+        print("transform applied: ", config.transform_flag)
         print("train fetcher: ", len(train_prefetcher))
         # Trains the model, according to the parameters specified in Config
         # util.initialise_folders(config, overwrite=True)

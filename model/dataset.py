@@ -38,7 +38,7 @@ def get_sample_ratio(upscale_factor):
         return 36, 6
 
 class CustomHRTFDataset(Dataset):
-    def __init__(self, original_hrtf_dataset, upscale_factor, max_degree=45) -> None:
+    def __init__(self, original_hrtf_dataset, upscale_factor, max_degree=28, transform=None) -> None:
         super(CustomHRTFDataset, self).__init__()
         self.original_hrtf_dataset = original_hrtf_dataset
         self.upscale_factor = upscale_factor
@@ -47,6 +47,7 @@ class CustomHRTFDataset(Dataset):
         # self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
         self.degree = max_degree
         self.max_dgree = max_degree
+        self.transform = transform
 
     def __getitem__(self, index: int):
         hrtf = self.original_hrtf_dataset[index]['features'][:, :, :, 1:]
@@ -68,7 +69,11 @@ class CustomHRTFDataset(Dataset):
                                              original_mask)
         hr_coefficient = hr_SHT(hrtf).T
 
-        hrtf = torch.from_numpy(hrtf.data).permute(3, 2, 0, 1) # nbins x r x w x h 
+        hrtf = torch.from_numpy(hrtf.data).permute(3, 2, 0, 1) # nbins x r x w x h
+        if self.transform is not None:
+            mean, std = self.transform
+            lr_coefficient = (lr_coefficient - mean[:, None]) / std[:, None]
+            hr_coefficient = (hr_coefficient - mean[:, None]) / std[:, None]
 
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient, 
                 "hrtf": hrtf, "mask": original_mask, "id": sample_id}
@@ -77,7 +82,7 @@ class CustomHRTFDataset(Dataset):
         return len(self.original_hrtf_dataset)
     
 class MergeHRTFDataset(Dataset):
-    def __init__(self, left_hrtf, right_hrtf, upscale_factor, max_degree=28) -> None:
+    def __init__(self, left_hrtf, right_hrtf, upscale_factor, max_degree=28, transform=None) -> None:
         super(MergeHRTFDataset, self).__init__()
         self.left_hrtf = left_hrtf
         self.right_hrtf = right_hrtf
@@ -87,6 +92,7 @@ class MergeHRTFDataset(Dataset):
         self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
         # self.degree = max_degree
         self.max_degree = max_degree
+        self.transform = transform
 
     def __getitem__(self, index: int):
         left = self.left_hrtf[index]['features'][:, :, :, 1:]
@@ -109,6 +115,11 @@ class MergeHRTFDataset(Dataset):
                                              self.left_hrtf.radii,
                                              np.all(np.ma.getmaskarray(merge), axis=3))
         hr_coefficient = hr_SHT(merge).T
+
+        if self.transform is not None:
+            mean, std = self.transform
+            lr_coefficient = (lr_coefficient - mean[:, None]) / std[:, None]
+            hr_coefficient = (hr_coefficient - mean[:, None]) / std[:, None]
 
         merge = torch.from_numpy(merge.data).permute(3, 2, 0, 1)  # nbins x r x w x h
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient,

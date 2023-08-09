@@ -222,6 +222,11 @@ def train(config, train_prefetcher):
 
     margin = 1.8670232e-08
 
+    if config.transform_flag:
+        mean_std_coef_filename = config.mean_std_coef_filename
+        with open(mean_std_coef_filename, 'rb') as f:
+            mean, std = pickle.load(f)
+
     if config.start_with_existing_model:
         print(f'Initialized weights using an existing model - {config.existing_model_path}')
         vae.load_state_dict(torch.load(f'{config.existing_model_path}/Vae.pt'))
@@ -332,6 +337,8 @@ def train(config, train_prefetcher):
                     harmonics = torch.from_numpy(SHT.get_harmonics())
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
+                if config.transform_flag:
+                    recon = recon * std[:, None] + mean[:, None]
                 recons = (harmonics_tensor @ recon.permute(0, 2, 1)).reshape(bs, num_row_angles, num_col_angles, num_radii, nbins)
                 recons = recons.permute(0, 4, 3, 1, 2)  # bs x nbins x r x w x h
                 # during every 25th epoch and last epoch, save filename for mag spectrum plot
