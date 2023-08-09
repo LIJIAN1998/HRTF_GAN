@@ -237,7 +237,7 @@ def main(config, mode):
         # print(std)
         mean_std_coef_filename = config.mean_std_coef_filename
         with open(mean_std_coef_filename, 'wb') as f:
-            pickle.load((mean, std), f) 
+            pickle.dump((mean, std), f) 
 
 
 
