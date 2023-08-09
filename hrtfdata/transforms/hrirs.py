@@ -339,18 +339,18 @@ class SphericalHarmonicsTransform:
             # X, Y, Z -> azimuths, elevations, radii
             grid[..., 0], grid[..., 1], grid[..., 2] = cartesian2spherical(grid[..., 0], grid[..., 1], grid[..., 2], out_angles_as_degrees=False)
         # Convert elevations to zeniths, azimuths, elevations, radii
-        grid[..., 1] = np.pi/2 - grid[..., 1]
+        # grid[..., 1] = np.pi/2 - grid[..., 1]
         # Convert elevations and azimuths to be between [0, 2*pi] and [0, pi], respectively.
-        # grid[..., 0] = np.pi / 2 + grid[..., 0]  # elevations
-        # grid[..., 1] = np.pi + grid[..., 1]  # azimuths
+        grid[..., 0] = np.pi / 2 + grid[..., 0]  # elevations
+        grid[..., 1] = np.pi + grid[..., 1]  # azimuths
 
         selected_angles = grid[~selection_mask]
-        self._harmonics = np.column_stack([np.real(sph_harm(order, degree, selected_angles[:, 0], selected_angles[:, 1]))
-                                            for degree in np.arange(max_degree+1)
-                                              for order in np.arange(-degree, degree+1)])
-        # self._harmonics = np.column_stack([np.real(sph_harm(order, degree, selected_angles[:, 1], selected_angles[:, 0]))
-        #                                     for degree in np.arange(max_degree + 1)
-        #                                       for order in np.arange(-degree, degree + 1)]) 
+        # self._harmonics = np.column_stack([np.real(sph_harm(order, degree, selected_angles[:, 0], selected_angles[:, 1]))
+        #                                     for degree in np.arange(max_degree+1)
+        #                                       for order in np.arange(-degree, degree+1)])
+        self._harmonics = np.column_stack([np.real(sph_harm(order, degree, selected_angles[:, 1], selected_angles[:, 0]))
+                                            for degree in np.arange(max_degree + 1)
+                                              for order in np.arange(-degree, degree + 1)]) 
         self._valid_mask = ~selection_mask
 
 
@@ -363,3 +363,43 @@ class SphericalHarmonicsTransform:
     
     def get_harmonics(self):
         return self._harmonics
+    
+class Aidan_SphericalHarmonicsTransform:
+
+    def __init__(self, max_degree, row_angles, column_angles, radii, selection_mask, coordinate_system='spherical'):
+        self.grid = np.stack(np.meshgrid(row_angles, column_angles, radii, indexing='ij'), axis=-1)
+        if coordinate_system == 'spherical':
+            # elevations, azimuths, radii -> azimuths, elevations, radii
+            self.grid[..., 0], self.grid[..., 1] = np.deg2rad(self.grid[..., 1]), np.deg2rad(self.grid[..., 0])
+        elif coordinate_system == 'interaural':
+            # lateral, vertical, radius -> azimuths, elevations, radii
+            self.grid[..., 0], self.grid[..., 1], self.grid[..., 2] = interaural2spherical(self.grid[..., 0], self.grid[..., 1], self.grid[..., 2],
+                                                                            out_angles_as_degrees=False)
+        else:
+            # X, Y, Z -> azimuths, elevations, radii
+            self.grid[..., 0], self.grid[..., 1], self.grid[..., 2] = cartesian2spherical(self.grid[..., 0], self.grid[..., 1], self.grid[..., 2],
+                                                                           out_angles_as_degrees=False)
+        # Convert elevations to zeniths, azimuths, elevations, radii
+        self.grid[..., 1] = np.pi + self.grid[..., 1]
+        self.grid[..., 0] = np.pi / 2 + self.grid[..., 0]
+
+        self.selected_angles = self.grid[~selection_mask]
+        self._harmonics = np.column_stack(
+            [np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) for degree in
+             np.arange(max_degree + 1) for order in np.arange(-degree, degree + 1)])
+        self._valid_mask = ~selection_mask
+
+    def __call__(self, hrirs):
+        return np.linalg.lstsq(self._harmonics, hrirs[self._valid_mask].data, rcond=None)[0]
+
+    def inverse(self, coefficients):
+        return self._harmonics @ coefficients
+
+    def get_harmonics(self):
+        return self._harmonics
+
+    def get_grid(self):
+        return self.grid
+
+    def get_selected_angles(self):
+        return self.selected_angles
