@@ -267,18 +267,18 @@ def main(config, mode):
         # print("max coef: ", torch.max(sh_coef))
         # print("min coef: ", torch.min(sh_coef))
         # print("avg coef: ", torch.mean(sh_coef))
-        print("max norm: ", torch.max(norm_coef))
-        print("min norm: ", torch.min(norm_coef))
-        print("avg norm: ", torch.mean(norm_coef))
+        # print("max norm: ", torch.max(norm_coef))
+        # print("min norm: ", torch.min(norm_coef))
+        # print("avg norm: ", torch.mean(norm_coef))
         un_norm = norm_coef * std[:, None] + mean[:, None]
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
         harmonics = torch.from_numpy(SHT.get_harmonics())
-        inverse = harmonics @ un_norm.T
+        # inverse = harmonics @ un_norm.T
         # print("harmonics shape: ", harmonics.shape, harmonics.dtype)
         # print("max harmonics: ", torch.max(harmonics))
         # print("min harmonics: ", torch.min(harmonics))
         # print("avg harmonics: ", torch.mean(harmonics))
-        # inverse = harmonics @ sh_coef
+        inverse = harmonics @ sh_coef
         # print("inverse: ", inverse.shape)
         recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
         # print("recon: ", recon.shape)
