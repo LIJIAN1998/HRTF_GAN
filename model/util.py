@@ -121,15 +121,15 @@ def load_hrtf(config, mean=None, std=None):
                                  subject_ids=val_ids)
         right_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
                                   subject_ids=val_ids)
-        train_dataset = MergeHRTFDataset(left_train, right_train, config.upscale_factor, transform)
-        val_dataset = MergeHRTFDataset(left_val, right_val, config.upscale_factor, transform)
+        train_dataset = MergeHRTFDataset(left_train, right_train, config.upscale_factor, max_degree=28, transform=transform)
+        val_dataset = MergeHRTFDataset(left_val, right_val, config.upscale_factor, max_degree=28, transform=transform)
     else:
         ds_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude_db'}},
                                  subject_ids=train_ids)
         ds_val = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude_db'}},
                                subject_ids=val_ids)
-        train_dataset = CustomHRTFDataset(ds_train, config.upscale_factor, transform)
-        val_dataset = CustomHRTFDataset(ds_val, config.upscale_factor, transform)
+        train_dataset = CustomHRTFDataset(ds_train, config.upscale_factor, max_degree=28, transform=transform)
+        val_dataset = CustomHRTFDataset(ds_val, config.upscale_factor, max_degree=28, transform=transform)
 
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=config.batch_size,
