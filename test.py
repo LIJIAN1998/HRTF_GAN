@@ -2,30 +2,65 @@ import argparse
 import torch
 import json
 import torch.nn as nn
-print("test")
-print("using cuda? ", torch.cuda.is_available())
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-print("device: ", device)
-x = torch.randn(1, 256, 2116).to(device)
-print(x.shape)
-conv1 = nn.Sequential(
-    nn.Conv1d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
-    nn.BatchNorm1d(256),
-    nn.ReLU(),
-).to(device)
-x = conv1(x)
-print(x.shape)
-print('done')
+import os
+import numpy as np
+import importlib
+import sys
+from config import Config
+import matplotlib.pyplot as plt
 
-# def main(index):
-#     with open(f"config_files/config_{index}.json", 'r') as f:
-#         j = json.load(f)
-#     with open("json_log.txt", 'a') as f:
-#         f.write(f"{j}\n")
+import torch.nn.functional as F
+from model.util import spectral_distortion_metric
 
-# if __name__ == '__main__':
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("-i", "--index")
-#     args = parser.parse_args()
-#     main(args.index)
+from scipy.special import sph_harm
+
+from hrtfdata.util import interaural2spherical, cartesian2spherical
+
+class SphericalHarmonicsTransform:
+
+    def __init__(self, max_degree, row_angles, column_angles, radii, selection_mask, coordinate_system='spherical'):
+        self.grid = np.stack(np.meshgrid(row_angles, column_angles, radii, indexing='ij'), axis=-1)
+        if coordinate_system == 'spherical':
+            # elevations, azimuths, radii -> azimuths, elevations, radii
+            self.grid[..., 0], self.grid[..., 1] = np.deg2rad(self.grid[..., 1]), np.deg2rad(self.grid[..., 0])
+        elif coordinate_system == 'interaural':
+            # lateral, vertical, radius -> azimuths, elevations, radii
+            self.grid[..., 0], self.grid[..., 1], self.grid[..., 2] = interaural2spherical(self.grid[..., 0], self.grid[..., 1], self.grid[..., 2],
+                                                                            out_angles_as_degrees=False)
+        else:
+            # X, Y, Z -> azimuths, elevations, radii
+            self.grid[..., 0], self.grid[..., 1], self.grid[..., 2] = cartesian2spherical(self.grid[..., 0], self.grid[..., 1], self.grid[..., 2],
+                                                                           out_angles_as_degrees=False)
+        # Convert elevations to zeniths, azimuths, elevations, radii
+        self.grid[..., 1] = np.pi + self.grid[..., 1]
+        self.grid[..., 0] = np.pi / 2 + self.grid[..., 0]
+
+
+        self.selected_angles = self.grid[~selection_mask]
+        self._harmonics = np.column_stack(
+            [np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) for degree in
+             np.arange(max_degree + 1) for order in np.arange(-degree, degree + 1)])
+        self._valid_mask = ~selection_mask
+
+    def __call__(self, hrirs):
+        return np.linalg.lstsq(self._harmonics, hrirs[self._valid_mask].data, rcond=None)[0]
+
+    def inverse(self, coefficients):
+        return self._harmonics @ coefficients
+
+    def get_harmonics(self):
+        return self._harmonics
+
+    def get_grid(self):
+        return self.grid
+
+    def get_selected_angles(self):
+        return self.selected_angles
+
+dataset = 'SONICOM'
+config = Config('debug', using_hpc=False, dataset=dataset, data_dir='/data/' + dataset)
+
+
+# device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+# print("device: ", device)
