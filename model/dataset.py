@@ -62,12 +62,12 @@ class CustomHRTFDataset(Dataset):
                                              self.original_hrtf_dataset.column_angles,
                                              self.original_hrtf_dataset.radii,
                                              mask)
-        lr_coefficient = lr_SHT(hrtf).T
+        lr_coefficient = torch.from_numpy(lr_SHT(hrtf).T)
         hr_SHT = SphericalHarmonicsTransform(self.max_dgree, self.original_hrtf_dataset.row_angles,
                                              self.original_hrtf_dataset.column_angles,
                                              self.original_hrtf_dataset.radii,
                                              original_mask)
-        hr_coefficient = hr_SHT(hrtf).T
+        hr_coefficient = torch.from_numpy(hr_SHT(hrtf).T)
 
         hrtf = torch.from_numpy(hrtf.data).permute(3, 2, 0, 1) # nbins x r x w x h
         if self.transform is not None:
@@ -109,12 +109,12 @@ class MergeHRTFDataset(Dataset):
                                              self.left_hrtf.column_angles,
                                              self.left_hrtf.radii,
                                              mask)
-        lr_coefficient = lr_SHT(merge).T
+        lr_coefficient = torch.from_numpy(lr_SHT(merge).T)
         hr_SHT = SphericalHarmonicsTransform(self.max_degree, self.left_hrtf.row_angles,
                                              self.left_hrtf.column_angles,
                                              self.left_hrtf.radii,
                                              original_mask)
-        hr_coefficient = hr_SHT(merge).T
+        hr_coefficient = torch.from_numpy(hr_SHT(merge).T)
 
         if self.transform is not None:
             mean, std = self.transform
