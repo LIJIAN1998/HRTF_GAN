@@ -254,25 +254,26 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         mask = np.ones((72, 12, 1), dtype=bool)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        # row_ratio = 8
-        # col_ratio = 4
-        # for i in range(72 // row_ratio):
-        #     for j in range(12 // col_ratio):
-        #         mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        order = 28
-        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        sh_coef = torch.from_numpy(SHT(merge))
+        row_ratio = 2
+        col_ratio = 1
+        for i in range(72 // row_ratio):
+            for j in range(12 // col_ratio):
+                mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
+        order = 15
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+        sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape, sh_coef.dtype)
-        norm_coef = (sh_coef.T - mean[:, None]) / std[:, None]
+        # norm_coef = (sh_coef.T - mean[:, None]) / std[:, None]
         # print("max coef: ", torch.max(sh_coef))
         # print("min coef: ", torch.min(sh_coef))
         # print("avg coef: ", torch.mean(sh_coef))
         # print("max norm: ", torch.max(norm_coef))
         # print("min norm: ", torch.min(norm_coef))
         # print("avg norm: ", torch.mean(norm_coef))
-        un_norm = norm_coef * std[:, None] + mean[:, None]
+        # un_norm = norm_coef * std[:, None] + mean[:, None]
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
-        harmonics = torch.from_numpy(SHT.get_harmonics())
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         # inverse = harmonics @ un_norm.T
         # print("harmonics shape: ", harmonics.shape, harmonics.dtype)
         # print("max harmonics: ", torch.max(harmonics))
@@ -296,8 +297,8 @@ def main(config, mode):
         content_loss = sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std)
         print("content loss: ", content_loss)
 
-        x = recon[60, 6, 0, :]
-        y = merge[60, 6, 0, :]
+        x = recon[0, 0, 0, :]
+        y = merge[0, 0, 0, :]
         mean_recon1 = torch.mean(recon)
         max1 = torch.max(recon)
         min1 = torch.min(recon)
