@@ -283,8 +283,9 @@ def main(config, mode):
         # print("inverse: ", inverse.shape)
         recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
         # print("recon: ", recon.shape)
-        # margin = 1.8670232e-08
+        margin = 1.8670232e-08
         generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        generated = F.relu(generated) + margin
         target = merge[None,:].permute(0,4,3,1,2)
         error = spectral_distortion_metric(generated, target)
         print("id: ", sample_id)
@@ -297,8 +298,8 @@ def main(config, mode):
         content_loss = sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std)
         print("content loss: ", content_loss)
 
-        x = recon[1, 1, 0, :]
-        y = merge[1, 1, 0, :]
+        x = recon[70, 1, 0, :]
+        y = merge[70, 1, 0, :]
         mean_recon1 = torch.mean(recon)
         max1 = torch.max(recon)
         min1 = torch.min(recon)
