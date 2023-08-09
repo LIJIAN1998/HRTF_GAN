@@ -10,7 +10,7 @@ import importlib
 from config import Config
 from model.train import train, test_train
 from model.test import test
-from model.util import load_dataset, load_hrtf, get_train_val_loader, spectral_distortion_metric
+from model.util import load_dataset, load_hrtf, get_train_val_loader, spectral_distortion_metric, sd_ild_loss
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.hrtf_sphere import HRTF_Sphere
@@ -215,102 +215,105 @@ def main(config, mode):
                                                              'side': 'left', 'domain': 'magnitude_db'}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                              'side': 'right', 'domain': 'magnitude_db'}})
-        # min_list = []
-        # all_valid = True
-        with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
-            train_ids, val_ids = pickle.load(f)
 
-        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude_db'}},
-                                   subject_ids=train_ids)
-        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
-                                   subject_ids=train_ids)
+        # with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
+        #     train_ids, val_ids = pickle.load(f)
 
-        means = []
-        stds = []
-        for sample_id in range(len(left_train)):
-            left = left_train[sample_id]['features'][:, :, :, 1:]
-            right = right_train[sample_id]['features'][:, :, :, 1:]
-            merge = np.ma.concatenate([left, right], axis=3)
-            mask = np.all(np.ma.getmaskarray(left), axis=3)
-            SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
-            sh_coef = torch.from_numpy(SHT(merge)).T
-            means.append(torch.mean(sh_coef, 1))
-            stds.append(torch.std(sh_coef, 1))
-        means = torch.stack(means, 0)
-        stds = torch.stack(stds, 0)
-        print("mean shape: ", means.shape)
-        mean = torch.mean(means, 0)
-        std = torch.std(torch.tensor(stds), 0)
-        print("mean: ", mean.shape)
-        # print(mean)
-        print("std: ", std.shape)
-        # print(std)
-        # mean_std_coef_filename = config.mean_std_coef_filename
-        # with open(mean_std_coef_filename, 'wb') as f:
-        #     pickle.dump((mean, std), f) 
+        # left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude_db'}},
+        #                            subject_ids=train_ids)
+        # right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
+        #                            subject_ids=train_ids)
 
+        # means = []
+        # stds = []
+        # for sample_id in range(len(left_train)):
+        #     left = left_train[sample_id]['features'][:, :, :, 1:]
+        #     right = right_train[sample_id]['features'][:, :, :, 1:]
+        #     merge = np.ma.concatenate([left, right], axis=3)
+        #     mask = np.all(np.ma.getmaskarray(left), axis=3)
+        #     SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+        #     sh_coef = torch.from_numpy(SHT(merge)).T
+        #     means.append(torch.mean(sh_coef, 1))
+        #     stds.append(torch.std(sh_coef, 1))
+        # means = torch.stack(means, 0)
+        # stds = torch.stack(stds, 0)
+        # print("mean shape: ", means.shape)
+        # mean = torch.mean(means, 0)
+        # std = torch.std(torch.tensor(stds), 0)
+        # print("mean: ", mean.shape)
+        # print("std: ", std.shape)
 
+        mean_std_coef_filename = config.mean_std_coef_filename
+        with open(mean_std_coef_filename, 'wb') as f:
+            pickle.dump((mean, std), f) 
 
-        # sample_id = 55
-        # left = left_hrtf[sample_id]['features'][:, :, :, 1:]
-        # right = right_hrtf[sample_id]['features'][:, :, :, 1:]
-        # merge = np.ma.concatenate([left, right], axis=3)
-        # mask = np.ones((72, 12, 1), dtype=bool)
-        # original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        sample_id = 34
+        left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+        right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+        merge = np.ma.concatenate([left, right], axis=3)
+        mask = np.ones((72, 12, 1), dtype=bool)
+        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
         # row_ratio = 8
         # col_ratio = 4
         # for i in range(72 // row_ratio):
         #     for j in range(12 // col_ratio):
         #         mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        # order = 28
-        # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        # sh_coef = torch.from_numpy(SHT(merge)).T
-        # print("coef: ", sh_coef.shape, sh_coef.dtype)
-        # norm_coef = (sh_coef - mean[:, None]) / std[:, None]
-        # print("max norm: ", torch.max(norm_coef))
-        # print("min norm: ", torch.min(norm_coef))
-        # print("avg norm: ", torch.mean(norm_coef))
-        # un_norm = norm_coef * std[:, None] + mean[:, None]
-        # merge = torch.from_numpy(merge.data).float() # w x h x r x nbins
-        # harmonics = torch.from_numpy(SHT.get_harmonics())
-        # inverse = harmonics @ un_norm.T
+        order = 28
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        sh_coef = torch.from_numpy(SHT(merge)).T
+        print("coef: ", sh_coef.shape, sh_coef.dtype)
+        norm_coef = (sh_coef - mean[:, None]) / std[:, None]
+        print("max norm: ", torch.max(norm_coef))
+        print("min norm: ", torch.min(norm_coef))
+        print("avg norm: ", torch.mean(norm_coef))
+        un_norm = norm_coef * std[:, None] + mean[:, None]
+        merge = torch.from_numpy(merge.data).float() # w x h x r x nbins
+        harmonics = torch.from_numpy(SHT.get_harmonics())
+        inverse = harmonics @ un_norm.T
         # print("harmonics shape: ", harmonics.shape, harmonics.dtype)
         # print("max harmonics: ", torch.max(harmonics))
         # print("min harmonics: ", torch.min(harmonics))
         # print("avg harmonics: ", torch.mean(harmonics))
         # inverse = harmonics @ sh_coef
         # print("inverse: ", inverse.shape)
-        # recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
+        recon = inverse.reshape(72, 12, 1, 256).detach().cpu() # w x h x r x nbins
         # print("recon: ", recon.shape)
         # margin = 1.8670232e-08
-        # generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
-        # target = merge[None,:].permute(0,4,3,1,2)
-        # error = spectral_distortion_metric(generated, target)
-        # print("id: ", sample_id)
-        # print("lsd error: ", error)
+        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        target = merge[None,:].permute(0,4,3,1,2)
+        error = spectral_distortion_metric(generated, target)
+        print("id: ", sample_id)
+        print("lsd error: ", error)
 
-        # x = recon[15, 6, 0, :]
-        # y = merge[15, 6, 0, :]
-        # mean_recon1 = torch.mean(recon)
-        # max1 = torch.max(recon)
-        # min1 = torch.min(recon)
-        # mean_original = torch.mean(merge)
-        # max_original = torch.max(merge)
-        # min_original = torch.min(merge)
-        # print("order: ", order)
-        # print("mean 1: ", mean_recon1)
-        # print("original mean: ", mean_original)
-        # print("max 1: ", max1)
-        # print("max original: ", max_original)
-        # print("min 1: ", min1)
-        # print("min original: ", min_original)
+        sd_mean = 7.387559253346883
+        sd_std = 0.577364154400081
+        ild_mean = 3.6508303231127868
+        ild_std = 0.5261339271318863
+        content_loss = sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std)
+        print("content loss: ", content_loss)
 
-        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        # ax1.plot(x)
-        # ax1.set_title('recon')
-        # ax2.plot(y)
-        # ax2.set_title('original')
-        # plt.savefig("output.png")
+        x = recon[60, 6, 0, :]
+        y = merge[60, 6, 0, :]
+        mean_recon1 = torch.mean(recon)
+        max1 = torch.max(recon)
+        min1 = torch.min(recon)
+        mean_original = torch.mean(merge)
+        max_original = torch.max(merge)
+        min_original = torch.min(merge)
+        print("order: ", order)
+        print("mean 1: ", mean_recon1)
+        print("original mean: ", mean_original)
+        print("max 1: ", max1)
+        print("max original: ", max_original)
+        print("min 1: ", min1)
+        print("min original: ", min_original)
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x)
+        ax1.set_title('recon')
+        ax2.plot(y)
+        ax2.set_title('original')
+        plt.savefig("output.png")
 
 
         
