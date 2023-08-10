@@ -215,6 +215,7 @@ def main(config, mode):
         stds = []
         orders = [19, 13, 9, 6, 4, 3, 2, 1]
         for order in orders:
+            print("order: ", order)
             coefs = []
             for sample_id in range(len(left_train)):
                 left = left_train[sample_id]['features'][:, :, :, 1:]
