@@ -252,7 +252,7 @@ def main(config, mode):
             print()
             filename = mean_std_dir + f"/mean_std_{upscale_factor}.pickle"
             with open(filename, 'wb') as f:
-                pickle.load((mean, std), f)
+                pickle.dump((mean, std), f)
 
             # means.append(torch.mean(sh_coef, 0))
             # stds.append(torch.std(sh_coef, 0))
