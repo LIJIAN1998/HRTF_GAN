@@ -132,9 +132,16 @@ def main(config, mode):
             f.write(f"critic iters: {critic_iters}\n")
 
         if config.transform_flag:
-            mean_std_coef_filename = config.mean_std_coef_filename
-            with open(mean_std_coef_filename, 'rb') as f:
-                mean, std = pickle.load(f)
+            mean_std_dir = config.mean_std_coef_dir
+            mean_std_full = mean_std_dir + "/mean_std_full.pickle"
+            with open(mean_std_full, "rb") as f:
+                mean_full, std_full = pickle.load(f)
+            
+            mean_std_lr = mean_std_dir + f"/mean_std_{config.upscale_factor}.pickle"
+            with open(mean_std_lr, "rb") as f:
+                mean_lr, std_lr = pickle.load(f)
+            mean = (mean_lr, mean_full)
+            std = (std_lr, std_full)
             train_prefetcher, _ = load_hrtf(config, mean, std)
         else:
             train_prefetcher, _ = load_hrtf(config)
@@ -240,7 +247,7 @@ def main(config, mode):
         print("max: ", torch.max(coefs))
         print("min: ", torch.min(coefs))
         print()
-        filename = mean_std_dir + "mean_std_full.pickle"
+        filename = mean_std_dir + "/mean_std_full.pickle"
         with open(filename, "wb") as f:
             pickle.dump((mean, std), f)
         # for i, upscale_factor in enumerate(upscale_factors):
