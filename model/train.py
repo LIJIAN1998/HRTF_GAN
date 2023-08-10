@@ -154,11 +154,12 @@ def train(config, train_prefetcher):
     :param train_prefetcher: prefetcher for training data
     """
     # load the dataset to get the row, column angles info
+    domain = config.domain
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
     ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
-                                                         'side': 'left', 'domain': 'time'}}, subject_ids='first')
+                                                         'side': 'left', 'domain': domain}}, subject_ids='first')
     num_row_angles = len(ds.row_angles)
     num_col_angles = len(ds.column_angles)
     num_radii = len(ds.radii)
@@ -183,7 +184,6 @@ def train(config, train_prefetcher):
     # Get train params
     bs, optmizer, lr, alpha, lambda_feature, latent_dim, critic_iters = config.get_train_params()
     decay_lr = config.decay_lr
-    # batch_size, beta1, beta2, num_epochs, lr_encoder, lr_decoder, lr_dis, critic_iters = config.get_train_params()
 
     # # get list of positive frequencies of HRTF for plotting magnitude spectrum
     # all_freqs = scipy.fft.fftfreq(256, 1 / config.hrir_samplerate)
@@ -304,32 +304,21 @@ def train(config, train_prefetcher):
             pred_real = pred[bs:]
 
             # train on real coefficient
-            # pred_real = netD(hr_coefficient)[0]
             loss_D_hr = adversarial_criterion(pred_real, ones_label)
             train_loss_Dis_hr += loss_D_hr.item()
             # train on reconstructed coefficient 
-            # pred_recon = netD(recon.detach().clone())[0]
             loss_D_recon = adversarial_criterion(pred_recon, zeros_label)
             train_loss_Dis_recon += loss_D_recon.item()
             gan_loss = loss_D_hr + loss_D_recon # Compute the discriminator loss
             train_loss_Dis += gan_loss.item()
             
-
             # training VAE
             if batch_index % int(critic_iters) == 0:
                 # train decoder
-                # pred_real, feature_real = netD(hr_coefficient)
-                # err_dec_real = adversarial_criterion(pred_real, ones_label)
-                # pred_recon, feature_recon = netD(recon)
-                # err_dec_recon = adversarial_criterion(pred_recon, zeros_label)
-                # gan_loss_dec = err_dec_real + err_dec_recon
-                # train_loss_Dec_gan += gan_loss_dec.item() # gan / adversarial loss
                 feature_recon = inter_feature[:bs]
                 feature_real = inter_feature[bs:]
-                feature_loss = ((feature_recon - feature_real) ** 2).mean()
+                feature_loss = ((feature_recon - feature_real) ** 2).mean() # feature-wise loss
                 train_loss_feature += feature_loss.item()
-                # feature_sim_loss_D = ((feature_recon - feature_real) ** 2).mean() # feature loss
-                # train_loss_Dec_sim += feature_sim_loss_D.item()
                 sh_loss = 0.001 * ((recon - hr_coefficient) ** 2).mean()  # sh coefficient loss
                 train_loss_Dec_sh += sh_loss.item()
                 # convert reconstructed coefficient back to hrtf
@@ -343,7 +332,8 @@ def train(config, train_prefetcher):
                     recon = recon * std[:, None] + mean[:, None]
                 recons = (harmonics_tensor @ recon.permute(0, 2, 1)).reshape(bs, num_row_angles, num_col_angles, num_radii, nbins)
                 recons = recons.permute(0, 4, 3, 1, 2)  # bs x nbins x r x w x h
-                # recons = F.relu(recons) + margin # filter out negative values and make it non-zero
+                if domain == "magnitude":
+                    recons = F.relu(recons) + margin # filter out negative values and make it non-zero
                 # during every 25th epoch and last epoch, save filename for mag spectrum plot
                 if epoch % 25 == 0 or epoch == (num_epochs - 1):
                     generated = recons[0].permute(2, 3, 1, 0)  # w x h x r x nbins

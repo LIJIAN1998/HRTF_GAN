@@ -395,8 +395,16 @@ class Discriminator(nn.Module):
             nn.Sigmoid()
         )
     
-    def forward(self,  recon: torch.Tensor, original: torch.Tensor) -> torch.Tensor:
-        x = torch.cat((recon, original), 0)
+    def forward(self,  x1: torch.Tensor, x2: torch.Tensor, mode="feature") -> torch.Tensor:
+        x = torch.cat((x1, x2), 0)
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        if mode == "feature":
+            return x
+        else:
+            x = self.classifier(x)
+            return x
+        x = torch.cat((x1, x2), 0)
         x = self.features(x)
         x = x.view(x.size(0), -1)
         x1 = x
@@ -414,7 +422,7 @@ class VAE(nn.Module):
         # self.encoder = Encoder(self.nbins, self.max_degree, self.latent_dim)
         self.encoder = ResEncoder(ResBlock, self.nbins, self.max_degree, self.latent_dim)
         self.decoder = Decoder(self.nbins, self.latent_dim, self.out_degree)
-        self.discriminator = Discriminator(self.nbins)
+        # self.discriminator = Discriminator(self.nbins)
 
         self.init_parameters()
 
@@ -424,9 +432,9 @@ class VAE(nn.Module):
                 if hasattr(m, 'weight') and m.weight is not None and m.weight.requires_grad:
                     scale = 1.0 /np.sqrt(np.prod(m.weight.shape[1:]))
                     scale /= np.sqrt(3)
-                    nn.init.uniform(m.weight, -scale, scale)
+                    nn.init.uniform_(m.weight, -scale, scale)
                 if hasattr(m, 'bias') and m.bias is not None and m.bias.requires_grad:
-                    nn.init.constant(m.bias, 0.0)
+                    nn.init.constant_(m.bias, 0.0)
 
     def forward(self,  x: torch.Tensor) -> torch.Tensor:
         # save original input

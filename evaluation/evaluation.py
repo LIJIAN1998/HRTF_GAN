@@ -132,7 +132,7 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
         #     cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
 
         my_convert_to_sofa(nodes_replaced_path, config, row_angles, column_angles)
-        # my_convert_to_sofa(config.valid_gt_path, config, row_angles, column_angles)
+        my_convert_to_sofa(config.valid_gt_path, config, row_angles, column_angles)
         # convert_to_sofa(nodes_replaced_path, config, cube, sphere)
         print('Created valid sofa files')
 
