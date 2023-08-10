@@ -216,38 +216,45 @@ def main(config, mode):
 
         means = []
         stds = []
+        mean_std_dir = config.mean_std_coef_dir
+        shutil.rmtree(Path(mean_std_dir), ignore_errors=True)
+        Path(mean_std_dir).mkdir(parents=True, exist_ok=True)
         orders = [19, 13, 9, 6, 4, 3, 2, 1, 1]
         upscale_factors = [2, 4, 8, 16, 32, 48, 72, 108, 216]
-        # row_ratio, column_ratio = get_sample_ratio()
-        # for i, upscale_factor in enumerate(upscale_factors):
-        #     order = orders[i]
-        #     row_ratio, col_ratio = get_sample_ratio(upscale_factor)
-        #     print("factor: ", upscale_factor)
-        #     print("order: ", order)
-        #     coefs = []
-        #     for sample_id in range(len(left_train)):
-        #         left = left_train[sample_id]['features'][:, :, :, 1:]
-        #         right = right_train[sample_id]['features'][:, :, :, 1:]
-        #         merge = np.ma.concatenate([left, right], axis=3)
-        #         mask = np.ones((72, 12, 1), dtype=bool)
-        #         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        #         for i in range(72 // row_ratio):
-        #             for j in range(12 // col_ratio):
-        #                 mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        #         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
-        #         sh_coef = torch.from_numpy(SHT(merge)).T
-        #         coefs.append(sh_coef)
-        #     coefs = torch.stack(coefs)
-        #     print("all train coefs: ", coefs.shape)
-        #     mean = torch.mean(coefs, 0)
-        #     std = torch.std(coefs, 0)
-        #     print("mean: ", mean.shape)
-        #     print(mean[:20][0])
-        #     print("std: ", std.shape)
-        #     print(std[:20][0])
-        #     print("max: ", torch.max(coefs))
-        #     print("min: ", torch.min(coefs))
-        #     print()
+        row_ratio, column_ratio = get_sample_ratio()
+        for i, upscale_factor in enumerate(upscale_factors):
+            order = orders[i]
+            row_ratio, col_ratio = get_sample_ratio(upscale_factor)
+            print("factor: ", upscale_factor)
+            print("order: ", order)
+            coefs = []
+            for sample_id in range(len(left_train)):
+                left = left_train[sample_id]['features'][:, :, :, 1:]
+                right = right_train[sample_id]['features'][:, :, :, 1:]
+                merge = np.ma.concatenate([left, right], axis=3)
+                mask = np.ones((72, 12, 1), dtype=bool)
+                original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+                for i in range(72 // row_ratio):
+                    for j in range(12 // column_ratio):
+                        mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
+                SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+                sh_coef = torch.from_numpy(SHT(merge)).T
+                coefs.append(sh_coef)
+            coefs = torch.stack(coefs)
+            print("all train coefs: ", coefs.shape)
+            mean = torch.mean(coefs, 0)
+            std = torch.std(coefs, 0)
+            print("mean: ", mean.shape)
+            print(mean[0][:4])
+            print("std: ", std.shape)
+            print(std[0][:4])
+            print("max: ", torch.max(coefs))
+            print("min: ", torch.min(coefs))
+            print()
+            filename = f"{mean_std_dir} + /mean_std_{upscale_factor}.pickle"
+            with open(filename, 'wb') as f:
+                pickle.load((mean, std), f)
+
             # means.append(torch.mean(sh_coef, 0))
             # stds.append(torch.std(sh_coef, 0))
         # means = torch.stack(means, 0)
@@ -263,26 +270,27 @@ def main(config, mode):
         #     # pickle.dump((mean, std), f) 
         #     mean, std = pickle.load(f)
 
-        sample_id = 34
-        left = left_hrtf[sample_id]['features'][:, :, :, 1:]
-        right = right_hrtf[sample_id]['features'][:, :, :, 1:]
-        merge = np.ma.concatenate([left, right], axis=3)
-        mask = np.ones((72, 12, 1), dtype=bool)
-        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        for i, upscale_factor in enumerate(upscale_factors):
-            order = orders[i]
-            print("factor: ", upscale_factor)
-            print("order: ", order)
-            row_ratio, col_ratio = get_sample_ratio(upscale_factor)
-            for i in range(72 // row_ratio):
-                for j in range(12 // col_ratio):
-                    mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-            SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
-            sh_coef = torch.from_numpy(SHT(merge))
-            print("coef: ", sh_coef.shape, sh_coef.dtype)
-            print(sh_coef[:4,0].shape)
-            print(sh_coef[:4,0])
-            print()
+        # compare coefficients with different orders
+        # sample_id = 34
+        # left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+        # right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+        # merge = np.ma.concatenate([left, right], axis=3)
+        # mask = np.ones((72, 12, 1), dtype=bool)
+        # original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        # for i, upscale_factor in enumerate(upscale_factors):
+        #     order = orders[i]
+        #     print("factor: ", upscale_factor)
+        #     print("order: ", order)
+        #     row_ratio, col_ratio = get_sample_ratio(upscale_factor)
+        #     for i in range(72 // row_ratio):
+        #         for j in range(12 // col_ratio):
+        #             mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
+        #     SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+        #     sh_coef = torch.from_numpy(SHT(merge))
+        #     print("coef: ", sh_coef.shape, sh_coef.dtype)
+        #     print(sh_coef[:4,0].shape)
+        #     print(sh_coef[:4,0])
+        #     print()
             
 
         # row_ratio = 1
@@ -351,48 +359,6 @@ def main(config, mode):
         # ax2.plot(y)
         # ax2.set_title('original')
         # plt.savefig("output.png")
-
-
-        
-
-        
-        
-        # config.batch_size = 1
-        # train_prefetcher, test_prefetcher = load_hrtf(config)
-        # train_prefetcher.reset()
-        # train_batch = train_prefetcher.next()
-        # while train_batch is not None:
-        #     lr_coefficient = train_batch["lr_coefficient"]
-        #     if torch.isnan(lr_coefficient).any():
-        #         id = train_batch["id"]
-        #         print("nan coef in train sample ", id)
-        #     train_batch = train_prefetcher.next()
-
-        # test_prefetcher.reset()
-        # test_batch = test_prefetcher.next()
-        # while test_batch is not None:
-        #     lr_coefficient = test_batch["lr_coefficient"]
-        #     if torch.isnan(lr_coefficient).any():
-        #         id = test_batch["id"]
-        #         print("nan in test sample ", id)
-        #     test_batch = test_prefetcher.next()
-
-
-        # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'magnitude'}})
-        # subject_ids = list(ds.subject_ids)
-        # hrtf = ds[0]['features'][:, :, :, 1:]
-        # for i in range(len(subject_ids)):
-        #     hrtf = ds[i]['features'][:, :, :, 1:]
-        #     data = torch.from_numpy(hrtf.data)
-        #     if torch.isnan(data).any():
-        #         print("id: ", subject_ids[i])
-        #         print("target: ", ds[i]['target'])
-        #         print("group: ", ds[i]['group'])
-        #         print()
-            
-        # train_prefetcher, _ = get_train_val_loader(config)
-        # print("train size: ", len(train_prefetcher))
-        # test_train(config, train_prefetcher)
 
     print("finished")
 
