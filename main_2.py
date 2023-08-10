@@ -221,7 +221,6 @@ def main(config, mode):
         Path(mean_std_dir).mkdir(parents=True, exist_ok=True)
         orders = [19, 13, 9, 6, 4, 3, 2, 1, 1]
         upscale_factors = [2, 4, 8, 16, 32, 48, 72, 108, 216]
-        row_ratio, column_ratio = get_sample_ratio()
         for i, upscale_factor in enumerate(upscale_factors):
             order = orders[i]
             row_ratio, col_ratio = get_sample_ratio(upscale_factor)
@@ -235,7 +234,7 @@ def main(config, mode):
                 mask = np.ones((72, 12, 1), dtype=bool)
                 original_mask = np.all(np.ma.getmaskarray(left), axis=3)
                 for i in range(72 // row_ratio):
-                    for j in range(12 // column_ratio):
+                    for j in range(12 // col_ratio):
                         mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
                 SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
                 sh_coef = torch.from_numpy(SHT(merge)).T
