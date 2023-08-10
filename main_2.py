@@ -280,7 +280,8 @@ def main(config, mode):
             SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
             sh_coef = torch.from_numpy(SHT(merge))
             print("coef: ", sh_coef.shape, sh_coef.dtype)
-            print(sh_coef[:4][0])
+            print(sh_coef[:4,0].shape)
+            print(sh_coef[:4,0])
             print()
             
 
