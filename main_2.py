@@ -250,7 +250,7 @@ def main(config, mode):
             print("max: ", torch.max(coefs))
             print("min: ", torch.min(coefs))
             print()
-            filename = f"{mean_std_dir} + /mean_std_{upscale_factor}.pickle"
+            filename = mean_std_dir + f"/mean_std_{upscale_factor}.pickle"
             with open(filename, 'wb') as f:
                 pickle.load((mean, std), f)
 
