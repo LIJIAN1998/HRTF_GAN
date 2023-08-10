@@ -205,7 +205,7 @@ def train(config, train_prefetcher):
     lr_encoder = ExponentialLR(optEncoder, gamma=decay_lr)
     optDecoder = optim.RMSprop(vae.decoder.parameters(), lr=lr, alpha=0.9, eps=1e-8, weight_decay=0, momentum=0, centered=False)
     lr_decoder = ExponentialLR(optDecoder, gamma=decay_lr)
-    optD = optim.RMSprop(netD.parameters(), lr=lr, alpha=0.9, eps=1e-8, weight_decay=0, momentum=0, centered=False)
+    optD = optim.RMSprop(netD.parameters(), lr=0.0000015, alpha=0.9, eps=1e-8, weight_decay=0, momentum=0, centered=False)
     lr_discriminator = ExponentialLR(optD, gamma=decay_lr)
 
     # Define loss functions
@@ -349,12 +349,9 @@ def train(config, train_prefetcher):
                 train_loss_Dec += err_dec.item()
 
                 # train encoder
-                # mu, log_var, recon = vae(lr_coefficient)
                 prior_loss = 1 + log_var - mu.pow(2) - log_var.exp()
                 prior_loss = (-0.5 * torch.sum(prior_loss)).mean() # prior loss
                 train_loss_Enc_prior += prior_loss.item()
-                # feature_recon = netD(recon)[1]
-                # feature_real = netD(hr_coefficient)[1]
                 with open(f"log.txt", "a") as f:
                     f.write(f"lr coef nan? {torch.isnan(lr_coefficient.any())}\n")
                     f.write(f"recon nan? {torch.isnan(recon).any()}\n")

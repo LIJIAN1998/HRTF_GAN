@@ -237,6 +237,7 @@ def main(config, mode):
             SHT = SphericalHarmonicsTransform(28, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
             sh_coef = torch.from_numpy(SHT(merge)).T
             coefs.append(sh_coef)
+        coefs = torch.stack(coefs)
         print("all train coefs: ", coefs.shape)
         mean = torch.mean(coefs, 0)
         std = torch.std(coefs, 0)

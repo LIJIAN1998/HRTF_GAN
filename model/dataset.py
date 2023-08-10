@@ -71,9 +71,10 @@ class CustomHRTFDataset(Dataset):
 
         hrtf = torch.from_numpy(hrtf.data).permute(3, 2, 0, 1) # nbins x r x w x h
         if self.transform is not None:
-            mean, std = self.transform
-            lr_coefficient = (lr_coefficient - mean[:, None]) / std[:, None]
-            hr_coefficient = (hr_coefficient - mean[:, None]) / std[:, None]
+            mean_lr, mean_full = self.transform[0]
+            std_lr, std_full = self.transform[1]
+            lr_coefficient = (lr_coefficient - mean_lr) / std_lr
+            hr_coefficient = (hr_coefficient - mean_full) / std_full
 
         return {"lr_coefficient": lr_coefficient, "hr_coefficient": hr_coefficient, 
                 "hrtf": hrtf, "mask": original_mask, "id": sample_id}
