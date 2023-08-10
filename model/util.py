@@ -27,13 +27,6 @@ def initialise_folders(config, overwrite):
         shutil.rmtree(Path(config.path), ignore_errors=True)
         Path(config.path).mkdir(parents=True, exist_ok=True)
 
-def split_dataset(dataset, train_ratio=0.8):
-    total_len = len(dataset)
-    train_len = int(total_len * train_ratio)
-    test_len = total_len - train_len
-
-    return random_split(dataset, lengths=[train_len, test_len])
-
 def compute_sh_degree(config):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')

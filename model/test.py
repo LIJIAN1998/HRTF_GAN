@@ -81,7 +81,7 @@ def test(config, val_prefetcher):
     while batch_data is not None:
         # Transfer in-memory data to CUDA devices to speed up validation 
         lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
-                                                         non_blocking=True)
+                                                         non_blocking=True, dtype=torch.float)
         hrtf = batch_data["hrtf"]
         masks = batch_data["mask"]
         sample_id = batch_data["id"].item()

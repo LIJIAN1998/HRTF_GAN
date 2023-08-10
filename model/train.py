@@ -343,7 +343,7 @@ def train(config, train_prefetcher):
                     recon = recon * std[:, None] + mean[:, None]
                 recons = (harmonics_tensor @ recon.permute(0, 2, 1)).reshape(bs, num_row_angles, num_col_angles, num_radii, nbins)
                 recons = recons.permute(0, 4, 3, 1, 2)  # bs x nbins x r x w x h
-                recons = F.relu(recons) + margin # filter out negative values and make it non-zero
+                # recons = F.relu(recons) + margin # filter out negative values and make it non-zero
                 # during every 25th epoch and last epoch, save filename for mag spectrum plot
                 if epoch % 25 == 0 or epoch == (num_epochs - 1):
                     generated = recons[0].permute(2, 3, 1, 0)  # w x h x r x nbins
