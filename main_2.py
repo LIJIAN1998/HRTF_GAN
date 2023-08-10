@@ -267,6 +267,8 @@ def main(config, mode):
                 sh_coef = torch.from_numpy(SHT(merge)).T
                 coefs.append(sh_coef)
             coefs = torch.stack(coefs)
+            mean = torch.mean(coefs, 0)
+            std = torch.std(coefs, 0)
             print("all train coefs: ", coefs.shape)
             print(mean[0][:4])
             print("std: ", std.shape)
