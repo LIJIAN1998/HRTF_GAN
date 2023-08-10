@@ -105,7 +105,7 @@ def load_hrtf(config, mean=None, std=None):
     else:
         transform = (mean, std)
 
-    domain = 'magnitude'
+    domain = config.domain
     if config.merge_flag:
         left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': domain}},
                                    subject_ids=train_ids)
