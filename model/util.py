@@ -280,12 +280,13 @@ def ILD_metric_inner(config, input_spectrum, target_spectrum, domain="magnitude"
     return torch.abs(input_ILD - target_ILD)
 
 
-def ILD_metric(config, generated, target, domain="magnitude", reduction="mean"):
+def ILD_metric(config, generated, target, reduction="mean"):
     batch_size = generated.size(0)
     num_panels = generated.size(2)
     height = generated.size(3)
     width = generated.size(4)
     total_positions = num_panels * height * width
+    domain = config.domain
 
     total_ILD_metric = 0
     for b in range(batch_size):
@@ -331,7 +332,7 @@ def sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std):
 
     # calculate SD and ILD metrics
     sd_metric = spectral_distortion_metric(generated, target, config.domain)
-    ild_metric = ILD_metric(config, generated, target, config.domain)
+    ild_metric = ILD_metric(config, generated, target)
 
     # normalize SD and ILD based on means/standard deviations passed to the function
     sd_norm = torch.div(torch.sub(sd_metric, sd_mean), sd_std)
