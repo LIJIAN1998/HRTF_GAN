@@ -206,9 +206,11 @@ def main(config, mode):
         with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
             train_ids, val_ids = pickle.load(f)
 
-        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'left', 'domain': 'magnitude_db'}},
+        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                                     'side': 'left', 'domain': 'magnitude_db'}},
                                    subject_ids=train_ids)
-        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'right', 'domain': 'magnitude_db'}},
+        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                                      'side': 'right', 'domain': 'magnitude_db'}},
                                    subject_ids=train_ids)
 
         means = []
@@ -233,6 +235,9 @@ def main(config, mode):
             print(mean[0][:20])
             print("std: ", std.shape)
             print(std[0][:20])
+            print("max: ", max(coefs))
+            print("min: ", min(coefs))
+            print()
             # means.append(torch.mean(sh_coef, 0))
             # stds.append(torch.std(sh_coef, 0))
         # means = torch.stack(means, 0)
