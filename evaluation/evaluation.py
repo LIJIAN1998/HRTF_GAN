@@ -72,7 +72,7 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
         for file_name in val_data_file_names:
             target, generated = replace_nodes(config, val_dir, file_name)
             # print(f"{file_name} contains negative? :", (generated < 0).any(), (target < 0).any())
-            error = spectral_distortion_metric(generated, target)
+            error = spectral_distortion_metric(generated, target, domain=config.domain)
             subject_id = ''.join(re.findall(r'\d+', file_name))
             lsd_errors.append([subject_id,  float(error.detach())])
             print('LSD Error of subject %s: %0.4f' % (subject_id, float(error.detach())))

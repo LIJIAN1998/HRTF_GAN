@@ -136,14 +136,14 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
-        config.upscale_factor = 2
-        _, test_prefetcher = load_hrtf(config)
-        print("Loaded all datasets successfully.")
+        # config.upscale_factor = 2
+        # _, test_prefetcher = load_hrtf(config)
+        # print("Loaded all datasets successfully.")
 
-        test(config, test_prefetcher)
+        # test(config, test_prefetcher)
 
         run_lsd_evaluation(config, config.valid_path)
-        run_localisation_evaluation(config, config.valid_path)
+        # run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
