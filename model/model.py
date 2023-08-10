@@ -396,14 +396,14 @@ class Discriminator(nn.Module):
         )
     
     def forward(self,  x1: torch.Tensor, x2: torch.Tensor, mode="feature") -> torch.Tensor:
-        x = torch.cat((x1, x2), 0)
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        if mode == "feature":
-            return x
-        else:
-            x = self.classifier(x)
-            return x
+        # x = torch.cat((x1, x2), 0)
+        # x = self.features(x)
+        # x = x.view(x.size(0), -1)
+        # if mode == "feature":
+        #     return x
+        # else:
+        #     x = self.classifier(x)
+        #     return x
         x = torch.cat((x1, x2), 0)
         x = self.features(x)
         x = x.view(x.size(0), -1)
