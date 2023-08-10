@@ -11,6 +11,7 @@ from config import Config
 from model.train import train, test_train
 from model.test import test
 from model.util import load_dataset, load_hrtf, get_train_val_loader, spectral_distortion_metric, sd_ild_loss
+from model.dataset import get_sample_ratio
 from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.hrtf_sphere import HRTF_Sphere
@@ -216,6 +217,8 @@ def main(config, mode):
         means = []
         stds = []
         orders = [19, 13, 9, 6, 4, 3, 2, 1]
+        upscale_factors = [2, 4, 8, 16, 32, 48, 72, 108, 216]
+        # row_ratio, column_ratio = get_sample_ratio()
         for order in orders:
             print("order: ", order)
             coefs = []
@@ -235,8 +238,8 @@ def main(config, mode):
             print(mean[0][:20])
             print("std: ", std.shape)
             print(std[0][:20])
-            print("max: ", max(coefs))
-            print("min: ", min(coefs))
+            print("max: ", torch.max(coefs))
+            print("min: ", torch.min(coefs))
             print()
             # means.append(torch.mean(sh_coef, 0))
             # stds.append(torch.std(sh_coef, 0))
