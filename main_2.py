@@ -213,15 +213,25 @@ def main(config, mode):
 
         means = []
         stds = []
-        coefs = []
-        for sample_id in range(len(left_train)):
-            left = left_train[sample_id]['features'][:, :, :, 1:]
-            right = right_train[sample_id]['features'][:, :, :, 1:]
-            merge = np.ma.concatenate([left, right], axis=3)
-            mask = np.all(np.ma.getmaskarray(left), axis=3)
-            SHT = SphericalHarmonicsTransform(19, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
-            sh_coef = torch.from_numpy(SHT(merge)).T
-            coefs.append(sh_coef)
+        orders = [19, 13, 9, 6, 4, 3, 2, 1]
+        for order in orders:
+            coefs = []
+            for sample_id in range(len(left_train)):
+                left = left_train[sample_id]['features'][:, :, :, 1:]
+                right = right_train[sample_id]['features'][:, :, :, 1:]
+                merge = np.ma.concatenate([left, right], axis=3)
+                mask = np.all(np.ma.getmaskarray(left), axis=3)
+                SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+                sh_coef = torch.from_numpy(SHT(merge)).T
+                coefs.append(sh_coef)
+            coefs = torch.stack(coefs)
+            print("all train coefs: ", coefs.shape)
+            mean = torch.mean(coefs, 0)
+            std = torch.std(coefs, 0)
+            print("mean: ", mean.shape)
+            print(mean[0][:20])
+            print("std: ", std.shape)
+            print(std[0][:20])
             # means.append(torch.mean(sh_coef, 0))
             # stds.append(torch.std(sh_coef, 0))
         # means = torch.stack(means, 0)
@@ -231,14 +241,7 @@ def main(config, mode):
         # std = torch.std(stds, 0)
         # print("mean: ", mean.shape)
         # print("std: ", std.shape)
-        coefs = torch.stack(coefs)
-        print("all train coefs: ", coefs.shape)
-        mean = torch.mean(coefs, 0)
-        std = torch.std(coefs, 0)
-        print("mean: ", mean.shape)
-        print(mean[0][:20])
-        print("std: ", std.shape)
-        print(std[0][:20])
+        
         # mean_std_coef_filename = config.mean_std_coef_filename
         # with open(mean_std_coef_filename, 'rb') as f:
         #     # pickle.dump((mean, std), f) 
