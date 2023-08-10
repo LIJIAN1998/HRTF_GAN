@@ -24,7 +24,7 @@ def test(config, val_prefetcher):
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
     ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
-                                                         'side': 'left', 'domain': 'time'}}, subject_ids='first')
+                                                         'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
     num_row_angles = len(ds.row_angles)
     num_col_angles = len(ds.column_angles)
     num_radii = len(ds.radii)
@@ -40,7 +40,7 @@ def test(config, val_prefetcher):
 
     device = torch.device(config.device_name if (
             torch.cuda.is_available() and ngpu > 0) else "cpu")
-    model = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).double().to(device)
+    model = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).to(device)
     print("Build VAE model successfully.")
 
     # Load vae model weights (always uses the CPU due to HPC having long wait times)
