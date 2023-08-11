@@ -147,8 +147,6 @@ def main(config, mode):
             train_prefetcher, _ = load_hrtf(config)
         print("transform applied: ", config.transform_flag)
         print("train fetcher: ", len(train_prefetcher))
-        # data = train_prefetcher.next()
-        # print(data.keys())
         # Trains the model, according to the parameters specified in Config
         # util.initialise_folders(config, overwrite=True)
         train(config, train_prefetcher)
@@ -340,6 +338,8 @@ def main(config, mode):
         print("std: ", std[0][:4])
         norm = (sh_coef - mean) / std
         print("norm: ", norm[0][:4])
+        print("max norm: ", torch.max(norm))
+        print("min norm: ", torch.min(norm))
         # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         # harmonics = torch.from_numpy(SHT.get_harmonics())
         # inverse = harmonics @ un_norm.T
