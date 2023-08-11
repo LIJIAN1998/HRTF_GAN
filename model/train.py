@@ -330,7 +330,7 @@ def train(config, train_prefetcher):
                     harmonics_list.append(harmonics)
                 harmonics_tensor = torch.stack(harmonics_list).to(device)
                 if config.transform_flag:  # unormalize the coefficient
-                    recon = recon * std[:, None] + mean[:, None]
+                    recon = recon * std + mean
                 recons = (harmonics_tensor @ recon.permute(0, 2, 1)).reshape(bs, num_row_angles, num_col_angles, num_radii, nbins)
                 recons = recons.permute(0, 4, 3, 1, 2)  # bs x nbins x r x w x h
                 if domain == "magnitude":
