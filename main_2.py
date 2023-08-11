@@ -248,52 +248,52 @@ def main(config, mode):
         # with open(filename, "wb") as f:
         #     pickle.dump((mean, std), f)
 
-        for i, upscale_factor in enumerate(upscale_factors):
-            order = orders[i]
-            row_ratio, col_ratio = get_sample_ratio(upscale_factor)
-            print("factor: ", upscale_factor)
-            print("order: ", order)
-            coefs = []
-            for sample_id in range(len(left_train)):
-                left = left_train[sample_id]['features'][:, :, :, 1:]
-                right = right_train[sample_id]['features'][:, :, :, 1:]
-                merge = np.ma.concatenate([left, right], axis=3)
-                mask = np.ones((72, 12, 1), dtype=bool)
-                original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-                for i in range(72 // row_ratio):
-                    for j in range(12 // col_ratio):
-                        mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-                SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
-                sh_coef = torch.from_numpy(SHT(merge)).T
-                coefs.append(sh_coef)
-            coefs = torch.stack(coefs)
-            mean = torch.mean(coefs, 0)
-            std = torch.std(coefs, 0)
-            print("all train coefs: ", coefs.shape)
-            print(mean[0][:4])
-            print("std: ", std.shape)
-            print(std[0][:4])
-            print("max: ", torch.max(coefs))
-            print("min: ", torch.min(coefs))
-            print()
-            filename = mean_std_dir + f"/mean_std_{upscale_factor}.pickle"
-            with open(filename, 'wb') as f:
-                pickle.dump((mean, std), f)
+        # for i, upscale_factor in enumerate(upscale_factors):
+        #     order = orders[i]
+        #     row_ratio, col_ratio = get_sample_ratio(upscale_factor)
+        #     print("factor: ", upscale_factor)
+        #     print("order: ", order)
+        #     coefs = []
+        #     for sample_id in range(len(left_train)):
+        #         left = left_train[sample_id]['features'][:, :, :, 1:]
+        #         right = right_train[sample_id]['features'][:, :, :, 1:]
+        #         merge = np.ma.concatenate([left, right], axis=3)
+        #         mask = np.ones((72, 12, 1), dtype=bool)
+        #         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        #         for i in range(72 // row_ratio):
+        #             for j in range(12 // col_ratio):
+        #                 mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
+        #         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+        #         sh_coef = torch.from_numpy(SHT(merge)).T
+        #         coefs.append(sh_coef)
+        #     coefs = torch.stack(coefs)
+        #     mean = torch.mean(coefs, 0)
+        #     std = torch.std(coefs, 0)
+        #     print("all train coefs: ", coefs.shape)
+        #     print(mean[0][:4])
+        #     print("std: ", std.shape)
+        #     print(std[0][:4])
+        #     print("max: ", torch.max(coefs))
+        #     print("min: ", torch.min(coefs))
+        #     print()
+        #     filename = mean_std_dir + f"/mean_std_{upscale_factor}.pickle"
+        #     with open(filename, 'wb') as f:
+        #         pickle.dump((mean, std), f)
 
         # compare coefficients with different orders
-        sample_id = 34
-        left = left_hrtf[sample_id]['features'][:, :, :, 1:]
-        right = right_hrtf[sample_id]['features'][:, :, :, 1:]
-        merge = np.ma.concatenate([left, right], axis=3)
-        mask = np.ones((72, 12, 1), dtype=bool)
-        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        order = 28
-        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        sh_coef = torch.from_numpy(SHT(merge))
-        print("coef: ", sh_coef.shape, sh_coef.dtype)
-        print(sh_coef[:4,0].shape)
-        print(sh_coef[:4,0])
-        print()
+        # sample_id = 34
+        # left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+        # right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+        # merge = np.ma.concatenate([left, right], axis=3)
+        # mask = np.ones((72, 12, 1), dtype=bool)
+        # original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        # order = 28
+        # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        # sh_coef = torch.from_numpy(SHT(merge))
+        # print("coef: ", sh_coef.shape, sh_coef.dtype)
+        # print(sh_coef[:4,0].shape)
+        # print(sh_coef[:4,0])
+        # print()
         # for i, upscale_factor in enumerate(upscale_factors):
         #     order = orders[i]
         #     print("factor: ", upscale_factor)
@@ -309,16 +309,21 @@ def main(config, mode):
         #     print(sh_coef[:4,0])
         #     print()
             
-
-        # row_ratio = 1
-        # col_ratio = 2
-        # for i in range(72 // row_ratio):
-        #     for j in range(12 // col_ratio):
-        #         mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        # order = 15
-        # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        # sh_coef = torch.from_numpy(SHT(merge))
-        # print("coef: ", sh_coef.shape, sh_coef.dtype)
+        sample_id = 34
+        left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+        right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+        merge = np.ma.concatenate([left, right], axis=3)
+        mask = np.ones((72, 12, 1), dtype=bool)
+        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        row_ratio, col_ratio = get_sample_ratio(2)
+        for i in range(72 // row_ratio):
+            for j in range(12 // col_ratio):
+                mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
+        order = 19
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+        sh_coef = torch.from_numpy(SHT(merge)).T
+        print("coef: ", sh_coef.shape, sh_coef.dtype)
+        print(sh_coef[0][:4])
         # norm_coef = (sh_coef.T - mean[:, None]) / std[:, None]
         # print("max coef: ", torch.max(sh_coef))
         # print("min coef: ", torch.min(sh_coef))
@@ -327,7 +332,14 @@ def main(config, mode):
         # print("min norm: ", torch.min(norm_coef))
         # print("avg norm: ", torch.mean(norm_coef))
         # un_norm = norm_coef * std[:, None] + mean[:, None]
-        # merge = torch.from_numpy(merge.data).float() # w x h x r x nbins
+        merge = torch.from_numpy(merge.data) # w x h x r x nbins
+        filename = mean_std_dir + f"/mean_std_{2}.pickle"
+        with open(filename, 'rb') as f:
+            mean, std = pickle.load(f)
+        print("mean: ", mean[0][:4])
+        print("std: ", std[0][:4])
+        norm = (sh_coef - mean) / std
+        print("norm: ", norm[0][:4])
         # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         # harmonics = torch.from_numpy(SHT.get_harmonics())
         # inverse = harmonics @ un_norm.T
