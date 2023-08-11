@@ -141,7 +141,7 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
         print('Created valid sofa files')
 
         hrtf_file_names = [hrtf_file_name for hrtf_file_name in os.listdir(nodes_replaced_path + '/sofa_min_phase')]
-
+    return
     eng = matlab.engine.start_matlab()
     s = eng.genpath(config.amt_dir)
     eng.addpath(s, nargout=0)
