@@ -94,6 +94,7 @@ def test(config, val_prefetcher):
         masks = batch_data["mask"]
         sample_id = batch_data["id"].item()
 
+        print("data nan? ", torch.isnan(lr_coefficient).any())
         # Use the generator model to generate fake samples
         with torch.no_grad():
             _, _, recon = model(lr_coefficient)
