@@ -101,6 +101,7 @@ def test(config, val_prefetcher):
         SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
         recon = recon * std + mean
+        print("recon nan? ", torch.isnan(recon).any())
         sr = harmonics @ recon[0].T
         sr = sr.reshape(-1, num_row_angles, num_col_angles, num_radii, nbins)
         margin = 1.8670232e-08
