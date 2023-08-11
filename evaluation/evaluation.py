@@ -21,19 +21,21 @@ from model.dataset import get_sample_ratio
 def replace_nodes(config, val_dir, file_name):
     # Overwrite the generated points that exist in the original data
     with open(val_dir + file_name, "rb") as f:
-        sr_hrir = pickle.load(f) # w x h x r x nbins
+        sr_hrtf = pickle.load(f) # w x h x r x nbins
 
     with open(config.valid_gt_path + file_name, "rb") as f:
-        hr_hrir = pickle.load(f).permute(1, 2, 0, 3)  # r x w x h x nbins -> w x h x r x nbins
+        hr_hrtf = pickle.load(f).permute(1, 2, 0, 3)  # r x w x h x nbins -> w x h x r x nbins
 
+    print("sr: ", sr_hrtf.shape)
+    print("hr: ", hr_hrtf.shape)
     row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
-    for i in range(sr_hrir.size(0) // row_ratio):  # sr_hrir.size(0) = num of row angles
-        for j in range(sr_hrir.size(1) // col_ratio): # sr_hrir.size(1) = num of column angles
-            sr_hrir[row_ratio*i, col_ratio*j, :] = hr_hrir[row_ratio*i, col_ratio*j, :]  # replace the nodes
+    for i in range(sr_hrtf.size(0) // row_ratio):  # sr_hrir.size(0) = num of row angles
+        for j in range(sr_hrtf.size(1) // col_ratio): # sr_hrir.size(1) = num of column angles
+            sr_hrtf[row_ratio*i, col_ratio*j, :] = hr_hrtf[row_ratio*i, col_ratio*j, :]  # replace the nodes
     
     # 1 x w x h x r x nbins
-    generated = torch.permute(sr_hrir[None, :], (0, 4, 3, 1, 2)) # 1 x nbins x r x w x h
-    target = torch.permute(hr_hrir[None, :], (0, 4, 3, 1, 2))
+    generated = torch.permute(sr_hrtf[None, :], (0, 4, 3, 1, 2)) # 1 x nbins x r x w x h
+    target = torch.permute(hr_hrtf[None, :], (0, 4, 3, 1, 2))
 
     return target, generated
 
