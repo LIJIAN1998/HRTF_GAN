@@ -313,11 +313,12 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         mask = np.ones((72, 12, 1), dtype=bool)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        row_ratio, col_ratio = get_sample_ratio(2)
+        scale = 4
+        row_ratio, col_ratio = get_sample_ratio(scale)
         for i in range(72 // row_ratio):
             for j in range(12 // col_ratio):
                 mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        order = 19
+        order = 13
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
         sh_coef = torch.from_numpy(SHT(merge)).T
         print("coef: ", sh_coef.shape, sh_coef.dtype)
@@ -331,7 +332,7 @@ def main(config, mode):
         # print("avg norm: ", torch.mean(norm_coef))
         # un_norm = norm_coef * std[:, None] + mean[:, None]
         merge = torch.from_numpy(merge.data) # w x h x r x nbins
-        filename = mean_std_dir + f"/mean_std_{2}.pickle"
+        filename = mean_std_dir + f"/mean_std_{scale}.pickle"
         with open(filename, 'rb') as f:
             mean, std = pickle.load(f)
         print("mean: ", mean[0][:4])
