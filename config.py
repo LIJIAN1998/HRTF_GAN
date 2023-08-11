@@ -30,7 +30,7 @@ class Config:
         self.upscale_factor = 32  # can only take values: 2, 4 ,8, 16
         self.train_samples_ratio = 0.8
         self.hrir_samplerate = 48000.0
-        self.transform_flag = True
+        self.transform_flag = False
         self.domain = 'magnitude_db'
 
         # Data dirs
