@@ -78,6 +78,14 @@ def test(config, val_prefetcher):
     shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
     Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
 
+    if config.transform_flag:
+        mean_std_dir = config.mean_std_coef_dir
+        mean_std_full = mean_std_dir + "/mean_std_full.pickle"
+        with open(mean_std_full, "rb") as f:
+            mean, std = pickle.load(f)
+        mean = mean.float().to(device)
+        std = std.float().to(device)
+
     while batch_data is not None:
         # Transfer in-memory data to CUDA devices to speed up validation 
         lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
@@ -97,6 +105,7 @@ def test(config, val_prefetcher):
         margin = 1.8670232e-08
         if config.domain == "magnitude":
             sr = F.relu(sr) + margin
+        sr = recon = recon * std + mean
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = sr[0].detach().cpu()
         # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
