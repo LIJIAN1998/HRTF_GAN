@@ -97,15 +97,14 @@ def test(config, val_prefetcher):
         masks = batch_data["mask"]
         sample_id = batch_data["id"].item()
 
-        print("data nan? ", torch.isnan(lr_coefficient).any())
         # Use the generator model to generate fake samples
         with torch.no_grad():
             _, _, recon = model(lr_coefficient)
 
         SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
-        recon = recon * std + mean
-        print("recon nan? ", torch.isnan(recon).any())
+        if config.transform_flag:
+            recon = recon * std + mean
         sr = harmonics @ recon[0].T
         sr = sr.reshape(-1, num_row_angles, num_col_angles, num_radii, nbins)
         margin = 1.8670232e-08
@@ -126,7 +125,8 @@ def test(config, val_prefetcher):
             generated = sr[0]
             target = hr.permute(1, 2, 0, 3)
             path = config.path
-            filename = '/' + f"sample_{sample_id}"
+            filename = f"sample_{sample_id}"
             plot_hrtf(generated, target, path, filename)
+            plot_flag = False
         # Preload the next batch of data
         batch_data = val_prefetcher.next()
