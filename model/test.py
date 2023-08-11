@@ -125,7 +125,7 @@ def test(config, val_prefetcher):
             print("plot")
             generated = sr[0]
             target = hr.permute(1, 2, 0, 3)
-            path = '/rds/general/user/jl2622/home/HRTF-projection'
+            path = '/rds/general/user/jl2622/home/HRTF_GAN'
             filename = f"sample_{sample_id}"
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
             x = generated[0, 0, 0, :]
