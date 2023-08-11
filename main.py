@@ -154,7 +154,7 @@ def main(config, mode):
         # # _, test_prefetcher = load_hrtf(config)
         print("Loaded all datasets successfully.")
 
-        # test(config, test_prefetcher)
+        test(config, test_prefetcher)
 
         run_lsd_evaluation(config, config.valid_path)
         run_localisation_evaluation(config, config.valid_path)
