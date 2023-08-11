@@ -215,7 +215,6 @@ def spectral_distortion_inner(input_spectrum, target_spectrum, domain):
     if domain == "magnitude": 
         return torch.mean((20 * torch.log10(numerator / denominator)) ** 2)
     else:
-        print("domain db")
         return torch.mean((numerator - denominator) ** 2)
 
 

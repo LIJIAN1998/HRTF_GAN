@@ -106,7 +106,6 @@ def test(config, val_prefetcher):
         margin = 1.8670232e-08
         if config.domain == "magnitude":
             sr = F.relu(sr) + margin
-        print("unormalize: ", sr.shape)
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = sr[0].detach().cpu()
         # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins

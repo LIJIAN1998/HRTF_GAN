@@ -73,6 +73,8 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
         lsd_errors = []
         for file_name in val_data_file_names:
             target, generated = replace_nodes(config, val_dir, file_name)
+            print("generated nan? ", torch.isnan(generated).any())
+            print("target nan? ", torch.isnan(target).any())
             # print(f"{file_name} contains negative? :", (generated < 0).any(), (target < 0).any())
             error = spectral_distortion_metric(generated, target, domain=config.domain)
             subject_id = ''.join(re.findall(r'\d+', file_name))
