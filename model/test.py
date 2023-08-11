@@ -15,7 +15,7 @@ import importlib
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 
 from plot import plot_hrtf
-
+import matplotlib.pyplot as plt
 
 def test(config, val_prefetcher):
     # source: https://github.com/Lornatang/SRGAN-PyTorch/blob/main/test.py
@@ -122,11 +122,19 @@ def test(config, val_prefetcher):
             pickle.dump(hr, file)
 
         if plot_flag:
+            print("plot")
             generated = sr[0]
             target = hr.permute(1, 2, 0, 3)
             path = '/rds/general/user/jl2622/home/HRTF-projection'
             filename = f"sample_{sample_id}"
-            plot_hrtf(generated, target, path, filename)
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+            x = generated[0, 0, 0, :]
+            y = target[0, 0, 0, :]
+            ax1.plot(x)
+            ax1.set_title('recon')
+            ax2.plot(y)
+            ax2.set_title('original')
+            plt.savefig(f"{path}/{filename}.png")
             plot_flag = False
         # Preload the next batch of data
         batch_data = val_prefetcher.next()
