@@ -14,6 +14,8 @@ import importlib
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 
+from plot import plot_hrtf
+
 
 def test(config, val_prefetcher):
     # source: https://github.com/Lornatang/SRGAN-PyTorch/blob/main/test.py
@@ -86,6 +88,7 @@ def test(config, val_prefetcher):
         mean = mean.float().to(device)
         std = std.float().to(device)
 
+    plot_flag = True
     while batch_data is not None:
         # Transfer in-memory data to CUDA devices to speed up validation 
         lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
@@ -118,6 +121,12 @@ def test(config, val_prefetcher):
 
         with open(valid_gt_dir + file_name, "wb") as file:
             pickle.dump(hr, file)
-        
+
+        if plot_flag:
+            generated = sr[0]
+            target = hr.permute(1, 2, 0, 3)
+            path = config.path
+            filename = '/' + f"sample_{sample_id}"
+            plot_hrtf(generated, target, path, filename)
         # Preload the next batch of data
         batch_data = val_prefetcher.next()

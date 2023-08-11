@@ -338,8 +338,8 @@ def plot_losses(losses, labels, colors, path, filename, title="Loss Curves"):
 
 
 def plot_hrtf(generated, target, path, filename):
-    x = generated[24, 8, 0, :]
-    y = target[24, 8, 0, :]
+    x = generated[0, 0, 0, :]
+    y = target[0, 0, 0, :]
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
     ax1.plot(x)
     ax1.set_title('recon')

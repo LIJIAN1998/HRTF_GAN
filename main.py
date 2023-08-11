@@ -136,27 +136,27 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
-        # config.upscale_factor = 2
-        # if config.transform_flag:
-        #     mean_std_dir = config.mean_std_coef_dir
-        #     mean_std_full = mean_std_dir + "/mean_std_full.pickle"
-        #     with open(mean_std_full, "rb") as f:
-        #         mean_full, std_full = pickle.load(f)
+        config.upscale_factor = 2
+        if config.transform_flag:
+            mean_std_dir = config.mean_std_coef_dir
+            mean_std_full = mean_std_dir + "/mean_std_full.pickle"
+            with open(mean_std_full, "rb") as f:
+                mean_full, std_full = pickle.load(f)
             
-        #     mean_std_lr = mean_std_dir + f"/mean_std_{config.upscale_factor}.pickle"
-        #     with open(mean_std_lr, "rb") as f:
-        #         mean_lr, std_lr = pickle.load(f)
-        #     mean = (mean_lr, mean_full)
-        #     std = (std_lr, std_full)
-        #     _, test_prefetcher = load_hrtf(config, mean, std)
-        # else:
-        #     _, test_prefetcher = load_hrtf(config)
+            mean_std_lr = mean_std_dir + f"/mean_std_{config.upscale_factor}.pickle"
+            with open(mean_std_lr, "rb") as f:
+                mean_lr, std_lr = pickle.load(f)
+            mean = (mean_lr, mean_full)
+            std = (std_lr, std_full)
+            _, test_prefetcher = load_hrtf(config, mean, std)
+        else:
+            _, test_prefetcher = load_hrtf(config)
         # # _, test_prefetcher = load_hrtf(config)
-        # # print("Loaded all datasets successfully.")
+        print("Loaded all datasets successfully.")
 
         # test(config, test_prefetcher)
 
-        # run_lsd_evaluation(config, config.valid_path)
+        run_lsd_evaluation(config, config.valid_path)
         run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
