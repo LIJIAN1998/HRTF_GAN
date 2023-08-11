@@ -26,8 +26,6 @@ def replace_nodes(config, val_dir, file_name):
     with open(config.valid_gt_path + file_name, "rb") as f:
         hr_hrtf = pickle.load(f).permute(1, 2, 0, 3)  # r x w x h x nbins -> w x h x r x nbins
 
-    print("sr: ", sr_hrtf.shape)
-    print("hr: ", hr_hrtf.shape)
     row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
     for i in range(sr_hrtf.size(0) // row_ratio):  # sr_hrir.size(0) = num of row angles
         for j in range(sr_hrtf.size(1) // col_ratio): # sr_hrir.size(1) = num of column angles
@@ -73,8 +71,6 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
         lsd_errors = []
         for file_name in val_data_file_names:
             target, generated = replace_nodes(config, val_dir, file_name)
-            print("generated nan? ", torch.isnan(generated).any())
-            print("target nan? ", torch.isnan(target).any())
             # print(f"{file_name} contains negative? :", (generated < 0).any(), (target < 0).any())
             error = spectral_distortion_metric(generated, target, domain=config.domain)
             subject_id = ''.join(re.findall(r'\d+', file_name))
