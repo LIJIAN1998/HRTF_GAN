@@ -123,7 +123,7 @@ def test(config, val_prefetcher):
 
         if plot_flag:
             print("plot")
-            generated = sr[0]
+            generated = sr
             target = hr.permute(1, 2, 0, 3)
             path = '/rds/general/user/jl2622/home/HRTF_GAN'
             filename = f"sample_{sample_id}"
