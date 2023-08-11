@@ -124,7 +124,7 @@ def test(config, val_prefetcher):
         if plot_flag:
             generated = sr[0]
             target = hr.permute(1, 2, 0, 3)
-            path = config.path
+            path = '/rds/general/user/jl2622/home/HRTF-projection'
             filename = f"sample_{sample_id}"
             plot_hrtf(generated, target, path, filename)
             plot_flag = False
