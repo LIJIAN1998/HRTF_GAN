@@ -100,12 +100,12 @@ def test(config, val_prefetcher):
 
         SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
+        recon = recon * std + mean
         sr = harmonics @ recon[0].T
         sr = sr.reshape(-1, num_row_angles, num_col_angles, num_radii, nbins)
         margin = 1.8670232e-08
         if config.domain == "magnitude":
             sr = F.relu(sr) + margin
-        sr = sr * std + mean
         print("unormalize: ", sr.shape)
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = sr[0].detach().cpu()
