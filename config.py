@@ -27,11 +27,12 @@ class Config:
         self.gen_sofa_flag = True
         self.nbins_hrtf = 128  # make this a power of 2
         self.hrtf_size = 16
-        self.upscale_factor = 32  # can only take values: 2, 4 ,8, 16
+        self.upscale_factor = 2  # can only take values: 2, 4 ,8, 16
         self.train_samples_ratio = 0.8
         self.hrir_samplerate = 48000.0
         self.transform_flag = False
         self.domain = 'magnitude_db'
+        self.max_order = 28
 
         # Data dirs
         if using_hpc:

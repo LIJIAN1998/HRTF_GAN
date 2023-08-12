@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from torch.autograd import Variable
+from model.base_blocks import *
 # from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
 
 class Reshape(nn.Module):
@@ -44,6 +45,80 @@ class Trim(nn.Module):
 
 #         return torch.permute(out, dims=(0, 2, 1, 3, 4))
 
+class IterativeBlock(nn.Module):
+    def __init__(self, channels, kernel, stride, padding):
+        super(IterativeBlock, self).__init__()
+        self.up1 = UpBlock(channels, kernel, stride, padding)
+        self.down1 = DownBlock(channels, kernel, stride, padding)
+        self.up2 = UpBlock(channels, kernel, stride, padding)
+        self.down2 = D_DownBlock(channels, kernel, stride, padding, 2)
+        self.up3 = D_UpBlock(channels, kernel, stride, padding, 2)
+        
+    def forward(self, x):
+        h1 = self.up1(x)
+        l1 = self.down1(h1)
+        h2 = self.up2(x)
+        
+        concat_h = torch.cat((h2, h1), 1)
+        l = self.down2(concat_h)
+        
+        concat_l = torch.cat((l, l1), 1)
+        h = self.up3(concat_l)
+        return h
+
+class D_DBPN(nn.Module):
+    def __init__(self, channels, base_channels, num_features, scale_factor, order, max_order):
+        super(D_DBPN, self).__init__()
+
+        if scale_factor == 2:
+            kernel = 6
+            stride = 2
+            padding = 2
+        elif scale_factor == 4:
+            kernel = 8
+            stride = 4
+            padding = 2
+        elif scale_factor == 8:
+            kernel = 12
+            stride = 8
+            padding = 2
+
+        max_num_coefficient = (max_order + 1) ** 2
+        num_coefficient = (order + 1) ** 2
+        num_blocks = int(np.log2(max_num_coefficient/num_coefficient)) + 1
+
+        self.conv0 = ConvBlock(channels, num_features, 3, 1, 1)
+        self.conv1 = ConvBlock(num_features, channels, 1, 1, 0)
+
+        # Back-projection stages
+        blocks = []
+        for _ in range(num_blocks):
+            blocks.append(IterativeBlock(base_channels, kernel, stride, padding))
+        self.up_downsample = nn.Sequential(*blocks)
+        
+        # Reconstruction
+        self.out_conv = ConvBlock(base_channels, channels, 3, 1, 1, activation=None)
+        self.trim = Trim(max_num_coefficient)
+
+        self.init_parameters()
+
+    def forward(self, x):
+        x = self.conv0(x)
+        x = self.conv1(x)
+
+        x = self.up_downsample(x)
+        x = self.out_conv(x)
+        out = self.trim(x)
+        return out
+
+    def init_parameters(self):
+        for m in self.modules():
+            if isinstance(m, (nn.Conv1d, nn.ConvTranspose1d)):
+                if hasattr(m, 'weight') and m.weight is not None and m.weight.requires_grad:
+                    nn.init.kaiming_normal_(m.weight)
+                if hasattr(m, 'bias') and m.bias is not None and m.bias.requires_grad:
+                    nn.init.constant_(m.bias, 0.0)
+        
 
 class ResBlock(nn.Module):
     def __init__(self, in_channnels, out_channels, stride=1, expansion=1, identity_downsample=None):
@@ -395,7 +470,7 @@ class Discriminator(nn.Module):
             nn.Sigmoid()
         )
     
-    def forward(self,  x1: torch.Tensor, x2: torch.Tensor, mode="feature") -> torch.Tensor:
+    def forward(self,  x: torch.Tensor) -> torch.Tensor:
         # x = torch.cat((x1, x2), 0)
         # x = self.features(x)
         # x = x.view(x.size(0), -1)
@@ -404,12 +479,11 @@ class Discriminator(nn.Module):
         # else:
         #     x = self.classifier(x)
         #     return x
-        x = torch.cat((x1, x2), 0)
         x = self.features(x)
         x = x.view(x.size(0), -1)
-        x1 = x
+        # x1 = x
         out = self.classifier(x)
-        return out, x1
+        return out
 
 class VAE(nn.Module):
     def __init__(self, nbins: int, max_degree: int, latent_dim: int, out_degree: int=28) -> None:
@@ -446,14 +520,12 @@ class VAE(nn.Module):
 
 
 if __name__ == '__main__':
-    x = torch.randn(1, 256, 2116)
-    vae = VAE(256, 45, 10, 45)
-    mu, log_var, recon = vae(x)
-    print("mu: ", mu.shape)
-    print("log var: ", log_var.shape)
-    print("recon: ", recon.shape)
+    x = torch.randn(1, 256, 400)
+    generator = D_DBPN(256, 256, 512, 2, 19, 28)
+    x = generator(x)
+    print(x.shape)
     D = Discriminator(256)
-    feature, out = D(x)
+    feature, out = D(x, x)
     print("feature shape: ", feature.shape)
     print("classify result: ", out.shape)
 
