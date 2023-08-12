@@ -231,6 +231,9 @@ def train(config, train_prefetcher):
 
     margin = 1.8670232e-08
 
+    real_label = 0.9
+    fake_label = 0.1
+
     if config.transform_flag:
         mean_std_dir = config.mean_std_coef_dir
         mean_std_full = mean_std_dir + "/mean_std_full.pickle"
@@ -292,8 +295,8 @@ def train(config, train_prefetcher):
             masks = batch_data["mask"]
             
             bs = lr_coefficient.size(0)
-            ones_label = Variable(torch.ones(bs,1)).to(device) # labels for real data
-            zeros_label = Variable(torch.zeros(bs,1)).to(device) # labels for generated data
+            # ones_label = Variable(torch.ones(bs,1)).to(device) # labels for real data
+            # zeros_label = Variable(torch.zeros(bs,1)).to(device) # labels for generated data
 
             # Generate fake samples using D-DBPN
             sr = netG(lr_coefficient)
@@ -301,13 +304,15 @@ def train(config, train_prefetcher):
             # Discriminator Training
             netD.zero_grad()
             # train on real coefficient
-            pred_real = netD(hr_coefficient.detach().clone())
-            loss_D_hr = adversarial_criterion(pred_real, ones_label)
+            pred_real = netD(hr_coefficient.detach().clone()).view(-1)
+            label = torch.full((bs,), real_label, dtype=hr_coefficient.dtype, device=device)
+            loss_D_hr = adversarial_criterion(pred_real, label)
             loss_D_hr.backward()
             loss_Dis_hr += loss_D_hr.item()
             # train on reconstructed coefficient
-            pred_fake = netD(sr.detach().clone())
-            loss_D_sr = adversarial_criterion(pred_fake, zeros_label)
+            pred_fake = netD(sr.detach().clone()).view(-1)
+            label.fill_(fake_label)
+            loss_D_sr = adversarial_criterion(pred_fake, label)
             loss_D_sr.backward()
             loss_D = loss_D_hr + loss_D_sr
             train_loss_D += loss_D.item()
@@ -321,8 +326,9 @@ def train(config, train_prefetcher):
                 # train decoder
                 netG.zero_grad()
                 sr = netG(lr_coefficient)
-                pred_fake = netD(sr)
-                adversarial_loss_G = config.adversarial_weight * adversarial_criterion(pred_fake, ones_label)
+                pred_fake = netD(sr).view(-1)
+                label.fill_(real_label)
+                adversarial_loss_G = config.adversarial_weight * adversarial_criterion(pred_fake, label)
                 sh_loss_G = 0.001 * ((sr - hr_coefficient) ** 2).mean()  # sh coefficient loss
                 # convert reconstructed coefficient back to hrtf
                 harmonics_list = []
