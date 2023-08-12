@@ -308,12 +308,12 @@ def train(config, train_prefetcher):
             label = torch.full((bs,), real_label, dtype=hr_coefficient.dtype, device=device)
             loss_D_hr = adversarial_criterion(pred_real, label)
             loss_D_hr.backward()
-            loss_Dis_hr += loss_D_hr.item()
             # train on reconstructed coefficient
             pred_fake = netD(sr.detach().clone()).view(-1)
             label.fill_(fake_label)
             loss_D_sr = adversarial_criterion(pred_fake, label)
             loss_D_sr.backward()
+            
             loss_D = loss_D_hr + loss_D_sr
             train_loss_D += loss_D.item()
             train_loss_D_hr += loss_D_hr.item()
