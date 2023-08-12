@@ -224,6 +224,12 @@ def main(config, mode):
         mean_std_dir = config.mean_std_coef_dir
         orders = [19, 13, 9, 6, 4, 3, 2, 1, 1]
         upscale_factors = [2, 4, 8, 16, 32, 48, 72, 108, 216]
+        train_prefetcher, _ = load_hrtf(config)
+        batch_data = train_prefetcher.next()
+        masks = batch_data["mask"]
+        print("masks shape: ", masks.shape)
+        print("masks data type: ", type(masks))
+        print(masks[0].numpy().astype(bool))
         # coefs = []
         # for sample_id in range(len(left_train)):
         #     left = left_train[sample_id]['features'][:, :, :, 1:]
@@ -309,22 +315,22 @@ def main(config, mode):
         #     print(sh_coef[:4,0])
         #     print()
             
-        sample_id = 34
-        left = left_hrtf[sample_id]['features'][:, :, :, 1:]
-        right = right_hrtf[sample_id]['features'][:, :, :, 1:]
-        merge = np.ma.concatenate([left, right], axis=3)
-        mask = np.ones((72, 12, 1), dtype=bool)
-        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        scale = 4
-        row_ratio, col_ratio = get_sample_ratio(scale)
-        for i in range(72 // row_ratio):
-            for j in range(12 // col_ratio):
-                mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        order = 28
-        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
-        sh_coef = torch.from_numpy(SHT(merge)).T
-        print("coef: ", sh_coef.shape, sh_coef.dtype)
-        print(sh_coef[0][:4])
+        # sample_id = 34
+        # left = left_hrtf[sample_id]['features'][:, :, :, 1:]
+        # right = right_hrtf[sample_id]['features'][:, :, :, 1:]
+        # merge = np.ma.concatenate([left, right], axis=3)
+        # mask = np.ones((72, 12, 1), dtype=bool)
+        # original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        # scale = 4
+        # row_ratio, col_ratio = get_sample_ratio(scale)
+        # for i in range(72 // row_ratio):
+        #     for j in range(12 // col_ratio):
+        #         mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
+        # order = 28
+        # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        # sh_coef = torch.from_numpy(SHT(merge)).T
+        # print("coef: ", sh_coef.shape, sh_coef.dtype)
+        # print(sh_coef[0][:4])
         # norm_coef = (sh_coef.T - mean[:, None]) / std[:, None]
         # print("max coef: ", torch.max(sh_coef))
         # print("min coef: ", torch.min(sh_coef))
@@ -333,17 +339,17 @@ def main(config, mode):
         # print("min norm: ", torch.min(norm_coef))
         # print("avg norm: ", torch.mean(norm_coef))
         # un_norm = norm_coef * std[:, None] + mean[:, None]
-        merge = torch.from_numpy(merge.data) # w x h x r x nbins
+        # merge = torch.from_numpy(merge.data) # w x h x r x nbins
         # filename = mean_std_dir + f"/mean_std_{scale}.pickle"
-        filename = mean_std_dir + "/mean_std_full.pickle"
-        with open(filename, 'rb') as f:
-            mean, std = pickle.load(f)
-        print("mean: ", mean[0][:4])
-        print("std: ", std[0][:4])
-        norm = (sh_coef - mean) / std
-        print("norm: ", norm[0][:4])
-        print("max norm: ", torch.max(norm))
-        print("min norm: ", torch.min(norm))
+        # filename = mean_std_dir + "/mean_std_full.pickle"
+        # with open(filename, 'rb') as f:
+        #     mean, std = pickle.load(f)
+        # print("mean: ", mean[0][:4])
+        # print("std: ", std[0][:4])
+        # norm = (sh_coef - mean) / std
+        # print("norm: ", norm[0][:4])
+        # print("max norm: ", torch.max(norm))
+        # print("min norm: ", torch.min(norm))
         # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         # harmonics = torch.from_numpy(SHT.get_harmonics())
         # inverse = harmonics @ un_norm.T
