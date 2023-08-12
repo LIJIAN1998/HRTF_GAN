@@ -131,7 +131,7 @@ def main(config, mode):
             f.write(f"latent_dim: {latent_dim}\n")
             f.write(f"critic iters: {critic_iters}\n")
             f.write(f"normalize? {config.transform_flag}\n", )
-            f.write(f"domain: {config.domain}")
+            f.write(f"domain: {config.domain}\n\n")
 
         if config.transform_flag:
             mean_std_dir = config.mean_std_coef_dir
