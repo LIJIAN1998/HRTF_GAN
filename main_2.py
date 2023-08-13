@@ -238,6 +238,7 @@ def main(config, mode):
         # print("harmo shape: ", harmonics.shape)
         # print("hr coef shape: ", hr_coefficient.shape)
         recon = (harmonics @ hr_coefficient.float().T).reshape(72, 12, 1, 256).detach().cpu()
+        merge = torch.from_numpy(merge.data).float()
         x = recon[70, 1, 0, :]
         y = merge[70, 1, 0, :]
         mean_recon1 = torch.mean(recon)
@@ -253,6 +254,11 @@ def main(config, mode):
         print("max original: ", max_original)
         print("min 1: ", min1)
         print("min original: ", min_original)
+
+        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        target = merge[None,:].permute(0,4,3,1,2)
+        error = spectral_distortion_metric(generated, target)
+        print("lsd error: ", error)
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
         ax1.plot(x)
@@ -278,6 +284,7 @@ def main(config, mode):
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         sh_coef = torch.from_numpy(SHT(merge)).float()
         recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
+        merge = torch.from_numpy(merge.data).float()
         x = recon[70, 1, 0, :]
         y = merge[70, 1, 0, :]
         mean_recon1 = torch.mean(recon)
@@ -293,6 +300,11 @@ def main(config, mode):
         print("max original: ", max_original)
         print("min 1: ", min1)
         print("min original: ", min_original)
+
+        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        target = merge[None,:].permute(0,4,3,1,2)
+        error = spectral_distortion_metric(generated, target)
+        print("lsd error: ", error)
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
         ax1.plot(x)
