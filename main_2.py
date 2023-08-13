@@ -277,7 +277,7 @@ def main(config, mode):
         SHT = SphericalHarmonicsTransform(config.max_order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         sh_coef = torch.from_numpy(SHT(merge)).float()
-        recon = (harmonics @ sh_coef).permute(72, 12, 1, 256).detach().cpu()
+        recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
         x = recon[70, 1, 0, :]
         y = merge[70, 1, 0, :]
         mean_recon1 = torch.mean(recon)
