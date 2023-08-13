@@ -238,7 +238,6 @@ def main(config, mode):
         # print("harmo shape: ", harmonics.shape)
         # print("hr coef shape: ", hr_coefficient.shape)
         recon = (harmonics @ hr_coefficient.float().T).reshape(72, 12, 1, 256).detach().cpu()
-        merge = torch.from_numpy(merge.data).float()
         x = recon[70, 1, 0, :]
         y = merge[70, 1, 0, :]
         mean_recon1 = torch.mean(recon)
