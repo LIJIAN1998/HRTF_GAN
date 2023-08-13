@@ -235,7 +235,7 @@ def main(config, mode):
         # print("masks data type: ", type(mask))
         SHT = SphericalHarmonicsTransform(config.max_order, left_train.row_angles, left_train.column_angles, left_train.radii, mask.numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
-        recon = (harmonics @ hr_coefficient.T).permute(72, 12, 1, 256).detach().cpu()
+        recon = (harmonics @ hr_coefficient.float().T).permute(72, 12, 1, 256).detach().cpu()
         x = recon[70, 1, 0, :]
         y = merge[70, 1, 0, :]
         mean_recon1 = torch.mean(recon)
