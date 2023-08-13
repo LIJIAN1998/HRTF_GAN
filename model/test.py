@@ -104,7 +104,8 @@ def test(config, val_prefetcher):
 
         # Use the generator model to generate fake samples
         with torch.no_grad():
-            _, _, recon = model(lr_coefficient)
+            # _, _, recon = model(lr_coefficient)
+            recon = model(lr_coefficient)
 
         SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
