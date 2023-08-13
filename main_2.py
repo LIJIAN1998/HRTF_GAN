@@ -256,7 +256,7 @@ def main(config, mode):
 
         generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
         target = merge[None,:].permute(0,4,3,1,2)
-        error = spectral_distortion_metric(generated, target)
+        error = spectral_distortion_metric(generated, target, domain='magnitude_db')
         print("lsd error: ", error)
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
