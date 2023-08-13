@@ -226,8 +226,8 @@ def main(config, mode):
         upscale_factors = [2, 4, 8, 16, 32, 48, 72, 108, 216]
         train_prefetcher, _ = load_hrtf(config)
         batch_data = train_prefetcher.next()
-        hr_coefficient = batch_data["hr_coefficient"][0]
-        merge = batch_data["hrtf"][0].permute(2, 3, 1, 0)
+        hr_coefficient = batch_data["hr_coefficient"][0].detach().cpu()
+        merge = batch_data["hrtf"][0].permute(2, 3, 1, 0).detach().cpu()
         mask = batch_data["mask"][0]
         id = batch_data["id"][0].item()
         print("id: ", id)
