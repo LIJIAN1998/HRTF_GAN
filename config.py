@@ -91,8 +91,8 @@ class Config:
         self.critic_iters = 4
 
         # Loss function weight
-        self.content_weight = 0.01
-        self.adversarial_weight = 0.01
+        self.content_weight = 0.1
+        self.adversarial_weight = 1
         self.gamma = 15
         self.beta = 5
 

@@ -259,7 +259,7 @@ def train(config, train_prefetcher):
     num_epochs = config.num_epochs
     for epoch in range(num_epochs):
         with open("log.txt", "a") as f:
-            f.write(f"Epoch: {epoch}\n")
+            f.write(f"\nEpoch: {epoch}\n")
         times = []
         train_loss_G = 0.
         train_loss_G_adversarial = 0.
@@ -369,7 +369,7 @@ def train(config, train_prefetcher):
                     f.write(f"{batch_index}/{len(train_prefetcher)}\n")
                     f.write(f"dis: {loss_D.item()}\t generator: {loss_G.item()}\n")
                     f.write(f"D_real: {loss_D_hr.item()}, D_fake: {loss_D_sr.item()}\n")
-                    f.write(f"content loss: {content_loss_G.item()}, sh loss: {sh_loss_G.item()}\n")
+                    f.write(f"content loss: {content_loss_G.item()}, adversarial: {adversarial_loss_G.item()} sh loss: {sh_loss_G.item()}\n")
 
             if ('cuda' in str(device)) and (ngpu > 1):
                 end_overall.record()
