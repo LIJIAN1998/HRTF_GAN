@@ -229,7 +229,7 @@ def main(config, mode):
         train_prefetcher, _ = load_hrtf(config)
         batch_data = train_prefetcher.next()
         hr_coefficient = batch_data["hr_coefficient"].float().detach().cpu()
-        merge = batch_data["hrtf"][1].permute(2, 3, 1, 0).detach().cpu()
+        merge = batch_data["hrtf"][2].permute(2, 3, 1, 0).detach().cpu()
         mask = batch_data["mask"]
         # id = batch_data["id"][0].item()
         # print("id: ", id)
@@ -241,7 +241,7 @@ def main(config, mode):
             harmonics_list.append(harmonics)
         harmonics_tensor = torch.stack(harmonics_list)
         recons = (harmonics_tensor @ hr_coefficient.permute(0, 2, 1)).reshape(8, 72, 12, 1, 256)
-        recon = recons[1]
+        recon = recons[2]
         x = recon[70, 1, 0, :]
         y = merge[70, 1, 0, :]
         mean_recon1 = torch.mean(recon)
