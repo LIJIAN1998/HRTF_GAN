@@ -107,7 +107,7 @@ def test(config, val_prefetcher):
             # _, _, recon = model(lr_coefficient)
             recon = model(lr_coefficient)
 
-        SHT = SphericalHarmonicsTransform(28, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
+        SHT = SphericalHarmonicsTransform(max_order, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
         if config.transform_flag:
             recon = recon * std + mean
