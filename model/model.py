@@ -53,6 +53,9 @@ class IterativeBlock(nn.Module):
         self.up2 = UpBlock(channels, kernel, stride, padding)
         self.down2 = D_DownBlock(channels, kernel, stride, padding, 2)
         self.up3 = D_UpBlock(channels, kernel, stride, padding, 2)
+        self.down3 = D_DownBlock(channels, kernel, stride, padding, 3)
+        self.up4 = D_UpBlock(channels, kernel, stride, padding, 3)
+        self.out_conv = ConvBlock(4*channels, channels, 3, 1, 1, activation=None)
         
     def forward(self, x):
         h1 = self.up1(x)
@@ -64,7 +67,16 @@ class IterativeBlock(nn.Module):
         
         concat_l = torch.cat((l, l1), 1)
         h = self.up3(concat_l)
-        return h
+
+        concat_h = torch.cat((h, concat_h), 1)
+        l = self.down3(concat_h)
+
+        concat_l = torch.cat((l, concat_l), 1)
+        h = self.up4(concat_l)
+
+        concat_h = torch.cat((h, concat_h), 1)
+        out = self.out_conv(concat_h)
+        return out
 
 class D_DBPN(nn.Module):
     def __init__(self, channels, base_channels, num_features, scale_factor, order, max_order):

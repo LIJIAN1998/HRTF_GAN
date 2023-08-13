@@ -313,7 +313,7 @@ def train(config, train_prefetcher):
             label.fill_(fake_label)
             loss_D_sr = adversarial_criterion(pred_fake, label)
             loss_D_sr.backward()
-            
+
             loss_D = loss_D_hr + loss_D_sr
             train_loss_D += loss_D.item()
             train_loss_D_hr += loss_D_hr.item()
@@ -355,7 +355,8 @@ def train(config, train_prefetcher):
                 #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
                 content_loss_G = config.content_weight * unweighted_content_loss_G
                 # Generator total loss
-                loss_G = content_loss_G + adversarial_loss_G + sh_loss_G
+                # loss_G = content_loss_G + adversarial_loss_G + sh_loss_G
+                loss_G = content_loss_G + adversarial_loss_G
                 loss_G.backward()
 
                 train_loss_G += loss_G.item()
@@ -425,29 +426,20 @@ def train(config, train_prefetcher):
                 path=path, filename='loss_curves', title="Loss curves")
     plot_losses([train_loss_D_list],['Discriminator loss'],['red'], path=path, filename='Discriminator_loss', title="Dis loss")
     plot_losses([train_loss_G_list],['Generator loss'],['green'], path=path, filename='Generator_loss', title="Gen loss")
-    plot_losses([train_loss_D_hr_list, train_loss_Dis_recon_list],
+    plot_losses([train_loss_D_hr_list, train_loss_D_sr],
                 ['Discriminator loss real', 'Discriminator loss fake'],
                 ["#5ec962", "#440154"], 
                 path=path, filename='loss_curves_Dis', title="Discriminator loss curves")
-    plot_losses([train_loss_feature_list],['Feature loss'],['blue'], path=path, filename='Feature_loss', title="Feature loss")
-    plot_losses([train_loss_Dec_content_list, train_loss_Dec_sh_list],
-                ['Decoder content loss', 'sh loss'],
+    plot_losses([train_loss_G_sh_list],['SH loss'],['blue'], path=path, filename='SH_loss', title="SH loss")
+    plot_losses([train_loss_G_adversarial_list, train_loss_G_content_list],
+                ['Generator adv loss', 'Generator content loss'],
                 ['green', 'purple'], 
-                path=path, filename='loss_curves_Dec', title="Decoder loss curves")
-    plot_losses([train_loss_Enc_prior_list],['Prior loss'],['blue'], path=path, filename='Prior_loss', title="Prior loss")
-    # plot_losses([train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list, train_loss_Dec_sh_list],
-    #             ['Decoder sim loss', 'Decoder content loss', 'Decoder gan loss', 'sh loss'],
-    #             ['red', 'green', 'blue', 'purple'], 
-    #             path=path, filename='loss_curves_Dec', title="Decoder loss curves")
-    # plot_losses([train_loss_Enc_prior_list, train_loss_Enc_sim_list], 
-    #             ['Encoder prior loss', 'Encoder sim loss'],
-    #             ['#b5de2b', '#1f9e89'],
-    #             path=path, filename='loss_curves_Enc', title="Encoder loss curves")
+                path=path, filename='loss_curves_G', title="Generator loss curves")
 
     with open(f'{path}/train_losses.pickle', "wb") as file:
-        pickle.dump((train_loss_Dis_list, train_loss_Dis_hr_list, train_loss_Dis_recon_list, train_loss_feature_list,
-                     train_loss_Dec_list, train_loss_Dec_content_list, train_loss_Dec_sh_list,
-                     train_loss_Enc_list, train_loss_Enc_prior_list), file)
+        pickle.dump((train_loss_D_list, train_loss_D_hr_list, train_loss_D_sr_list,
+                     train_loss_G_list, train_loss_G_content_list, train_loss_G_adversarial_list,
+                     train_loss_G_sh_list), file)
         # pickle.dump((train_loss_Dis_list, train_loss_Dis_hr_list, train_loss_Dis_recon_list,
         #              train_loss_Dec_list, train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list, train_loss_Dec_sh_list,
         #              train_loss_Enc_list, train_loss_Enc_sim_list, train_loss_Enc_prior_list), file)
