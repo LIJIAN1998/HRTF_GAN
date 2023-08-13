@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-from model.model import VAE
+from model.model import VAE, D_DBPN
 import shutil
 from pathlib import Path
 
@@ -30,7 +30,10 @@ def test(config, val_prefetcher):
     num_row_angles = len(ds.row_angles)
     num_col_angles = len(ds.column_angles)
     num_radii = len(ds.radii)
-    degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
+
+    max_order = config.max_order
+    upscale_factor = config.upscale_factor
+    degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/upscale_factor) - 1)
 
     ngpu = config.ngpu
     valid_dir = config.valid_path
@@ -42,11 +45,13 @@ def test(config, val_prefetcher):
 
     device = torch.device(config.device_name if (
             torch.cuda.is_available() and ngpu > 0) else "cpu")
-    model = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).to(device)
+    model = D_DBPN(channels=nbins, base_channels=256, num_features=512, scale_factor=upscale_factor, max_order=max_order)
+    # model = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).to(device)
     print("Build VAE model successfully.")
 
     # Load vae model weights (always uses the CPU due to HPC having long wait times)
-    model.load_state_dict(torch.load(f"{config.model_path}/vae.pt", map_location=torch.device('cpu')))
+    # model.load_state_dict(torch.load(f"{config.model_path}/vae.pt", map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(f"{config.model_path}/Gen.pt", map_location=torch.device('cpu')))
     print(f"Load VAE model weights `{os.path.abspath(config.model_path)}` successfully.")
 
     param_size = 0
