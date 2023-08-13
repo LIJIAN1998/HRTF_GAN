@@ -260,13 +260,13 @@ def main(config, mode):
         error = spectral_distortion_metric(generated, target, domain='magnitude_db')
         print("lsd error: ", error)
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        ax1.plot(x)
-        ax1.set_title('recon')
-        ax2.plot(y)
-        ax2.set_title('original')
-        plt.savefig("output.png")
-        plt.close()
+        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        # ax1.plot(x)
+        # ax1.set_title('recon')
+        # ax2.plot(y)
+        # ax2.set_title('original')
+        # plt.savefig("output.png")
+        # plt.close()
 
         left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                                      'side': 'left', 'domain': 'magnitude_db'}},
@@ -306,13 +306,15 @@ def main(config, mode):
         error = spectral_distortion_metric(generated, target, domain='magnitude_db')
         print("lsd error: ", error)
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        ax1.plot(x)
-        ax1.set_title('recon')
-        ax2.plot(y)
-        ax2.set_title('original')
-        plt.savefig("output1.png")
-        plt.close()
+        sh_loss = ((hr_coefficient - sh_coef.T)**2).mean()
+        print("sh loss: ", sh_loss)
+        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        # ax1.plot(x)
+        # ax1.set_title('recon')
+        # ax2.plot(y)
+        # ax2.set_title('original')
+        # plt.savefig("output1.png")
+        # plt.close()
 
         # coefs = []
         # for sample_id in range(len(left_train)):
