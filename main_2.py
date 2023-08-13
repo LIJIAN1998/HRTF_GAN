@@ -274,7 +274,7 @@ def main(config, mode):
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
         SHT = SphericalHarmonicsTransform(config.max_order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
-        sh_coef = torch.from_numpy(SHT(merge))
+        sh_coef = torch.from_numpy(SHT(merge)).float()
         recon = (harmonics @ sh_coef).permute(72, 12, 1, 256).detach().cpu()
         x = recon[70, 1, 0, :]
         y = merge[70, 1, 0, :]
