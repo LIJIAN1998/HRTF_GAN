@@ -228,7 +228,7 @@ def main(config, mode):
         print("max order: ", config.max_order)
         train_prefetcher, _ = load_hrtf(config)
         batch_data = train_prefetcher.next()
-        hr_coefficient = batch_data["hr_coefficient"].detach().cpu()
+        hr_coefficient = batch_data["hr_coefficient"].float().detach().cpu()
         merge = batch_data["hrtf"][0].detach().cpu()
         mask = batch_data["mask"]
         # id = batch_data["id"][0].item()
