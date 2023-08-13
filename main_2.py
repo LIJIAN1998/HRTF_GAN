@@ -224,6 +224,7 @@ def main(config, mode):
         mean_std_dir = config.mean_std_coef_dir
         orders = [19, 13, 9, 6, 4, 3, 2, 1, 1]
         upscale_factors = [2, 4, 8, 16, 32, 48, 72, 108, 216]
+        config.max_order = 15
         train_prefetcher, _ = load_hrtf(config)
         batch_data = train_prefetcher.next()
         hr_coefficient = batch_data["hr_coefficient"][0].detach().cpu()
