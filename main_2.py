@@ -226,10 +226,80 @@ def main(config, mode):
         upscale_factors = [2, 4, 8, 16, 32, 48, 72, 108, 216]
         train_prefetcher, _ = load_hrtf(config)
         batch_data = train_prefetcher.next()
-        masks = batch_data["mask"]
-        print("masks shape: ", masks.shape)
-        print("masks data type: ", type(masks))
-        print(masks[0].numpy().astype(bool))
+        hr_coefficient = batch_data["hr_coefficient"][0]
+        merge = batch_data["hrtf"].permute(2, 3, 1, 0)
+        mask = batch_data["mask"][0]
+        id = batch_data["id"][0].item()
+        print("id: ", id)
+        # print("masks shape: ", mask.shape)
+        # print("masks data type: ", type(mask))
+        SHT = SphericalHarmonicsTransform(config.max_order, ds.row_angles, ds.column_angles, ds.radii, mask.numpy().astype(bool))
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        recon = (harmonics @ hr_coefficient.T).permute(72, 12, 1, 256).detach().cpu()
+        x = recon[70, 1, 0, :]
+        y = merge[70, 1, 0, :]
+        mean_recon1 = torch.mean(recon)
+        max1 = torch.max(recon)
+        min1 = torch.min(recon)
+        mean_original = torch.mean(merge)
+        max_original = torch.max(merge)
+        min_original = torch.min(merge)
+        print("order: ", config.max_order)
+        print("mean 1: ", mean_recon1)
+        print("original mean: ", mean_original)
+        print("max 1: ", max1)
+        print("max original: ", max_original)
+        print("min 1: ", min1)
+        print("min original: ", min_original)
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x)
+        ax1.set_title('recon')
+        ax2.plot(y)
+        ax2.set_title('original')
+        plt.savefig("output.png")
+        plt.close()
+
+        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                                     'side': 'left', 'domain': 'magnitude_db'}},
+                                   subject_ids=[id])
+        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
+                                                                      'side': 'right', 'domain': 'magnitude_db'}},
+                                   subject_ids=[id])
+        print("!!!!!!!!!!!!!!!!!!!!!!!")
+        print("id: ", left_train.subject_ids[0])
+        left = left_train[0]['features'][:, :, :, 1:]
+        right = right_train[0]['features'][:, :, :, 1:]
+        merge = np.ma.concatenate([left, right], axis=3)
+        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        SHT = SphericalHarmonicsTransform(config.max_order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        sh_coef = torch.from_numpy(SHT(merge))
+        recon = (harmonics @ sh_coef).permute(72, 12, 1, 256).detach().cpu()
+        x = recon[70, 1, 0, :]
+        y = merge[70, 1, 0, :]
+        mean_recon1 = torch.mean(recon)
+        max1 = torch.max(recon)
+        min1 = torch.min(recon)
+        mean_original = torch.mean(merge)
+        max_original = torch.max(merge)
+        min_original = torch.min(merge)
+        print("order: ", config.max_order)
+        print("mean 1: ", mean_recon1)
+        print("original mean: ", mean_original)
+        print("max 1: ", max1)
+        print("max original: ", max_original)
+        print("min 1: ", min1)
+        print("min original: ", min_original)
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x)
+        ax1.set_title('recon')
+        ax2.plot(y)
+        ax2.set_title('original')
+        plt.savefig("output1.png")
+        plt.close()
+
         # coefs = []
         # for sample_id in range(len(left_train)):
         #     left = left_train[sample_id]['features'][:, :, :, 1:]
