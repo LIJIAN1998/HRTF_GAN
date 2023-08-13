@@ -229,7 +229,7 @@ def main(config, mode):
         train_prefetcher, _ = load_hrtf(config)
         batch_data = train_prefetcher.next()
         hr_coefficient = batch_data["hr_coefficient"].float().detach().cpu()
-        merge = batch_data["hrtf"][0].detach().cpu()
+        merge = batch_data["hrtf"][0].permute(2, 3, 1, 0).detach().cpu()
         mask = batch_data["mask"]
         # id = batch_data["id"][0].item()
         # print("id: ", id)
