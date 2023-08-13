@@ -4,8 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from torch.autograd import Variable
-from model.base_blocks import *
-# from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
+from base_blocks import *
 
 class Reshape(nn.Module):
     def __init__(self, *args):
@@ -23,28 +22,6 @@ class Trim(nn.Module):
     def forward(self, x):
         return x[:,:,:self.shape]
 
-# class UpsampleBlock(nn.Module):
-#     def __init__(self, channels: int) -> None:
-#         super(UpsampleBlock, self).__init__()
-#         self.upsample_block_1 = nn.Sequential(
-#             CubeSpherePadding2D(1),
-#             CubeSphereConv2D(channels, channels * 4, (3, 3), (1, 1))
-#         )
-#         self.upsample_block_2 = nn.Sequential(
-#             nn.PixelShuffle(2),
-#             nn.PReLU(),
-#         )
-
-#     def forward(self, x: torch.Tensor) -> torch.Tensor:
-#         out1 = self.upsample_block_1(x)
-#         print("upsample 1: ", out1.shape)
-#         out = self.upsample_block_2(torch.permute(out1, dims=(0, 2, 1, 3, 4)))
-#         print("upsample 2: ", out.shape)
-#         x = torch.permute(out, dims=(0, 2, 1, 3, 4))
-#         print("permute: ", x.shape)
-
-#         return torch.permute(out, dims=(0, 2, 1, 3, 4))
-
 class IterativeBlock(nn.Module):
     def __init__(self, channels, kernel, stride, padding):
         super(IterativeBlock, self).__init__()
@@ -55,7 +32,9 @@ class IterativeBlock(nn.Module):
         self.up3 = D_UpBlock(channels, kernel, stride, padding, 2)
         self.down3 = D_DownBlock(channels, kernel, stride, padding, 3)
         self.up4 = D_UpBlock(channels, kernel, stride, padding, 3)
-        self.out_conv = ConvBlock(4*channels, channels, 3, 1, 1, activation=None)
+        self.down4 = D_DownBlock(channels, kernel, stride, padding, 4)
+        self.up5 = D_UpBlock(channels, kernel, stride, padding, 4)
+        self.out_conv = ConvBlock(5*channels, channels, 3, 1, 1, activation=None)
         
     def forward(self, x):
         h1 = self.up1(x)
@@ -75,29 +54,39 @@ class IterativeBlock(nn.Module):
         h = self.up4(concat_l)
 
         concat_h = torch.cat((h, concat_h), 1)
+        l = self.down4(concat_h)
+
+        concat_l = torch.cat((l, concat_l), 1)
+        h = self.up5(concat_l)
+
+        concat_h = torch.cat((h, concat_h), 1)
         out = self.out_conv(concat_h)
+
         return out
 
 class D_DBPN(nn.Module):
-    def __init__(self, channels, base_channels, num_features, scale_factor, order, max_order):
+    def __init__(self, channels, base_channels, num_features, scale_factor, max_order):
         super(D_DBPN, self).__init__()
 
-        if scale_factor == 2:
-            kernel = 6
+        max_num_coefficient = (max_order + 1) ** 2
+        if scale_factor in [2, 4, 8]:
+            # order = 7, coefficient of size 64
+            kernel = 4
             stride = 2
-            padding = 2
-        elif scale_factor == 4:
+            padding = 1
+            num_blocks = int(np.log2(max_num_coefficient/64))  # base 2, 2 IterativeBlock
+        elif scale_factor in [16 ,32, 48]:
+            # order = 3, coefficient of size 16
             kernel = 8
             stride = 4
             padding = 2
-        elif scale_factor == 8:
-            kernel = 12
-            stride = 8
+            num_blocks = int(np.log2(max_num_coefficient/16) / np.log2(4)) # base 4, 2 IterativeBlock
+        elif scale_factor in [72, 108, 216]:
+            # order = 1, coefficient of size 4
+            kernel = 8
+            stride = 4
             padding = 2
-
-        max_num_coefficient = (max_order + 1) ** 2
-        num_coefficient = (order + 1) ** 2
-        num_blocks = int(np.log2(max_num_coefficient/num_coefficient)) + 1
+            num_blocks = int(np.log2(max_num_coefficient/4) / np.log2(4)) # base 4, 3 IterativeBlock
 
         self.conv0 = ConvBlock(channels, num_features, 3, 1, 1)
         self.conv1 = ConvBlock(num_features, channels, 1, 1, 0)
@@ -119,8 +108,8 @@ class D_DBPN(nn.Module):
         x = self.conv1(x)
 
         x = self.up_downsample(x)
-        x = self.out_conv(x)
-        out = self.trim(x)
+        out = self.out_conv(x)
+        # out = self.trim(x)
         return out
 
     def init_parameters(self):
@@ -427,7 +416,7 @@ class Discriminator(nn.Module):
         self.nbins = nbins
 
         self.features = nn.Sequential(
-            # input size: nbins x 2116
+            # input size: nbins x 256
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
@@ -437,34 +426,34 @@ class Discriminator(nn.Module):
             nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
-            # nbins x 1058
+            # nbins x 128
             nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
-            # nbins x 529
+            # nbins x 64
             nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
-            # nbins x 265
+            # nbins x 32
             nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
-            # nbins x 133
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
+            # nbins x 16
+            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+            # nn.BatchNorm1d(512),
+            # nn.LeakyReLU(0.2, True),
+            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+            # nn.BatchNorm1d(512),
+            # nn.LeakyReLU(0.2, True),
             # nbins x 67
             # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
             # nn.BatchNorm1d(512),
@@ -476,7 +465,7 @@ class Discriminator(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 27, 512),
+            nn.Linear(512 * 16, 512),
             nn.LeakyReLU(0.2, True),
             nn.Linear(512, 1),
             nn.Sigmoid()
@@ -532,13 +521,13 @@ class VAE(nn.Module):
 
 
 if __name__ == '__main__':
-    x = torch.randn(1, 256, 400)
-    generator = D_DBPN(256, 256, 512, 2, 19, 28)
+    x = torch.randn(1, 256, 64)
+    generator = D_DBPN(256, 256, 512, 2, 15)
     x = generator(x)
     print(x.shape)
     D = Discriminator(256)
-    feature, out = D(x, x)
-    print("feature shape: ", feature.shape)
+    out = D(x)
+    # print("feature shape: ", feature.shape)
     print("classify result: ", out.shape)
 
     # x1 = torch.randn(1, 128, 49)

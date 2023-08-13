@@ -32,7 +32,7 @@ class Config:
         self.hrir_samplerate = 48000.0
         self.transform_flag = False
         self.domain = 'magnitude_db'
-        self.max_order = 28
+        self.max_order = 15
 
         # Data dirs
         if using_hpc:
