@@ -204,7 +204,7 @@ def train(config, train_prefetcher):
 
     # Define optimizers
     optD = optim.Adam(netD.parameters(), lr=0.0000015)
-    optG = optim.Adam(netG.parameters(), lr=0.0002)
+    optG = optim.Adam(netG.parameters(), lr=0.0003)
     scheduler_D = ExponentialLR(optD, gamma=decay_lr)
     scheduler_G = ExponentialLR(optG, gamma=decay_lr)
     # optD = optim.Adam(netD.parameters(), lr=lr*alpha)
@@ -325,7 +325,6 @@ def train(config, train_prefetcher):
             if batch_index % int(critic_iters) == 0:
                 # train decoder
                 netG.zero_grad()
-                sr = netG(lr_coefficient)
                 pred_fake = netD(sr).view(-1)
                 label.fill_(real_label)
                 adversarial_loss_G = config.adversarial_weight * adversarial_criterion(pred_fake, label)
