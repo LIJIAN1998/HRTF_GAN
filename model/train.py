@@ -202,7 +202,7 @@ def train(config, train_prefetcher):
         # vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
 
     # Define optimizers
-    optD = optim.Adam(netD.parameters(), lr=0.00003)
+    optD = optim.Adam(netD.parameters(), lr=0.0001)
     optG = optim.Adam(netG.parameters(), lr=0.0003)
     scheduler_D = ExponentialLR(optD, gamma=decay_lr)
     scheduler_G = ExponentialLR(optG, gamma=decay_lr)
