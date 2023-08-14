@@ -327,7 +327,11 @@ def train(config, train_prefetcher):
                 pred_fake = netD(sr).view(-1)
                 label.fill_(real_label)
                 adversarial_loss_G = config.adversarial_weight * adversarial_criterion(pred_fake, label)
-                sh_loss_G = 0.001 * ((sr - hr_coefficient) ** 2).mean()  # sh coefficient loss
+                sh_loss_G = ((sr - hr_coefficient) ** 2).mean()  # sh coefficient loss
+                sr0 = sr[0].T
+                hr0 = hr_coefficient[0].T
+                print("sr: ",sr0.shape, sr0[0, :20])
+                print("hr: ",hr0.shape, hr0[0, :20])
                 # convert reconstructed coefficient back to hrtf
                 harmonics_list = []
                 for i in range(masks.size(0)):

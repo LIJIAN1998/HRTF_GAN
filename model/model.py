@@ -74,7 +74,7 @@ class D_DBPN(nn.Module):
             kernel = 4
             stride = 2
             padding = 1
-            num_blocks = int(np.log2(max_num_coefficient/64))  # base 2, 2 IterativeBlock
+            num_blocks = int(np.log2(max_num_coefficient/64)) + 1  # base 2, 2 IterativeBlock
         elif scale_factor in [16 ,32, 48]:
             # order = 3, coefficient of size 16
             kernel = 8
@@ -108,8 +108,8 @@ class D_DBPN(nn.Module):
         x = self.conv1(x)
 
         x = self.up_downsample(x)
-        out = self.out_conv(x)
-        # out = self.trim(x)
+        x = self.out_conv(x)
+        out = self.trim(x)
         return out
 
     def init_parameters(self):
@@ -416,7 +416,7 @@ class Discriminator(nn.Module):
         self.nbins = nbins
 
         self.features = nn.Sequential(
-            # input size: nbins x 256
+            # input size: nbins x 484
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
@@ -426,22 +426,29 @@ class Discriminator(nn.Module):
             nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
-            # nbins x 128
+            # nbins x 242
             nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
-            # nbins x 64
+            # nbins x 121
             nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
-            # nbins x 32
+            # nbins x 61
             nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            # nbins x 31
+            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
@@ -455,13 +462,6 @@ class Discriminator(nn.Module):
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             # nbins x 8
-            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            # nn.BatchNorm1d(512),
-            # nn.LeakyReLU(0.2, True),
-            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            # nn.BatchNorm1d(512),
-            # nn.LeakyReLU(0.2, True),
-            # nbins x 34
         )
 
         self.classifier = nn.Sequential(
@@ -476,17 +476,8 @@ class Discriminator(nn.Module):
         )
     
     def forward(self,  x: torch.Tensor) -> torch.Tensor:
-        # x = torch.cat((x1, x2), 0)
-        # x = self.features(x)
-        # x = x.view(x.size(0), -1)
-        # if mode == "feature":
-        #     return x
-        # else:
-        #     x = self.classifier(x)
-        #     return x
         x = self.features(x)
         x = x.view(x.size(0), -1)
-        # x1 = x
         out = self.classifier(x)
         return out
 

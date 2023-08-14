@@ -5,7 +5,6 @@ import torch.nn.functional as F
 import numpy as np
 from torch.autograd import Variable
 from model.base_blocks import *
-# from model.custom_conv import CubeSpherePadding2D, CubeSphereConv2D
 
 class Reshape(nn.Module):
     def __init__(self, *args):
@@ -22,28 +21,6 @@ class Trim(nn.Module):
 
     def forward(self, x):
         return x[:,:,:self.shape]
-
-# class UpsampleBlock(nn.Module):
-#     def __init__(self, channels: int) -> None:
-#         super(UpsampleBlock, self).__init__()
-#         self.upsample_block_1 = nn.Sequential(
-#             CubeSpherePadding2D(1),
-#             CubeSphereConv2D(channels, channels * 4, (3, 3), (1, 1))
-#         )
-#         self.upsample_block_2 = nn.Sequential(
-#             nn.PixelShuffle(2),
-#             nn.PReLU(),
-#         )
-
-#     def forward(self, x: torch.Tensor) -> torch.Tensor:
-#         out1 = self.upsample_block_1(x)
-#         print("upsample 1: ", out1.shape)
-#         out = self.upsample_block_2(torch.permute(out1, dims=(0, 2, 1, 3, 4)))
-#         print("upsample 2: ", out.shape)
-#         x = torch.permute(out, dims=(0, 2, 1, 3, 4))
-#         print("permute: ", x.shape)
-
-#         return torch.permute(out, dims=(0, 2, 1, 3, 4))
 
 class IterativeBlock(nn.Module):
     def __init__(self, channels, kernel, stride, padding):
