@@ -235,12 +235,12 @@ class Discriminator(nn.Module):
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             # nbins x 53
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
+            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+            # nn.BatchNorm1d(512),
+            # nn.LeakyReLU(0.2, True),
+            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+            # nn.BatchNorm1d(512),
+            # nn.LeakyReLU(0.2, True),
             # nbins x 27
             # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
             # nn.BatchNorm1d(512),
@@ -252,7 +252,7 @@ class Discriminator(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 27, 512),
+            nn.Linear(512 * 53, 512),
             nn.LeakyReLU(0.2, True),
             nn.Linear(512, 1),
             nn.Sigmoid()
