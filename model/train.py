@@ -5,7 +5,8 @@ import scipy
 import importlib
 
 from model.util import *
-from model.model import *
+# from model.model import *
+from model.ae import *
 
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
@@ -192,9 +193,10 @@ def train(config, train_prefetcher):
     # pos_freqs = all_freqs[all_freqs >= 0]
 
     # Define VAE and transfer to CUDA
-    # degree = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
-    netG = D_DBPN(nbins, base_channels=256, num_features=512, scale_factor=upscale_factor, max_order=max_order).to(device)
-    # vae = VAE(nbins=nbins, max_degree=degree, latent_dim=latent_dim).to(device)
+    in_order = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
+    netG = AutoEncoder(nbins=nbins, in_order=in_order, latent_dim=latent_dim, out_oder=max_order).to(device)
+    # netG = D_DBPN(nbins, base_channels=256, num_features=512, scale_factor=upscale_factor, max_order=max_order).to(device)
+    # vae = VAE(nbins=nbins, max_degree=in_order, latent_dim=latent_dim).to(device)
     netD = Discriminator(nbins=nbins).to(device)
     if ('cuda' in str(device)) and (ngpu > 1):
         netD = (nn.DataParallel(netD, list(range(ngpu)))).to(device)
@@ -218,6 +220,7 @@ def train(config, train_prefetcher):
 
     # Define loss functions
     adversarial_criterion = nn.BCEWithLogitsLoss()
+    cos_similarity_criterion = nn.CosineSimilarity(dim=2)
     content_criterion = sd_ild_loss
 
     # mean and std for ILD and SD, which are used for normalization
@@ -249,7 +252,8 @@ def train(config, train_prefetcher):
     train_loss_G_list = []
     train_loss_G_adversarial_list = []
     train_loss_G_content_list = []
-    train_loss_G_sh_list = []
+    train_loss_G_sh_mse_list = []
+    train_loss_G_sh_cos_list = []
     train_loss_D_list = []
     train_loss_D_hr_list = []
     train_loss_D_sr_list = []
@@ -264,11 +268,12 @@ def train(config, train_prefetcher):
         train_loss_G = 0.
         train_loss_G_adversarial = 0.
         train_loss_G_content = 0.
+        train_loss_G_sh_mse = 0.
+        train_loss_G_sh_cos = 0.
         train_loss_D = 0.
         train_loss_D_hr = 0.
         train_loss_D_sr = 0.
-        train_loss_G_sh = 0.
-
+        
         # Initialize the number of data batches to print logs on the terminal
         batch_index = 0
 
@@ -327,11 +332,15 @@ def train(config, train_prefetcher):
                 pred_fake = netD(sr).view(-1)
                 label.fill_(real_label)
                 adversarial_loss_G = config.adversarial_weight * adversarial_criterion(pred_fake, label)
-                sh_loss_G = ((sr - hr_coefficient) ** 2).mean()  # sh coefficient loss
+                sh_cos_loss = 1 - cos_similarity_criterion(sr, hr_coefficient).mean()
+                sh_mse_loss = ((sr - hr_coefficient) ** 2).mean()  # sh coefficient loss
                 sr0 = sr[0].T
                 hr0 = hr_coefficient[0].T
-                print("sr: ",sr0.shape, sr0[0, :20])
-                print("hr: ",hr0.shape, hr0[0, :20])
+                with open("log.txt", "a") as f:
+                    f.write(f"sr: {sr0.shape}, {sr0[0, :20]}")
+                    f.write(f"hr: {hr0.shape}, {hr0[0, :20]}")
+                    # print("sr: ",sr0.shape, sr0[0, :20])
+                    # print("hr: ",hr0.shape, hr0[0, :20])
                 # convert reconstructed coefficient back to hrtf
                 harmonics_list = []
                 for i in range(masks.size(0)):
@@ -358,13 +367,14 @@ def train(config, train_prefetcher):
                 content_loss_G = config.content_weight * unweighted_content_loss_G
                 # Generator total loss
                 # loss_G = content_loss_G + adversarial_loss_G + sh_loss_G
-                loss_G = content_loss_G + adversarial_loss_G
+                loss_G = content_loss_G + adversarial_loss_G + sh_cos_loss
                 loss_G.backward()
 
                 train_loss_G += loss_G.item()
                 train_loss_G_adversarial += adversarial_loss_G.item()
                 train_loss_G_content += content_loss_G.item()
-                train_loss_G_sh += sh_loss_G.item()
+                train_loss_G_sh_mse += sh_mse_loss.item()
+                train_loss_G_sh_cos += sh_cos_loss.item()
                 train_SD_metric.append(unweighted_content_loss_G.item())
 
                 optG.step()
@@ -373,7 +383,8 @@ def train(config, train_prefetcher):
                     f.write(f"{batch_index}/{len(train_prefetcher)}\n")
                     f.write(f"dis: {loss_D.item()}\t generator: {loss_G.item()}\n")
                     f.write(f"D_real: {loss_D_hr.item()}, D_fake: {loss_D_sr.item()}\n")
-                    f.write(f"content loss: {content_loss_G.item()}, adversarial: {adversarial_loss_G.item()} sh loss: {sh_loss_G.item()}\n")
+                    f.write(f"content loss: {content_loss_G.item()}, adversarial: {adversarial_loss_G.item()}\n")
+                    f.write(f"sh mse: {sh_mse_loss.item()}, sh cos: {sh_cos_loss.item()}\n")
 
             if ('cuda' in str(device)) and (ngpu > 1):
                 end_overall.record()
@@ -407,10 +418,12 @@ def train(config, train_prefetcher):
         train_loss_G_list.append(train_loss_G / len(train_prefetcher))
         train_loss_G_content_list.append(train_loss_G_content / len(train_prefetcher))
         train_loss_G_adversarial_list.append(train_loss_G_adversarial / len(train_prefetcher))
-        train_loss_G_sh_list.append(train_loss_G_sh / len(train_prefetcher))
+        train_loss_G_sh_mse_list.append(train_loss_G_sh_mse / len(train_prefetcher))
+        train_loss_G_sh_cos_list.append(train_loss_G_sh_cos / len(train_prefetcher))
         print(f"Avearge epoch loss, discriminator: {train_loss_D_list[-1]}, generator: {train_loss_G_list[-1]}")
         print(f"Avearge epoch loss, D_real: {train_loss_D_hr_list[-1]}, D_fake: {train_loss_D_sr_list[-1]}")
-        print(f"Avearge content loss: {train_loss_G_content_list[-1]}, sh loss:{train_loss_G_sh_list[-1]}, adversarial loss: {train_loss_G_adversarial_list[-1]}")
+        print(f"Avearge content loss: {train_loss_G_content_list[-1]}, adversarial loss: {train_loss_G_adversarial_list[-1]}")
+        print(f"Average sh mse loss: {train_loss_G_sh_mse_list[-1]}, sh cos loss: {train_loss_G_sh_cos_list[-1]}")
 
         # # create magnitude spectrum plot every 25 epochs and last epoch
         # if epoch % 25 == 0 or epoch == (num_epochs - 1):
@@ -432,16 +445,17 @@ def train(config, train_prefetcher):
                 ['Discriminator loss real', 'Discriminator loss fake'],
                 ["#5ec962", "#440154"], 
                 path=path, filename='loss_curves_Dis', title="Discriminator loss curves")
-    plot_losses([train_loss_G_sh_list],['SH loss'],['blue'], path=path, filename='SH_loss', title="SH loss")
-    plot_losses([train_loss_G_adversarial_list, train_loss_G_content_list],
-                ['Generator adv loss', 'Generator content loss'],
-                ['green', 'purple'], 
+    plot_losses([train_loss_G_sh_mse_list],['SH mse loss'],['blue'], path=path, filename='SH_mse_loss', title="SH mse loss")
+    plot_losses([train_loss_G_sh_cos_list],['SH cos loss'],['blue'], path=path, filename='SH_cos_loss', title="SH cos loss")
+    plot_losses([train_loss_G_adversarial_list, train_loss_G_content_list, train_loss_G_sh_cos_list],
+                ['Generator adv loss', 'Generator content loss', 'Coefficient sim loss'],
+                ['green', 'purple', 'red'], 
                 path=path, filename='loss_curves_G', title="Generator loss curves")
 
     with open(f'{path}/train_losses.pickle', "wb") as file:
         pickle.dump((train_loss_D_list, train_loss_D_hr_list, train_loss_D_sr_list,
-                     train_loss_G_list, train_loss_G_content_list, train_loss_G_adversarial_list,
-                     train_loss_G_sh_list), file)
+                     train_loss_G_list, train_loss_G_content_list, train_loss_G_adversarial_list, train_loss_G_sh_cos_list,
+                     train_loss_G_sh_mse_list), file)
         # pickle.dump((train_loss_Dis_list, train_loss_Dis_hr_list, train_loss_Dis_recon_list,
         #              train_loss_Dec_list, train_loss_Dec_sim_list, train_loss_Dec_content_list, train_loss_Dec_gan_list, train_loss_Dec_sh_list,
         #              train_loss_Enc_list, train_loss_Enc_sim_list, train_loss_Enc_prior_list), file)

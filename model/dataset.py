@@ -90,13 +90,13 @@ class MergeHRTFDataset(Dataset):
         self.upscale_factor = upscale_factor
         self.num_row_angles, self.num_col_angles = len(self.left_hrtf.row_angles), len(self.left_hrtf.column_angles)
         self.num_radii = len(self.left_hrtf.radii)
-        # self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
-        if upscale_factor in [2, 4, 8]:
-            self.degree = 7
-        elif upscale_factor in [16 ,32, 48]:
-            self.degree = 3
-        elif upscale_factor in [72, 108, 216]:
-            self.degree = 1
+        self.degree = int(np.sqrt(self.num_row_angles*self.num_col_angles*self.num_radii/upscale_factor) - 1)
+        # if upscale_factor in [2, 4, 8]:
+        #     self.degree = 7
+        # elif upscale_factor in [16 ,32, 48]:
+        #     self.degree = 3
+        # elif upscale_factor in [72, 108, 216]:
+        #     self.degree = 1
         self.max_degree = max_degree
         self.transform = transform
 
