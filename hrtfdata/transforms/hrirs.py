@@ -403,3 +403,6 @@ class SphericalHarmonicsTransform:
 
     def get_selected_angles(self):
         return self.selected_angles
+    
+    def get_masked_hrirs(self, hrirs):
+        return hrirs[self._valid_mask].data
