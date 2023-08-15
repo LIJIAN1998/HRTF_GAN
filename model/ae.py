@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from base_blocks import *
 
 class Reshape(nn.Module):
     def __init__(self, *args):
@@ -19,7 +20,48 @@ class Trim(nn.Module):
     def forward(self, x):
         return x[:,:,:self.shape]
 
+class IterativeBlock(nn.Module):
+    def __init__(self, channels, kernel, stride, padding):
+        super(IterativeBlock, self).__init__()
+        self.up1 = UpBlock(channels, kernel, stride, padding)
+        self.down1 = DownBlock(channels, kernel, stride, padding)
+        self.up2 = UpBlock(channels, kernel, stride, padding)
+        self.down2 = D_DownBlock(channels, kernel, stride, padding, 2)
+        self.up3 = D_UpBlock(channels, kernel, stride, padding, 2)
+        self.down3 = D_DownBlock(channels, kernel, stride, padding, 3)
+        self.up4 = D_UpBlock(channels, kernel, stride, padding, 3)
+        self.down4 = D_DownBlock(channels, kernel, stride, padding, 4)
+        self.up5 = D_UpBlock(channels, kernel, stride, padding, 4)
+        self.out_conv = ConvBlock(5*channels, channels, 3, 1, 1, activation=None)
+        
+    def forward(self, x):
+        h1 = self.up1(x)
+        l1 = self.down1(h1)
+        h2 = self.up2(x)
+        
+        concat_h = torch.cat((h2, h1), 1)
+        l = self.down2(concat_h)
+        
+        concat_l = torch.cat((l, l1), 1)
+        h = self.up3(concat_l)
 
+        concat_h = torch.cat((h, concat_h), 1)
+        l = self.down3(concat_h)
+
+        concat_l = torch.cat((l, concat_l), 1)
+        h = self.up4(concat_l)
+
+        concat_h = torch.cat((h, concat_h), 1)
+        l = self.down4(concat_h)
+
+        concat_l = torch.cat((l, concat_l), 1)
+        h = self.up5(concat_l)
+
+        concat_h = torch.cat((h, concat_h), 1)
+        out = self.out_conv(concat_h)
+
+        return out
+    
 class ResBlock(nn.Module):
     def __init__(self, in_channnels, out_channels, stride=1, expansion=1, identity_downsample=None):
         super(ResBlock, self).__init__()
@@ -98,6 +140,57 @@ class ResEncoder(nn.Module):
         z = self.fc(x)
         return z
     
+class D_DBPN(nn.Module):
+    def __init__(self, nbins, base_channels, num_features, latent_dim, max_order):
+        super(D_DBPN, self).__init__()
+
+        max_num_coefficient = (max_order + 1) ** 2
+        kernel = 8
+        stride = 4
+        padding = 2
+        
+        self.fc = nn.Sequential(
+            nn.Linear(latent_dim, 512*2),
+            nn.BatchNorm1d(512*2),
+            nn.ReLU(True),
+        )
+        self.conv0 = ConvBlock(512, num_features, 3, 1, 1)
+        self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
+
+        # Back-projection stages
+        self.up1 = IterativeBlock(base_channels, kernel, stride, padding)
+        self.up2 = IterativeBlock(base_channels, kernel, stride, padding)
+        self.up3 = IterativeBlock(base_channels, kernel, stride, padding)
+        self.up4 = IterativeBlock(base_channels, kernel, stride, padding)
+        
+        # Reconstruction
+        self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1, activation=None)
+        self.trim = Trim(max_num_coefficient)
+
+        self.init_parameters()
+
+    def forward(self, x):
+        x = self.fc(x)
+        x = x.view(-1, 512, 2)
+        x = self.conv0(x)
+        x = self.conv1(x)
+
+        x = self.up1(x)
+        x = self.up2(x)
+        x = self.up3(x)
+        x = self.up4(x)
+        x = self.out_conv(x)
+        out = self.trim(x)
+        return out
+
+    def init_parameters(self):
+        for m in self.modules():
+            if isinstance(m, (nn.Conv1d, nn.ConvTranspose1d)):
+                if hasattr(m, 'weight') and m.weight is not None and m.weight.requires_grad:
+                    nn.init.kaiming_normal_(m.weight)
+                if hasattr(m, 'bias') and m.bias is not None and m.bias.requires_grad:
+                    nn.init.constant_(m.bias, 0.0)
+
 class Decoder(nn.Module):
     def __init__(self, nbins: int, latent_dim: int, out_degree: int=28) -> None:
         super(Decoder, self).__init__()
@@ -107,7 +200,7 @@ class Decoder(nn.Module):
 
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, 512*2),
-            nn.BatchNorm1d(512*2, momentum=0.9),
+            nn.BatchNorm1d(512*2),
             nn.ReLU(True),
             Reshape(-1, 512, 2),
             nn.ConvTranspose1d(512, 512, kernel_size=3, stride=1, padding=1, bias=False),
@@ -175,11 +268,12 @@ class Decoder(nn.Module):
         return x
     
 class AutoEncoder(nn.Module):
-    def __init__(self, nbins: int, in_order: int, latent_dim: int, out_oder: int=28):
+    def __init__(self, nbins: int, in_order: int, latent_dim: int, base_channels: int, num_features: int, out_oder: int=28):
         super(AutoEncoder, self).__init__()
 
         self.encoder = ResEncoder(ResBlock, nbins, in_order, latent_dim)
-        self.decoder = Decoder(nbins, latent_dim, out_oder)
+        self.decoder = D_DBPN(nbins, base_channels=base_channels, num_features=num_features, latent_dim=latent_dim, max_order=out_oder)
+        # self.decoder = Decoder(nbins, latent_dim, out_oder)
 
 
     def init_parameters(self):
@@ -203,7 +297,7 @@ class Discriminator(nn.Module):
         self.nbins = nbins
 
         self.features = nn.Sequential(
-            # input size: nbins x 841
+            # input size: nbins x 484
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
@@ -213,46 +307,81 @@ class Discriminator(nn.Module):
             nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
-            # nbins x 421
+            # input size: nbins x 242
             nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
-            # nbins x 211
+            # nbins x 121
             nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
-            # nbins x 106
+            # nbins x 61
             nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
-            # nbins x 53
-            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            # nn.BatchNorm1d(512),
-            # nn.LeakyReLU(0.2, True),
-            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            # nn.BatchNorm1d(512),
-            # nn.LeakyReLU(0.2, True),
-            # nbins x 27
-            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            # nn.BatchNorm1d(512),
-            # nn.LeakyReLU(0.2, True),
-            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            # nn.BatchNorm1d(512),
-            # nn.LeakyReLU(0.2, True),
-            # nbins x 34
+            # nbins x 31
         )
 
+        # self.features = nn.Sequential(
+        #     # input size: nbins x 841
+        #     nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(64),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(64),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(64),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 421
+        #     nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(128),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(128),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 211
+        #     nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 106
+        #     nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 53
+        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 27
+        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 34
+        # )
+
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 53, 512),
+            nn.Linear(512 * 31, 512),
             nn.LeakyReLU(0.2, True),
             nn.Linear(512, 1),
             nn.Sigmoid()
@@ -267,8 +396,8 @@ class Discriminator(nn.Module):
     
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 25)
-    G = AutoEncoder(256, 4, 128, 28)
+    x = torch.randn(2, 256, 400)
+    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=256, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)

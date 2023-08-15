@@ -194,7 +194,7 @@ def train(config, train_prefetcher):
 
     # Define VAE and transfer to CUDA
     in_order = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
-    netG = AutoEncoder(nbins=nbins, in_order=in_order, latent_dim=latent_dim, out_oder=max_order).to(device)
+    netG = AutoEncoder(nbins=nbins, in_order=in_order, latent_dim=latent_dim, base_channels=256, num_features=512, out_oder=max_order).to(device)
     # netG = D_DBPN(nbins, base_channels=256, num_features=512, scale_factor=upscale_factor, max_order=max_order).to(device)
     # vae = VAE(nbins=nbins, max_degree=in_order, latent_dim=latent_dim).to(device)
     netD = Discriminator(nbins=nbins).to(device)
@@ -204,8 +204,8 @@ def train(config, train_prefetcher):
         # vae = nn.DataParallel(vae, list(range(ngpu))).to(device)
 
     # Define optimizers
-    optD = optim.Adam(netD.parameters(), lr=0.0001)
-    optG = optim.Adam(netG.parameters(), lr=0.0006)
+    optD = optim.Adam(netD.parameters(), lr=0.00003)
+    optG = optim.Adam(netG.parameters(), lr=0.0003)
     scheduler_D = ExponentialLR(optD, gamma=decay_lr)
     scheduler_G = ExponentialLR(optG, gamma=decay_lr)
     # optD = optim.Adam(netD.parameters(), lr=lr*alpha)

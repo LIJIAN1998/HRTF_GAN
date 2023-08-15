@@ -89,7 +89,7 @@ class D_DBPN(nn.Module):
             num_blocks = int(np.log2(max_num_coefficient/4) / np.log2(4)) # base 4, 3 IterativeBlock
 
         self.conv0 = ConvBlock(channels, num_features, 3, 1, 1)
-        self.conv1 = ConvBlock(num_features, channels, 1, 1, 0)
+        self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
         # Back-projection stages
         blocks = []
