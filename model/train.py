@@ -205,7 +205,7 @@ def train(config, train_prefetcher):
 
     # Define optimizers
     optD = optim.Adam(netD.parameters(), lr=0.00003)
-    optG = optim.Adam(netG.parameters(), lr=0.0003)
+    optG = optim.Adam(netG.parameters(), lr=0.0002)
     scheduler_D = ExponentialLR(optD, gamma=decay_lr)
     scheduler_G = ExponentialLR(optG, gamma=decay_lr)
     # optD = optim.Adam(netD.parameters(), lr=lr*alpha)
@@ -334,9 +334,11 @@ def train(config, train_prefetcher):
                 adversarial_loss_G = config.adversarial_weight * adversarial_criterion(pred_fake, label)
                 sh_cos_loss = 1 - cos_similarity_criterion(sr, hr_coefficient).mean()
                 sh_mse_loss = ((sr - hr_coefficient) ** 2).mean()  # sh coefficient loss
+                lr0 = lr_coefficient[0].T
                 sr0 = sr[0].T
                 hr0 = hr_coefficient[0].T
                 with open("log.txt", "a") as f:
+                    f.write(f"lr: {lr0.shape}, {lr0[0, :20]}\n")
                     f.write(f"sr: {sr0.shape}, {sr0[0, :20]}\n")
                     f.write(f"hr: {hr0.shape}, {hr0[0, :20]}\n")
                     # print("sr: ",sr0.shape, sr0[0, :20])
