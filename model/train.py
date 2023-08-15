@@ -233,8 +233,8 @@ def train(config, train_prefetcher):
 
     margin = 1.8670232e-08
 
-    real_label = 1.
-    fake_label = 0.
+    real_label = 0.9
+    fake_label = 0.1
 
     if config.transform_flag:
         mean_std_dir = config.mean_std_coef_dir
