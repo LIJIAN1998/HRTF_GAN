@@ -271,12 +271,6 @@ def main(config, mode):
         # plt.savefig("output.png")
         # plt.close()
 
-        left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                                     'side': 'left', 'domain': 'magnitude_db'}},
-                                   subject_ids=[id])
-        right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                                      'side': 'right', 'domain': 'magnitude_db'}},
-                                   subject_ids=[id])
         print("!!!!!!!!!!!!!!!!!!!!!!!")
         print("id: ", left_train.subject_ids[0])
         left = left_train[0]['features'][:, :, :, 1:]
