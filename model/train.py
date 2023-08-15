@@ -205,7 +205,7 @@ def train(config, train_prefetcher):
 
     # Define optimizers
     optD = optim.Adam(netD.parameters(), lr=0.0001)
-    optG = optim.Adam(netG.parameters(), lr=0.001)
+    optG = optim.Adam(netG.parameters(), lr=0.0006)
     scheduler_D = ExponentialLR(optD, gamma=decay_lr)
     scheduler_G = ExponentialLR(optG, gamma=decay_lr)
     # optD = optim.Adam(netD.parameters(), lr=lr*alpha)
@@ -384,7 +384,7 @@ def train(config, train_prefetcher):
                     f.write(f"dis: {loss_D.item()}\t generator: {loss_G.item()}\n")
                     f.write(f"D_real: {loss_D_hr.item()}, D_fake: {loss_D_sr.item()}\n")
                     f.write(f"content loss: {content_loss_G.item()}, adversarial: {adversarial_loss_G.item()}\n")
-                    f.write(f"sh mse: {sh_mse_loss.item()}, sh cos: {sh_cos_loss.item()}\n")
+                    f.write(f"sh mse: {sh_mse_loss.item()}, sh cos: {sh_cos_loss.item()}\n\n")
 
             if ('cuda' in str(device)) and (ngpu > 1):
                 end_overall.record()
