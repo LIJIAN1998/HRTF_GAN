@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from model.model import VAE, D_DBPN
+from model.ae import AutoEncoder
 import shutil
 from pathlib import Path
 

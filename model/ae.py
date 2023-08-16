@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from model.base_blocks import *
+from base_blocks import *
 
 class Reshape(nn.Module):
     def __init__(self, *args):
@@ -105,15 +105,15 @@ class ResEncoder(nn.Module):
         )
         self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
-        self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
-#         self.num_encode_layers = 4
+        # self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
+        self.num_encode_layers = 4
         if self.coefficient in [16 ,4]:
             self.num_encode_layers -= 1
         res_layers.append(self._make_layer(block, 256, num_blocks))
         for i in range(self.num_encode_layers):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
-        self.fc = nn.Sequential(nn.Linear(512*2, 512, bias=False),
+        self.fc = nn.Sequential(nn.Linear(512*25, 512, bias=False),
                                 nn.BatchNorm1d(512, momentum=0.9),
                                 nn.ReLU(True),
                                 nn.Linear(512, latent_dim))
@@ -145,13 +145,13 @@ class D_DBPN(nn.Module):
         super(D_DBPN, self).__init__()
 
         max_num_coefficient = (max_order + 1) ** 2
-        kernel = 8
-        stride = 4
-        padding = 2
+        kernel = 4
+        stride = 2
+        padding = 1
         
         self.fc = nn.Sequential(
-            nn.Linear(latent_dim, 512*2),
-            nn.BatchNorm1d(512*2),
+            nn.Linear(latent_dim, 512*16),
+            nn.BatchNorm1d(512*16),
             nn.ReLU(True),
         )
         self.conv0 = ConvBlock(512, num_features, 3, 1, 1)
@@ -162,6 +162,7 @@ class D_DBPN(nn.Module):
         self.up2 = IterativeBlock(base_channels, kernel, stride, padding)
         self.up3 = IterativeBlock(base_channels, kernel, stride, padding)
         self.up4 = IterativeBlock(base_channels, kernel, stride, padding)
+        self.up5 = IterativeBlock(base_channels, kernel, stride, padding)
         
         # Reconstruction
         self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1, activation=None)
@@ -171,7 +172,7 @@ class D_DBPN(nn.Module):
 
     def forward(self, x):
         x = self.fc(x)
-        x = x.view(-1, 512, 2)
+        x = x.view(-1, 512, 16)
         x = self.conv0(x)
         x = self.conv1(x)
 
@@ -179,6 +180,7 @@ class D_DBPN(nn.Module):
         x = self.up2(x)
         x = self.up3(x)
         x = self.up4(x)
+        x = self.up5(x)
         x = self.out_conv(x)
         out = self.trim(x)
         return out
