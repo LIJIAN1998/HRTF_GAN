@@ -116,9 +116,6 @@ class ResEncoder(nn.Module):
         self.fc = nn.Sequential(nn.Linear(512*25, 512, bias=False),
                                 nn.BatchNorm1d(512, momentum=0.9),
                                 nn.ReLU(True),
-                                nn.Linear(512, 512, bias=False),
-                                nn.BatchNorm1d(512, momentum=0.9),
-                                nn.ReLU(True),
                                 nn.Linear(512, latent_dim))
     
     def _make_layer(self, block, out_channels, num_blocks, stride=1):
@@ -173,7 +170,7 @@ class D_DBPN(nn.Module):
         self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1, activation=None)
         self.trim = Trim(max_num_coefficient)
 
-        # self.init_parameters()
+        self.init_parameters()
 
     def forward(self, x):
         x = self.fc(x)
