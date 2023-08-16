@@ -152,13 +152,12 @@ class D_DBPN(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(latent_dim, 512*16),
             nn.BatchNorm1d(512*16),
-            # nn.ReLU(True),
-            nn.Tanh()
+            nn.ReLU(True),
         )
         activation = 'tanh'
 
-        self.conv0 = ConvBlock(512, num_features, 3, 1, 1, activation=activation)
-        self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0, activation=activation)
+        self.conv0 = ConvBlock(512, num_features, 3, 1, 1)
+        self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
         # Back-projection stages
         self.up1 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
