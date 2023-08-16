@@ -116,6 +116,9 @@ class ResEncoder(nn.Module):
         self.fc = nn.Sequential(nn.Linear(512*25, 512, bias=False),
                                 nn.BatchNorm1d(512, momentum=0.9),
                                 nn.ReLU(True),
+                                nn.Linear(512, 512, bias=False),
+                                nn.BatchNorm1d(512, momentum=0.9),
+                                nn.ReLU(True),
                                 nn.Linear(512, latent_dim))
     
     def _make_layer(self, block, out_channels, num_blocks, stride=1):
@@ -170,7 +173,7 @@ class D_DBPN(nn.Module):
         self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1, activation=None)
         self.trim = Trim(max_num_coefficient)
 
-        self.init_parameters()
+        # self.init_parameters()
 
     def forward(self, x):
         x = self.fc(x)
@@ -334,6 +337,13 @@ class Discriminator(nn.Module):
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             # nbins x 31
+            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            # nbins x 16
         )
 
         # self.features = nn.Sequential(
@@ -386,7 +396,11 @@ class Discriminator(nn.Module):
         # )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 31, 512),
+            nn.Linear(512 * 16, 512),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             nn.Linear(512, 1),
             nn.Sigmoid()
@@ -438,5 +452,7 @@ if __name__ == '__main__':
     x = G(x)
     print(x.shape)
     D = Discriminator(256)
+    x = torch.randn(2, 256, 484)
+    print(x.shape)
     x = D(x)
     print(x.shape)
