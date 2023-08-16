@@ -279,7 +279,7 @@ class AutoEncoder(nn.Module):
         self.decoder = D_DBPN(nbins, base_channels=base_channels, num_features=num_features, latent_dim=latent_dim, max_order=out_oder)
         # self.decoder = Decoder(nbins, latent_dim, out_oder)
 
-        self.init_parameters()
+        # self.init_parameters()
 
     def init_parameters(self):
         for m in self.modules():
@@ -334,12 +334,12 @@ class Discriminator(nn.Module):
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             # nbins x 31
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
+            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+            # nn.BatchNorm1d(512),
+            # nn.LeakyReLU(0.2, True),
+            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+            # nn.BatchNorm1d(512),
+            # nn.LeakyReLU(0.2, True),
             # nbins x 16
         )
 
@@ -393,11 +393,11 @@ class Discriminator(nn.Module):
         # )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 16, 512),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(512 * 31, 512),
+            # nn.BatchNorm1d(512),
+            # nn.LeakyReLU(0.2, True),
+            # nn.Linear(512, 512),
+            # nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             nn.Linear(512, 1),
             nn.Sigmoid()
