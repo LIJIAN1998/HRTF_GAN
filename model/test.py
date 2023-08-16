@@ -95,6 +95,8 @@ def test(config, val_prefetcher):
         mean = mean.float().to(device)
         std = std.float().to(device)
 
+    margin = 1.8670232e-08
+
     plot_flag = True
     while batch_data is not None:
         # Transfer in-memory data to CUDA devices to speed up validation 
@@ -115,8 +117,8 @@ def test(config, val_prefetcher):
             recon = recon * std + mean
         sr = harmonics @ recon[0].T
         sr = sr.reshape(-1, num_row_angles, num_col_angles, num_radii, nbins)
-        margin = 1.8670232e-08
         if config.domain == "magnitude":
+            
             sr = F.relu(sr) + margin
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = sr[0].detach().cpu()
