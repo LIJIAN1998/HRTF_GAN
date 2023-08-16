@@ -21,17 +21,17 @@ class Trim(nn.Module):
         return x[:,:,:self.shape]
 
 class IterativeBlock(nn.Module):
-    def __init__(self, channels, kernel, stride, padding):
+    def __init__(self, channels, kernel, stride, padding, activation='tanh'):
         super(IterativeBlock, self).__init__()
-        self.up1 = UpBlock(channels, kernel, stride, padding)
-        self.down1 = DownBlock(channels, kernel, stride, padding)
-        self.up2 = UpBlock(channels, kernel, stride, padding)
-        self.down2 = D_DownBlock(channels, kernel, stride, padding, 2)
-        self.up3 = D_UpBlock(channels, kernel, stride, padding, 2)
-        self.down3 = D_DownBlock(channels, kernel, stride, padding, 3)
-        self.up4 = D_UpBlock(channels, kernel, stride, padding, 3)
-        self.down4 = D_DownBlock(channels, kernel, stride, padding, 4)
-        self.up5 = D_UpBlock(channels, kernel, stride, padding, 4)
+        self.up1 = UpBlock(channels, kernel, stride, padding, activation=activation)
+        self.down1 = DownBlock(channels, kernel, stride, padding, activation=activation)
+        self.up2 = UpBlock(channels, kernel, stride, padding, activation=activation)
+        self.down2 = D_DownBlock(channels, kernel, stride, padding, 2, activation=activation)
+        self.up3 = D_UpBlock(channels, kernel, stride, padding, 2, activation=activation)
+        self.down3 = D_DownBlock(channels, kernel, stride, padding, 3, activation=activation)
+        self.up4 = D_UpBlock(channels, kernel, stride, padding, 3, activation=activation)
+        self.down4 = D_DownBlock(channels, kernel, stride, padding, 4, activation=activation)
+        self.up5 = D_UpBlock(channels, kernel, stride, padding, 4, activation=activation)
         self.out_conv = ConvBlock(5*channels, channels, 3, 1, 1, activation=None)
         
     def forward(self, x):
@@ -157,12 +157,14 @@ class D_DBPN(nn.Module):
         self.conv0 = ConvBlock(512, num_features, 3, 1, 1)
         self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
+        activation = 'tanh'
+
         # Back-projection stages
-        self.up1 = IterativeBlock(base_channels, kernel, stride, padding)
-        self.up2 = IterativeBlock(base_channels, kernel, stride, padding)
-        self.up3 = IterativeBlock(base_channels, kernel, stride, padding)
-        self.up4 = IterativeBlock(base_channels, kernel, stride, padding)
-        self.up5 = IterativeBlock(base_channels, kernel, stride, padding)
+        self.up1 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
+        self.up2 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
+        self.up3 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
+        self.up4 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
+        self.up5 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
         
         # Reconstruction
         self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1, activation=None)
@@ -269,6 +271,11 @@ class Decoder(nn.Module):
         # out = self.classifier(x)
         return x
     
+# class FCEncoder(nn.Module):
+#     def __init__(self, ) -> None:
+#         super().__init__()
+
+
 class AutoEncoder(nn.Module):
     def __init__(self, nbins: int, in_order: int, latent_dim: int, base_channels: int, num_features: int, out_oder: int=28):
         super(AutoEncoder, self).__init__()
