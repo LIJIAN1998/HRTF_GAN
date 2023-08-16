@@ -270,11 +270,6 @@ class Decoder(nn.Module):
         x = self.decoder(x)
         # out = self.classifier(x)
         return x
-    
-# class FCEncoder(nn.Module):
-#     def __init__(self, ) -> None:
-#         super().__init__()
-
 
 class AutoEncoder(nn.Module):
     def __init__(self, nbins: int, in_order: int, latent_dim: int, base_channels: int, num_features: int, out_oder: int=28):
@@ -284,6 +279,7 @@ class AutoEncoder(nn.Module):
         self.decoder = D_DBPN(nbins, base_channels=base_channels, num_features=num_features, latent_dim=latent_dim, max_order=out_oder)
         # self.decoder = Decoder(nbins, latent_dim, out_oder)
 
+        self.init_parameters()
 
     def init_parameters(self):
         for m in self.modules():
@@ -402,6 +398,38 @@ class Discriminator(nn.Module):
         # x1 = x
         out = self.classifier(x)
         return out
+
+class FCEncoder(nn.Module):
+    def __init__(self, nbins: int, in_order: int, latent_dim: int) -> None:
+        super(FCEncoder, self).__init__()
+        num_coefficient = (in_order + 1) ** 2 
+        self.fc1 = nn.Sequential(nn.Linear(nbins * num_coefficient, 512 * 100),
+                                 nn.BatchNorm1d(512 * 100),
+                                 nn.Tanh())
+        self.fc2 = nn.Sequential(nn.Linear(512 * 100, 512 * 32),
+                                 nn.BatchNorm1d(512 * 32),
+                                 nn.Tanh())
+        self.fc3 = nn.Sequential(nn.Linear(512 * 32, 512 * 8),
+                                 nn.BatchNorm1d(512 * 32),
+                                 nn.Tanh())
+        self.fc4 = nn.Sequential(nn.Linear(512 * 8, 512 * 2),
+                                 nn.BatchNorm1d(512 * 32),
+                                 nn.Tanh())
+        self.fc5 = nn.Sequential(nn.Linear(512 * 2, 256),
+                                 nn.BatchNorm1d(256),
+                                 nn.Tanh())
+        self.fc6 = nn.Linear(256, latent_dim)
+
+    def forward(self, x):
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        x = self.fc3(x)
+        x = self.fc4(x)
+        x = self.fc5(x)
+        z = self.fc6(x)
+        return z
+        
     
 
 if __name__ == '__main__':
