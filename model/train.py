@@ -436,23 +436,23 @@ def train(config, train_prefetcher):
         #     plot_label = filename[i_plot].split('/')[-1] + '_epoch' + str(epoch)
         #     plot_magnitude_spectrums(pos_freqs, magnitudes_real[:, :, :, :config.nbins_hrtf], magnitudes_interpolated[:, :, :, :config.nbins_hrtf],
         #                              "left", "training", plot_label, path, log_scale_magnitudes=True)
-
+    plot_path = path + '/loss_plot'
     plot_losses([train_loss_D_list, train_loss_G_list], 
                 ['Discriminator loss', 'Generator loss'],
                 ['red', 'green'], 
-                path=path, filename='loss_curves', title="Loss curves")
-    plot_losses([train_loss_D_list],['Discriminator loss'],['red'], path=path, filename='Discriminator_loss', title="Dis loss")
-    plot_losses([train_loss_G_list],['Generator loss'],['green'], path=path, filename='Generator_loss', title="Gen loss")
+                path=plot_path, filename='loss_curves', title="Loss curves")
+    plot_losses([train_loss_D_list],['Discriminator loss'],['red'], path=plot_path, filename='Discriminator_loss', title="Dis loss")
+    plot_losses([train_loss_G_list],['Generator loss'],['green'], path=plot_path, filename='Generator_loss', title="Gen loss")
     plot_losses([train_loss_D_hr_list, train_loss_D_sr],
                 ['Discriminator loss real', 'Discriminator loss fake'],
                 ["#5ec962", "#440154"], 
-                path=path, filename='loss_curves_Dis', title="Discriminator loss curves")
-    plot_losses([train_loss_G_sh_mse_list],['SH mse loss'],['blue'], path=path, filename='SH_mse_loss', title="SH mse loss")
-    plot_losses([train_loss_G_sh_cos_list],['SH cos loss'],['blue'], path=path, filename='SH_cos_loss', title="SH cos loss")
+                path=plot_path, filename='loss_curves_Dis', title="Discriminator loss curves")
+    plot_losses([train_loss_G_sh_mse_list],['SH mse loss'],['blue'], path=plot_path, filename='SH_mse_loss', title="SH mse loss")
+    plot_losses([train_loss_G_sh_cos_list],['SH cos loss'],['blue'], path=plot_path, filename='SH_cos_loss', title="SH cos loss")
     plot_losses([train_loss_G_adversarial_list, train_loss_G_content_list, train_loss_G_sh_cos_list],
                 ['Generator adv loss', 'Generator content loss', 'Coefficient sim loss'],
                 ['green', 'purple', 'red'], 
-                path=path, filename='loss_curves_G', title="Generator loss curves")
+                path=plot_path, filename='loss_curves_G', title="Generator loss curves")
 
     with open(f'{path}/train_losses.pickle', "wb") as file:
         pickle.dump((train_loss_D_list, train_loss_D_hr_list, train_loss_D_sr_list,
