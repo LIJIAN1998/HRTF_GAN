@@ -307,47 +307,47 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.nbins = nbins
 
-        self.features = nn.Sequential(
-            # input size: nbins x 506     484
-            nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(64),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(64),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
-            nn.BatchNorm1d(64),
-            nn.LeakyReLU(0.2, True),
-            # nbins x 253          242
-            nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(128),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
-            nn.BatchNorm1d(128),
-            nn.LeakyReLU(0.2, True),
-            # nbins x 127      121
-            nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(256),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
-            nn.BatchNorm1d(256),
-            nn.LeakyReLU(0.2, True),
-            # nbins x  64     61
-            nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            # nbins x 32
-            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            # nn.BatchNorm1d(512),
-            # nn.LeakyReLU(0.2, True),
-            # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            # nn.BatchNorm1d(512),
-            # nn.LeakyReLU(0.2, True),
-            # nbins x 16
-        )
+        # self.features = nn.Sequential(
+        #     # input size: nbins x 506     484
+        #     nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(64),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(64),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(64),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 253          242
+        #     nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(128),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(128),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 127      121
+        #     nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x  64     61
+        #     nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 32
+        #     # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+        #     # nn.BatchNorm1d(512),
+        #     # nn.LeakyReLU(0.2, True),
+        #     # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+        #     # nn.BatchNorm1d(512),
+        #     # nn.LeakyReLU(0.2, True),
+        #     # nbins x 16
+        # )
 
         self.features = nn.Sequential(
             # input size: nbins x 812       841
