@@ -277,7 +277,8 @@ def main(config, mode):
         right = right_train[0]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        SHT = SphericalHarmonicsTransform(config.max_order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        order = 19
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         # masked_merge = SHT.get_masked_hrirs(merge)
         # print("masked merge: ", masked_merge.shape)
@@ -292,7 +293,7 @@ def main(config, mode):
         mean_original = torch.mean(merge)
         max_original = torch.max(merge)
         min_original = torch.min(merge)
-        print("order: ", config.max_order)
+        print("order: ", order)
         print("mean 1: ", mean_recon1)
         print("original mean: ", mean_original)
         print("max 1: ", max1)
