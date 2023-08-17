@@ -92,9 +92,10 @@ class ResBlock(nn.Module):
         return x
 
 class ResEncoder(nn.Module):
-    def __init__(self, block, nbins: int, order: int, latent_dim: int) -> None:
+    def __init__(self, block, nbins: int, order: int, latent_dim: int):
         super(ResEncoder, self).__init__()
-        self.coefficient = (order + 1) ** 2
+        # self.coefficient = (order + 1) ** 2
+        self.coefficient = order * (order + 1)
         num_blocks = 2
         self.expansion = 1
         self.in_channels = 256
@@ -113,7 +114,7 @@ class ResEncoder(nn.Module):
         for i in range(self.num_encode_layers):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
-        self.fc = nn.Sequential(nn.Linear(512*25, 512, bias=False),
+        self.fc = nn.Sequential(nn.Linear(512*24, 512, bias=False),
                                 nn.BatchNorm1d(512, momentum=0.9),
                                 nn.ReLU(True),
                                 nn.Linear(512, latent_dim))
@@ -134,13 +135,13 @@ class ResEncoder(nn.Module):
         return nn.Sequential(*layers)
     
     def forward(self, x):
-        print("input: ", x.shape)
+        # print("input: ", x.shape)
         x = self.conv1(x)
-        print("conv1: ", x.shape)
+        # print("conv1: ", x.shape)
         x = self.res_layers(x)
-        print("res: ", x.shape)
+        # print("res: ", x.shape)
         x = x.view(x.size(0), -1)
-        print("flatten: ", x.shape)
+        # print("flatten: ", x.shape)
         z = self.fc(x)
         return z
     
@@ -148,7 +149,8 @@ class D_DBPN(nn.Module):
     def __init__(self, nbins, base_channels, num_features, latent_dim, max_order):
         super(D_DBPN, self).__init__()
 
-        max_num_coefficient = (max_order + 1) ** 2
+        # max_num_coefficient = (max_order + 1) ** 2
+        max_num_coefficient = max_order * (max_order + 1)
         kernel = 4
         stride = 2
         padding = 1
@@ -276,7 +278,7 @@ class Decoder(nn.Module):
         return x
 
 class AutoEncoder(nn.Module):
-    def __init__(self, nbins: int, in_order: int, latent_dim: int, base_channels: int, num_features: int, out_oder: int=28):
+    def __init__(self, nbins: int, in_order: int, latent_dim: int, base_channels: int, num_features: int, out_oder: int=22):
         super(AutoEncoder, self).__init__()
 
         self.encoder = ResEncoder(ResBlock, nbins, in_order, latent_dim)
@@ -306,7 +308,7 @@ class Discriminator(nn.Module):
         self.nbins = nbins
 
         self.features = nn.Sequential(
-            # input size: nbins x 484
+            # input size: nbins x 506     484
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
@@ -316,28 +318,28 @@ class Discriminator(nn.Module):
             nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
-            # input size: nbins x 242
+            # nbins x 253          242
             nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
-            # nbins x 121
+            # nbins x 127      121
             nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
-            # nbins x 61
+            # nbins x  64     61
             nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
-            # nbins x 31
+            # nbins x 32
             # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
             # nn.BatchNorm1d(512),
             # nn.LeakyReLU(0.2, True),
@@ -397,7 +399,7 @@ class Discriminator(nn.Module):
         # )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 31, 512),
+            nn.Linear(512 * 32, 512),
             # nn.BatchNorm1d(512),
             # nn.LeakyReLU(0.2, True),
             # nn.Linear(512, 512),
@@ -445,15 +447,15 @@ class FCEncoder(nn.Module):
         z = self.fc6(x)
         return z
         
-    
+
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 400)
-    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=256, num_features=512, out_oder=21)
+    x = torch.randn(2, 256, 380)
+    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=256, num_features=512, out_oder=22)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)
-    x = torch.randn(2, 256, 484)
-    print(x.shape)
+    # x = torch.randn(2, 256, 484)
+    # print(x.shape)
     x = D(x)
     print(x.shape)
