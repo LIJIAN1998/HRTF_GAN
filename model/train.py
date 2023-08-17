@@ -443,7 +443,7 @@ def train(config, train_prefetcher):
                 path=plot_path, filename='loss_curves', title="Loss curves")
     plot_losses([train_loss_D_list],['Discriminator loss'],['red'], path=plot_path, filename='Discriminator_loss', title="Dis loss")
     plot_losses([train_loss_G_list],['Generator loss'],['green'], path=plot_path, filename='Generator_loss', title="Gen loss")
-    plot_losses([train_loss_D_hr_list, train_loss_D_sr],
+    plot_losses([train_loss_D_hr_list, train_loss_D_sr_list],
                 ['Discriminator loss real', 'Discriminator loss fake'],
                 ["#5ec962", "#440154"], 
                 path=plot_path, filename='loss_curves_Dis', title="Discriminator loss curves")
