@@ -384,9 +384,13 @@ class SphericalHarmonicsTransform:
         self.grid[..., 0] = np.pi / 2 + self.grid[..., 0]
 
         self.selected_angles = self.grid[~selection_mask]
+        # self._harmonics = np.column_stack(
+        #     [np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) for degree in
+        #      np.arange(max_degree + 1) for order in np.arange(-degree, degree + 1)])
         self._harmonics = np.column_stack(
-            [np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) for degree in
-             np.arange(max_degree + 1) for order in np.arange(-degree, degree + 1)])
+            [np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) if order >= 0 
+             else np.imag(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) for degree in 
+             np.arange(max_degree + 1) for order in np.arange(-degree, degree)])
         self._valid_mask = ~selection_mask
 
     def __call__(self, hrirs):

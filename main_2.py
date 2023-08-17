@@ -279,41 +279,41 @@ def main(config, mode):
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
         SHT = SphericalHarmonicsTransform(config.max_order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
-        masked_merge = SHT.get_masked_hrirs(merge)
-        print("masked merge: ", masked_merge.shape)
-        # sh_coef = torch.from_numpy(SHT(merge)).float()
-        # recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
-        # merge = torch.from_numpy(merge.data).float()
-        # x = recon[70, 1, 0, :]
-        # y = merge[70, 1, 0, :]
-        # mean_recon1 = torch.mean(recon)
-        # max1 = torch.max(recon)
-        # min1 = torch.min(recon)
-        # mean_original = torch.mean(merge)
-        # max_original = torch.max(merge)
-        # min_original = torch.min(merge)
-        # print("order: ", config.max_order)
-        # print("mean 1: ", mean_recon1)
-        # print("original mean: ", mean_original)
-        # print("max 1: ", max1)
-        # print("max original: ", max_original)
-        # print("min 1: ", min1)
-        # print("min original: ", min_original)
+        # masked_merge = SHT.get_masked_hrirs(merge)
+        # print("masked merge: ", masked_merge.shape)
+        sh_coef = torch.from_numpy(SHT(merge)).float()
+        recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
+        merge = torch.from_numpy(merge.data).float()
+        x = recon[70, 1, 0, :]
+        y = merge[70, 1, 0, :]
+        mean_recon1 = torch.mean(recon)
+        max1 = torch.max(recon)
+        min1 = torch.min(recon)
+        mean_original = torch.mean(merge)
+        max_original = torch.max(merge)
+        min_original = torch.min(merge)
+        print("order: ", config.max_order)
+        print("mean 1: ", mean_recon1)
+        print("original mean: ", mean_original)
+        print("max 1: ", max1)
+        print("max original: ", max_original)
+        print("min 1: ", min1)
+        print("min original: ", min_original)
 
-        # generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
-        # target = merge[None,:].permute(0,4,3,1,2)
-        # error = spectral_distortion_metric(generated, target, domain='magnitude_db')
-        # print("lsd error: ", error)
+        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        target = merge[None,:].permute(0,4,3,1,2)
+        error = spectral_distortion_metric(generated, target, domain='magnitude_db')
+        print("lsd error: ", error)
 
         # sh_loss = ((hr_coefficient - sh_coef.T)**2).mean()
         # print("sh loss: ", sh_loss)
-        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        # ax1.plot(x)
-        # ax1.set_title('recon')
-        # ax2.plot(y)
-        # ax2.set_title('original')
-        # plt.savefig("output1.png")
-        # plt.close()
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        ax1.plot(x)
+        ax1.set_title('recon')
+        ax2.plot(y)
+        ax2.set_title('original')
+        plt.savefig("output1.png")
+        plt.close()
 
         # coefs = []
         # for sample_id in range(len(left_train)):
@@ -411,7 +411,7 @@ def main(config, mode):
         # for i in range(72 // row_ratio):
         #     for j in range(12 // col_ratio):
         #         mask[row_ratio*i, col_ratio*j, :] = original_mask[row_ratio*i, col_ratio*j, :]
-        # order = 28
+        # order = 21
         # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         # sh_coef = torch.from_numpy(SHT(merge)).T
         # print("coef: ", sh_coef.shape, sh_coef.dtype)
