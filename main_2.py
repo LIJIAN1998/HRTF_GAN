@@ -277,7 +277,7 @@ def main(config, mode):
         right = right_train[0]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        order = 6
+        order = 28
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         # masked_merge = SHT.get_masked_hrirs(merge)
@@ -309,13 +309,13 @@ def main(config, mode):
 
         # sh_loss = ((hr_coefficient - sh_coef.T)**2).mean()
         # print("sh loss: ", sh_loss)
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        ax1.plot(x)
-        ax1.set_title('recon')
-        ax2.plot(y)
-        ax2.set_title('original')
-        plt.savefig("output1.png")
-        plt.close()
+        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        # ax1.plot(x)
+        # ax1.set_title('recon')
+        # ax2.plot(y)
+        # ax2.set_title('original')
+        # plt.savefig("output1.png")
+        # plt.close()
 
         # coefs = []
         # for sample_id in range(len(left_train)):
