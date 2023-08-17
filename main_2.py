@@ -149,6 +149,7 @@ def main(config, mode):
             train_prefetcher, _ = load_hrtf(config)
         print("transform applied: ", config.transform_flag)
         print("train fetcher: ", len(train_prefetcher))
+        print("max order: ", config.max_order)
         # Trains the model, according to the parameters specified in Config
         # util.initialise_folders(config, overwrite=True)
         train(config, train_prefetcher)
