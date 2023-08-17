@@ -283,6 +283,7 @@ def main(config, mode):
         # masked_merge = SHT.get_masked_hrirs(merge)
         # print("masked merge: ", masked_merge.shape)
         sh_coef = torch.from_numpy(SHT(merge)).float()
+        print("coef: ", sh_coef.shape)
         recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
         merge = torch.from_numpy(merge.data).float()
         x = recon[70, 1, 0, :]
