@@ -134,9 +134,13 @@ class ResEncoder(nn.Module):
         return nn.Sequential(*layers)
     
     def forward(self, x):
+        print("input: ", x.shape)
         x = self.conv1(x)
+        print("conv1: ", x.shape)
         x = self.res_layers(x)
+        print("res: ", x.shape)
         x = x.view(x.size(0), -1)
+        print("flatten: ", x.shape)
         z = self.fc(x)
         return z
     
