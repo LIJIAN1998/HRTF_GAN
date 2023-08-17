@@ -277,7 +277,7 @@ def main(config, mode):
         right = right_train[0]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        order = 9
+        order = 6
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         # masked_merge = SHT.get_masked_hrirs(merge)
