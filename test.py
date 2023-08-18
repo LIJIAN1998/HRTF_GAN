@@ -269,58 +269,58 @@ for order in [5]:
         plt.savefig(f"tf_{ir_id}.png")
         plt.close()
 
-    total_positions = len(inverse)
-    total_all_positions = 0
+    # total_positions = len(inverse)
+    # total_all_positions = 0
 
-    total_sd_metric = 0
+    # total_sd_metric = 0
 
-    ir_id = 0
-    max_value = None
-    max_id = None
-    min_value = None
-    min_id = None
+    # ir_id = 0
+    # max_value = None
+    # max_id = None
+    # min_value = None
+    # min_id = None
 
-    for ori, gen in zip(ori_hrtf, recon_hrtf):
-        if domain == 'magnitude_db':
-            ori = 10 ** (ori/20)
-            gen = 10 ** (gen/20)
+    # for ori, gen in zip(ori_hrtf, recon_hrtf):
+    #     if domain == 'magnitude_db':
+    #         ori = 10 ** (ori/20)
+    #         gen = 10 ** (gen/20)
 
-        if domain == 'magnitude_db' or domain == 'magnitude':
-            average_over_frequencies = spectral_distortion_inner(abs(gen), abs(ori))
-            total_all_positions += np.sqrt(average_over_frequencies)
-        elif domain == 'time':
+    #     if domain == 'magnitude_db' or domain == 'magnitude':
+    #         average_over_frequencies = spectral_distortion_inner(abs(gen), abs(ori))
+    #         total_all_positions += np.sqrt(average_over_frequencies)
+    #     elif domain == 'time':
 
-            nbins = 128
-            ori_tf_left = abs(scipy.fft.rfft(ori[:nbins], nbins*2)[1:])
-            ori_tf_right = abs(scipy.fft.rfft(ori[nbins:], nbins*2)[1:])
-            gen_tf_left = abs(scipy.fft.rfft(gen[:nbins], nbins*2)[1:])
-            gen_tf_right = abs(scipy.fft.rfft(gen[nbins:], nbins*2)[1:])
+    #         nbins = 128
+    #         ori_tf_left = abs(scipy.fft.rfft(ori[:nbins], nbins*2)[1:])
+    #         ori_tf_right = abs(scipy.fft.rfft(ori[nbins:], nbins*2)[1:])
+    #         gen_tf_left = abs(scipy.fft.rfft(gen[:nbins], nbins*2)[1:])
+    #         gen_tf_right = abs(scipy.fft.rfft(gen[nbins:], nbins*2)[1:])
 
-            ori_tf = np.ma.concatenate([ori_tf_left, ori_tf_right])
-            gen_tf = np.ma.concatenate([gen_tf_left, gen_tf_right])
+    #         ori_tf = np.ma.concatenate([ori_tf_left, ori_tf_right])
+    #         gen_tf = np.ma.concatenate([gen_tf_left, gen_tf_right])
 
-            average_over_frequencies = spectral_distortion_inner(gen_tf, ori_tf)
-            total_all_positions += np.sqrt(average_over_frequencies)
+    #         average_over_frequencies = spectral_distortion_inner(gen_tf, ori_tf)
+    #         total_all_positions += np.sqrt(average_over_frequencies)
 
-        print('Log SD (for %s position): %s' % (ir_id, np.sqrt(average_over_frequencies)))
-        if max_value is None or np.sqrt(average_over_frequencies) > max_value:
-            max_value = np.sqrt(average_over_frequencies)
-            max_id = ir_id
-        if min_value is None or np.sqrt(average_over_frequencies) < min_value:
-            min_value = np.sqrt(average_over_frequencies)
-            min_id = ir_id
-        ir_id += 1
+    #     print('Log SD (for %s position): %s' % (ir_id, np.sqrt(average_over_frequencies)))
+    #     if max_value is None or np.sqrt(average_over_frequencies) > max_value:
+    #         max_value = np.sqrt(average_over_frequencies)
+    #         max_id = ir_id
+    #     if min_value is None or np.sqrt(average_over_frequencies) < min_value:
+    #         min_value = np.sqrt(average_over_frequencies)
+    #         min_id = ir_id
+    #     ir_id += 1
 
-    sd_metric = total_all_positions / total_positions
-    total_sd_metric += sd_metric
+    # sd_metric = total_all_positions / total_positions
+    # total_sd_metric += sd_metric
 
-    print('Min Log SD (for %s position): %s' % (min_id, min_value))
-    print('Max Log SD (for %s position): %s' % (max_id, max_value))
+    # print('Min Log SD (for %s position): %s' % (min_id, min_value))
+    # print('Max Log SD (for %s position): %s' % (max_id, max_value))
 
-    PLOT_FLAG = True
-    if PLOT_FLAG == True:
-        plot_tf(min_id)
-        plot_tf(max_id)
+    # PLOT_FLAG = True
+    # if PLOT_FLAG == True:
+    #     plot_tf(min_id)
+    #     plot_tf(max_id)
 
 
-    print('Log SD (across all positions): %s' % float(sd_metric))
+    # print('Log SD (across all positions): %s' % float(sd_metric))
