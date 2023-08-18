@@ -74,7 +74,9 @@ def plot_Y(order, degree, sph_harmonics, grid, selection_mask):
     ax.set_ylim(-ax_lim, ax_lim)
     ax.set_zlim(-ax_lim, ax_lim)
     ax.axis('off')
-    plt.show()
+    plt.savefig("sh.png")
+    plt.close()
+    # plt.show()
 
 
 class SphericalHarmonicsTransform:
@@ -244,7 +246,7 @@ for order in [5]:
     print("coef: ", sh_coef.shape, sh_coef.dtype)
 
     # inverse SHT
-    SHT_orig = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask, PLOT_FLAG=False)
+    SHT_orig = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask, PLOT_FLAG=True)
     harmonics = SHT_orig.get_harmonics()
     print("harmonics shape: ", harmonics.shape, harmonics.dtype)
     inverse = harmonics @ sh_coef
