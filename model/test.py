@@ -18,6 +18,23 @@ from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from plot import plot_hrtf
 import matplotlib.pyplot as plt
 
+def spectral_distortion_inner(input_spectrum, target_spectrum):
+    numerator = target_spectrum
+    denominator = input_spectrum
+    return np.mean((20 * np.log10(numerator / denominator)) ** 2)
+
+def plot_tf(ir_id, ori_hrtf, recon_hrtf):
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+
+        ax1.plot(ori_hrtf[ir_id])
+        ax1.set_title(f'original (ID: {ir_id})')
+        ax2.plot(recon_hrtf[ir_id])
+        ax2.set_title(f'recon (ID {ir_id})')
+
+        # plt.show()
+        plt.savefig(f"tf_{ir_id}.png")
+        plt.close()
+
 def test(config, val_prefetcher):
     # source: https://github.com/Lornatang/SRGAN-PyTorch/blob/main/test.py
     # Initialize super-resolution model
@@ -26,8 +43,9 @@ def test(config, val_prefetcher):
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
+    domain = config.domain
     ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
-                                                         'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+                                                         'side': 'left', 'domain': domain}}, subject_ids='first')
     num_row_angles = len(ds.row_angles)
     num_col_angles = len(ds.column_angles)
     num_radii = len(ds.radii)
@@ -111,15 +129,69 @@ def test(config, val_prefetcher):
             # _, _, recon = model(lr_coefficient)
             recon = model(lr_coefficient)
 
+        original_mask = masks[0].numpy().astype(bool)
         SHT = SphericalHarmonicsTransform(max_order, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
         harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
         if config.transform_flag:
             recon = recon * std + mean
         sr = harmonics @ recon[0].T
+        total_positions = len(sr)
+        ori_hrtf = hrtf[0].reshape(nbins, -1).T
+        total_all_positions = 0
         sr = sr.reshape(-1, num_row_angles, num_col_angles, num_radii, nbins)
         if config.domain == "magnitude":
-            
             sr = F.relu(sr) + margin
+        
+        total_sd_metric = 0
+
+        ir_id = 0
+        max_value = None
+        max_id = None
+        min_value = None
+        min_id = None
+        print("subject: ", sample_id)
+        for ori, gen in zip(ori_hrtf, sr):
+            if domain == 'magnitude_db':
+                ori = 10 ** (ori/20)
+                gen = 10 ** (gen/20)
+
+            if domain == 'magnitude_db' or domain == 'magnitude':
+                average_over_frequencies = spectral_distortion_inner(abs(gen), abs(ori))
+                total_all_positions += np.sqrt(average_over_frequencies)
+            elif domain == 'time':
+
+                nbins = 128
+                ori_tf_left = abs(scipy.fft.rfft(ori[:nbins], nbins*2)[1:])
+                ori_tf_right = abs(scipy.fft.rfft(ori[nbins:], nbins*2)[1:])
+                gen_tf_left = abs(scipy.fft.rfft(gen[:nbins], nbins*2)[1:])
+                gen_tf_right = abs(scipy.fft.rfft(gen[nbins:], nbins*2)[1:])
+
+                ori_tf = np.ma.concatenate([ori_tf_left, ori_tf_right])
+                gen_tf = np.ma.concatenate([gen_tf_left, gen_tf_right])
+
+                average_over_frequencies = spectral_distortion_inner(gen_tf, ori_tf)
+                total_all_positions += np.sqrt(average_over_frequencies)
+
+            print('Log SD (for %s position): %s' % (ir_id, np.sqrt(average_over_frequencies)))
+            if max_value is None or np.sqrt(average_over_frequencies) > max_value:
+                max_value = np.sqrt(average_over_frequencies)
+                max_id = ir_id
+            if min_value is None or np.sqrt(average_over_frequencies) < min_value:
+                min_value = np.sqrt(average_over_frequencies)
+                min_id = ir_id
+            ir_id += 1
+        
+        sd_metric = total_all_positions / total_positions
+        total_sd_metric += sd_metric
+
+        print('Min Log SD (for %s position): %s' % (min_id, min_value))
+        print('Max Log SD (for %s position): %s' % (max_id, max_value))
+
+        plot_tf(min_id, ori_hrtf, sr)
+        plot_tf(max_id, ori_hrtf, sr)
+        
+        
+        
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = sr[0].detach().cpu()
         # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins

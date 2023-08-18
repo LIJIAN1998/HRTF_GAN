@@ -75,20 +75,21 @@ class ResBlock(nn.Module):
             nn.BatchNorm1d(out_channels * self.expansion)
         )
         self.relu = nn.ReLU()
+        self.prelu = nn.PReLU()
         self.identity_downsample = identity_downsample
         self.stride = stride
 
     def forward(self, x):
         identity = x.clone()
         x = self.conv1(x)
-        x = self.relu(x)
+        x = self.prelu(x)
         x = self.conv2(x)
         
         if self.identity_downsample is not None:
             identity = self.identity_downsample(identity)
 
         x += identity
-        x = self.relu(x)
+        x = self.prelu(x)
         return x
 
 class ResEncoder(nn.Module):
@@ -102,7 +103,8 @@ class ResEncoder(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv1d(nbins, self.in_channels, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(self.in_channels),
-            nn.ReLU(),
+            # nn.ReLU(),
+            nn.PReLU()
         )
         self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
@@ -116,7 +118,8 @@ class ResEncoder(nn.Module):
         self.res_layers = nn.Sequential(*res_layers)
         self.fc = nn.Sequential(nn.Linear(512*16, 512, bias=False),
                                 nn.BatchNorm1d(512, momentum=0.9),
-                                nn.ReLU(True),
+                                # nn.ReLU(True),
+                                nn.PReLU(),
                                 nn.Linear(512, latent_dim))
     
     def _make_layer(self, block, out_channels, num_blocks, stride=1):
@@ -158,7 +161,8 @@ class D_DBPN(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(latent_dim, 512*16),
             nn.BatchNorm1d(512*16),
-            nn.ReLU(True),
+            # nn.ReLU(True),
+            nn.PReLU(),
             Reshape(-1, 512, 16),
         )
         activation = 'tanh'
