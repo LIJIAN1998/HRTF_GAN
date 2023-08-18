@@ -21,7 +21,7 @@ class Trim(nn.Module):
         return x[:,:,:self.shape]
 
 class IterativeBlock(nn.Module):
-    def __init__(self, channels, kernel, stride, padding, activation='tanh'):
+    def __init__(self, channels, kernel, stride, padding, activation='prelu'):
         super(IterativeBlock, self).__init__()
         self.up1 = UpBlock(channels, kernel, stride, padding, activation=activation)
         self.down1 = DownBlock(channels, kernel, stride, padding, activation=activation)
