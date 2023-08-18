@@ -163,10 +163,10 @@ load_function = getattr(imp, config.dataset)
 
 domain = 'magnitude_db'
 
-left_hrtf = load_function(data_dir, features_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
                                                             'side': 'left', 'domain': domain}},  subject_ids='first')
 
-right_hrtf = load_function(data_dir, features_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
                                                              'side': 'right', 'domain': domain}},  subject_ids='first')
 left_ids = left_hrtf.subject_ids
 right_ids = right_hrtf.subject_ids
