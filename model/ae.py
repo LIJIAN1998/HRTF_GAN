@@ -107,14 +107,14 @@ class ResEncoder(nn.Module):
         self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
         # self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
-        self.num_encode_layers = 4
+        self.num_encode_layers = 5
         if self.coefficient in [16 ,4]:
             self.num_encode_layers -= 1
         res_layers.append(self._make_layer(block, 256, num_blocks))
         for i in range(self.num_encode_layers):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
-        self.fc = nn.Sequential(nn.Linear(512*24, 512, bias=False),
+        self.fc = nn.Sequential(nn.Linear(512*16, 512, bias=False),
                                 nn.BatchNorm1d(512, momentum=0.9),
                                 nn.ReLU(True),
                                 nn.Linear(512, latent_dim))
@@ -156,10 +156,10 @@ class D_DBPN(nn.Module):
         padding = 1
         
         self.fc = nn.Sequential(
-            nn.Linear(latent_dim, 512*26),
-            nn.BatchNorm1d(512*26),
+            nn.Linear(latent_dim, 512*16),
+            nn.BatchNorm1d(512*16),
             nn.ReLU(True),
-            Reshape(-1, 512, 26),
+            Reshape(-1, 512, 16),
         )
         activation = 'tanh'
 
@@ -307,50 +307,8 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.nbins = nbins
 
-        # self.features = nn.Sequential(
-        #     # input size: nbins x 506     484
-        #     nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
-        #     nn.BatchNorm1d(64),
-        #     nn.LeakyReLU(0.2, True),
-        #     nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=1, bias=False),
-        #     nn.BatchNorm1d(64),
-        #     nn.LeakyReLU(0.2, True),
-        #     nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
-        #     nn.BatchNorm1d(64),
-        #     nn.LeakyReLU(0.2, True),
-        #     # nbins x 253          242
-        #     nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
-        #     nn.BatchNorm1d(128),
-        #     nn.LeakyReLU(0.2, True),
-        #     nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
-        #     nn.BatchNorm1d(128),
-        #     nn.LeakyReLU(0.2, True),
-        #     # nbins x 127      121
-        #     nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
-        #     nn.BatchNorm1d(256),
-        #     nn.LeakyReLU(0.2, True),
-        #     nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
-        #     nn.BatchNorm1d(256),
-        #     nn.LeakyReLU(0.2, True),
-        #     # nbins x  64     61
-        #     nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
-        #     nn.BatchNorm1d(512),
-        #     nn.LeakyReLU(0.2, True),
-        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-        #     nn.BatchNorm1d(512),
-        #     nn.LeakyReLU(0.2, True),
-        #     # nbins x 32
-        #     # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-        #     # nn.BatchNorm1d(512),
-        #     # nn.LeakyReLU(0.2, True),
-        #     # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-        #     # nn.BatchNorm1d(512),
-        #     # nn.LeakyReLU(0.2, True),
-        #     # nbins x 16
-        # )
-
         self.features = nn.Sequential(
-            # input size: nbins x 812       841
+            # input size: nbins x 506     484
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
@@ -360,46 +318,88 @@ class Discriminator(nn.Module):
             nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
-            # nbins x 406   421
+            # nbins x 253          242
             nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2, True),
-            # nbins x 203   211
+            # nbins x 127      121
             nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, True),
-            # nbins x 102   106
+            # nbins x  64     61
             nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
             nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
-            # nbins x 51    53
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            # nbins x 26    27
+            # nbins x 32
             # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
             # nn.BatchNorm1d(512),
             # nn.LeakyReLU(0.2, True),
             # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
             # nn.BatchNorm1d(512),
             # nn.LeakyReLU(0.2, True),
-            # nbins x 34
+            # nbins x 16
         )
 
+        # self.features = nn.Sequential(
+        #     # input size: nbins x 812       841
+        #     nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(64),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(64),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(64),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 406   421
+        #     nn.Conv1d(64, 128, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(128),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(128, 128, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(128),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 203   211
+        #     nn.Conv1d(128, 256, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(256, 256, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(256),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 102   106
+        #     nn.Conv1d(256, 512, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 51    53
+        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+        #     nn.BatchNorm1d(512),
+        #     nn.LeakyReLU(0.2, True),
+        #     # nbins x 26    27
+        #     # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=1, bias=False),
+        #     # nn.BatchNorm1d(512),
+        #     # nn.LeakyReLU(0.2, True),
+        #     # nn.Conv1d(512, 512, kernel_size=3, padding=1, stride=2, bias=False),
+        #     # nn.BatchNorm1d(512),
+        #     # nn.LeakyReLU(0.2, True),
+        #     # nbins x 34
+        # )
+
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 26, 512),
+            nn.Linear(512 * 32, 512),
             # nn.BatchNorm1d(512),
             # nn.LeakyReLU(0.2, True),
             # nn.Linear(512, 512),
@@ -450,8 +450,8 @@ class FCEncoder(nn.Module):
 
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 380)
-    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=256, num_features=512, out_oder=28)
+    x = torch.randn(2, 256, 506)
+    G = AutoEncoder(nbins=256, in_order=22, latent_dim=128, base_channels=256, num_features=512, out_oder=22)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)

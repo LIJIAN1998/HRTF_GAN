@@ -302,8 +302,9 @@ def train(config, train_prefetcher):
             # ones_label = Variable(torch.ones(bs,1)).to(device) # labels for real data
             # zeros_label = Variable(torch.zeros(bs,1)).to(device) # labels for generated data
 
-            # Generate fake samples using D-DBPN
-            sr = netG(lr_coefficient)
+            # Generate fake samples using autoencoder
+            # sr = netG(lr_coefficient)
+            sr = netG(hr_coefficient)
 
             # Discriminator Training
             netD.zero_grad()
@@ -334,7 +335,7 @@ def train(config, train_prefetcher):
                 adversarial_loss_G = config.adversarial_weight * adversarial_criterion(pred_fake, label)
                 sh_cos_loss = cos_similarity_criterion(sr, hr_coefficient)
                 sh_mse_loss = ((sr - hr_coefficient) ** 2).mean()  # sh coefficient loss
-                lr0 = lr_coefficient[0].T
+                lr0 = lr_coefficient[0].T    # num coef x nbins
                 sr0 = sr[0].T
                 hr0 = hr_coefficient[0].T
                 with open("log.txt", "a") as f:
