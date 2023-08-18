@@ -220,7 +220,7 @@ def train(config, train_prefetcher):
 
     # Define loss functions
     adversarial_criterion = nn.BCEWithLogitsLoss()
-    cos_similarity_criterion = nn.CosineSimilarity(dim=2)
+    cos_similarity_criterion = cos_similarity_loss
     content_criterion = sd_ild_loss
 
     # mean and std for ILD and SD, which are used for normalization
@@ -332,7 +332,7 @@ def train(config, train_prefetcher):
                 pred_fake = netD(sr).view(-1)
                 label.fill_(real_label)
                 adversarial_loss_G = config.adversarial_weight * adversarial_criterion(pred_fake, label)
-                sh_cos_loss = 1 - cos_similarity_criterion(sr, hr_coefficient).mean()
+                sh_cos_loss = cos_similarity_criterion(sr, hr_coefficient)
                 sh_mse_loss = ((sr - hr_coefficient) ** 2).mean()  # sh coefficient loss
                 lr0 = lr_coefficient[0].T
                 sr0 = sr[0].T

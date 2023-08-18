@@ -130,8 +130,10 @@ def main(config, mode):
             # f.write(f"lambda: {lambda_feature}\n")
             # f.write(f"latent_dim: {latent_dim}\n")
             f.write(f"critic iters: {critic_iters}\n")
-            f.write(f"normalize? {config.transform_flag}\n", )
-            f.write(f"domain: {config.domain}\n\n")
+            f.write(f"normalize? {config.transform_flag}\n")
+            f.write(f"domain: {config.domain}\n")
+            f.write(f"max order: {config.max_order}\n")
+            f.write(f"transform applied: {config.transform_flag}\n")
 
         if config.transform_flag:
             mean_std_dir = config.mean_std_coef_dir
@@ -149,7 +151,6 @@ def main(config, mode):
             train_prefetcher, _ = load_hrtf(config)
         print("transform applied: ", config.transform_flag)
         print("train fetcher: ", len(train_prefetcher))
-        print("max order: ", config.max_order)
         # Trains the model, according to the parameters specified in Config
         # util.initialise_folders(config, overwrite=True)
         train(config, train_prefetcher)

@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pickle
 
+import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
 from torch.utils.data import random_split
@@ -349,3 +350,10 @@ def sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std):
     output = torch.add(torch.mul(sum_norms, sum_std), sum_mean)
 
     return output
+
+def cos_similarity_loss(generated, target):
+    cos_similarity_criterion = nn.CosineSimilarity(dim=2)
+    avg_cos_loss_over_frequency = ((1-cos_similarity_criterion(generated, target))**2).mean(1)
+    # take square root and average over batch size
+    cos_loss = torch.sqrt(avg_cos_loss_over_frequency).mean()
+    return cos_loss
