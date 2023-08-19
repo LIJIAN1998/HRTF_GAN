@@ -391,11 +391,19 @@ class SphericalHarmonicsTransform:
         #     [np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) if order >= 0 
         #      else np.imag(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) for degree in 
         #      np.arange(max_degree + 1) for order in np.arange(-degree, degree)])
-        self._harmonics = np.column_stack(
-            [np.sqrt(2) * (-1.0)**order * np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) 
-             if order >= 0 else 
+        # self._harmonics = np.column_stack(
+        #     [np.sqrt(2) * (-1.0)**order * np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) 
+        #      if order >= 0 else 
+        #      np.sqrt(2) * (-1.0)**order * np.imag(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0]))
+        #        for degree in np.arange(max_degree + 1) for order in np.arange(-degree, degree)])
+        self._harmonics = np.transpose(
+            [np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0]))
+             if order == 0 else
+             np.sqrt(2) * (-1.0)**order * np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0]))
+             if order > 0 else
              np.sqrt(2) * (-1.0)**order * np.imag(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0]))
-               for degree in np.arange(max_degree + 1) for order in np.arange(-degree, degree)])
+             for degree in
+             np.arange(max_degree + 1) for order in np.arange(-degree, degree + 1)])
         self._valid_mask = ~selection_mask
 
     def __call__(self, hrirs):
