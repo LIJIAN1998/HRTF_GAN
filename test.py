@@ -83,22 +83,22 @@ class SphericalHarmonicsTransform:
 
     def __init__(self, max_degree, row_angles, column_angles, radii, selection_mask, coordinate_system='spherical', PLOT_FLAG=False):
 
-        # row_angles = np.linspace(-180, 180, 3, endpoint=False)
-        # column_angles = np.linspace(-90, 90, 3, endpoint=False)
+        # row_angles = np.linspace(-180, 180, 100, endpoint=False)
+        # column_angles = np.linspace(-90, 90, 100, endpoint=False)
         # selection_mask = np.zeros((len(row_angles), len(column_angles), 1), dtype=bool)
 
         self.grid = np.stack(np.meshgrid(row_angles, column_angles, radii, indexing='ij'), axis=-1)
         if coordinate_system == 'spherical':
             # elevations, azimuths, radii -> azimuths, elevations, radii
             self.grid[..., 0], self.grid[..., 1] = np.deg2rad(self.grid[..., 1]), np.deg2rad(self.grid[..., 0])
-        # elif coordinate_system == 'interaural':
-        #     # lateral, vertical, radius -> azimuths, elevations, radii
-        #     self.grid[..., 0], self.grid[..., 1], self.grid[..., 2] = interaural2spherical(self.grid[..., 0], self.grid[..., 1], self.grid[..., 2],
-        #                                                                     out_angles_as_degrees=False)
-        # else:
-        #     # X, Y, Z -> azimuths, elevations, radii
-        #     self.grid[..., 0], self.grid[..., 1], self.grid[..., 2] = cartesian2spherical(self.grid[..., 0], self.grid[..., 1], self.grid[..., 2],
-        #                                                                    out_angles_as_degrees=False)
+        elif coordinate_system == 'interaural':
+            # lateral, vertical, radius -> azimuths, elevations, radii
+            self.grid[..., 0], self.grid[..., 1], self.grid[..., 2] = interaural2spherical(self.grid[..., 0], self.grid[..., 1], self.grid[..., 2],
+                                                                            out_angles_as_degrees=False)
+        else:
+            # X, Y, Z -> azimuths, elevations, radii
+            self.grid[..., 0], self.grid[..., 1], self.grid[..., 2] = cartesian2spherical(self.grid[..., 0], self.grid[..., 1], self.grid[..., 2],
+                                                                           out_angles_as_degrees=False)
         # Convert elevations to zeniths, azimuths, elevations, radii
         self.grid[..., 1] = np.pi + self.grid[..., 1]
         self.grid[..., 0] = np.pi / 2 + self.grid[..., 0]
@@ -108,9 +108,6 @@ class SphericalHarmonicsTransform:
         # self._harmonics = np.column_stack(
         #     [np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) for degree in
         #      np.arange(max_degree + 1) for order in np.arange(-degree, degree + 1)])
-        # self._harmonics = np.column_stack(
-        #     [np.sqrt(2) * (-1.0)**order * np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) if order >= 0 else np.sqrt(2) * (-1.0)**order * np.imag(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0])) for degree in
-        #      np.arange(max_degree + 1) for order in np.arange(-degree, degree)])
         self._harmonics = np.transpose(
             [np.real(sph_harm(order, degree, self.selected_angles[:, 1], self.selected_angles[:, 0]))
              if order == 0 else
@@ -129,9 +126,11 @@ class SphericalHarmonicsTransform:
 
     def __call__(self, hrirs):
         # max_degree = int(np.sqrt(np.shape(self._harmonics)[1]) - 1)
-        coef = np.linalg.lstsq(self._harmonics, hrirs[self._valid_mask].data, rcond=None)[0]
-        # self._harmonics_inv = np.linalg.pinv(self._harmonics)
-        # coef = self._harmonics_inv @ hrirs[self._valid_mask].data
+        # coef = np.linalg.lstsq(self._harmonics, hrirs[self._valid_mask].data, rcond=None)[0]
+        self._harmonics_inv = scipy.linalg.pinv(self._harmonics)
+        coef = self._harmonics_inv @ hrirs[self._valid_mask].data
+        # coef = self._harmonics_inv @ np.swapaxes(hrirs.data, 1, 0)[np.swapaxes(self._valid_mask, 1, 0)].data
+        #
 
         # [plot_Y(order, degree, self._harmonics, self.grid, ~self._valid_mask) for order in
         #  np.arange(max_degree + 1) for
