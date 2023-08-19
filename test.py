@@ -182,7 +182,7 @@ left_ids = left_hrtf.subject_ids
 right_ids = right_hrtf.subject_ids
 
 order = 30
-for order in [22]:
+for order in [21]:
 
     sample_id = 0
     if domain == 'time':
@@ -190,6 +190,8 @@ for order in [22]:
         right = right_hrtf[sample_id]['features'][:, :, :, :]
         left = np.array([[[remove_itd(x[0]*10, int(len(x[0]) * 0.04), len(x[0]))] for x in y] for y in left])
         right = np.array([[[remove_itd(x[0]*10, int(len(x[0]) * 0.04), len(x[0]))] for x in y] for y in right])
+        print("left: ", left.shape)
+        print("right: ", right.shape)
     else:
         left = left_hrtf[sample_id]['features'][:, :, :, 1:]
         right = right_hrtf[sample_id]['features'][:, :, :, 1:]
