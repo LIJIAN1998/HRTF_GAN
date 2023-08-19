@@ -16,7 +16,7 @@ from model import util
 from preprocessing.cubed_sphere import CubedSphere
 from preprocessing.hrtf_sphere import HRTF_Sphere
 from preprocessing.utils import interpolate_fft, generate_euclidean_cube, convert_to_sofa, my_convert_to_sofa,\
-     merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories, get_sphere_coords
+     merge_files, gen_sofa_preprocess, get_hrtf_from_ds, clear_create_directories, get_sphere_coords, remove_itd
 
 from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation, debug_barycentric
 from baselines.hrtf_selection import run_hrtf_selection
@@ -208,78 +208,39 @@ def main(config, mode):
         # run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
 
     elif mode == "debug":
+        domain = 'time'
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'left', 'domain': 'magnitude_db'}})
+                                                             'side': 'left', 'domain': domain}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                             'side': 'right', 'domain': 'magnitude_db'}})
+                                                             'side': 'right', 'domain': domain}})
 
         with open('/vol/bitbucket/jl2622/HRTF-results/data/SONICOM/train_val_id/train_val_id.pickle', "rb") as f:
             train_ids, val_ids = pickle.load(f)
 
         left_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                                     'side': 'left', 'domain': 'magnitude_db'}},
+                                                                     'side': 'left', 'domain': domain}},
                                    subject_ids=train_ids)
         right_train = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                                      'side': 'right', 'domain': 'magnitude_db'}},
+                                                                      'side': 'right', 'domain': domain}},
                                    subject_ids=train_ids)
 
         mean_std_dir = config.mean_std_coef_dir
         orders = [19, 13, 9, 6, 4, 3, 2, 1, 1]
         upscale_factors = [2, 4, 8, 16, 32, 48, 72, 108, 216]
-        # config.max_order = 15
-        # print("max order: ", config.max_order)
-        # train_prefetcher, _ = load_hrtf(config)
-        # batch_data = train_prefetcher.next()
-        # hr_coefficient = batch_data["hr_coefficient"].float().detach().cpu()
-        # merge = batch_data["hrtf"][2].permute(2, 3, 1, 0).detach().cpu()
-        # mask = batch_data["mask"]
-        # id = batch_data["id"][0].item()
-        # print("id: ", id)
-        # harmonics_list = []
-        # for i in range(mask.size(0)):
-        #     m = mask[i].numpy().astype(bool)
-        #     SHT = SphericalHarmonicsTransform(config.max_order, left_train.row_angles, left_train.column_angles, left_train.radii, m)
-        #     harmonics = torch.from_numpy(SHT.get_harmonics()).float()
-        #     harmonics_list.append(harmonics)
-        # harmonics_tensor = torch.stack(harmonics_list)
-        # recons = (harmonics_tensor @ hr_coefficient.permute(0, 2, 1)).reshape(8, 72, 12, 1, 256)
-        # recon = recons[2]
-        # x = recon[70, 1, 0, :]
-        # y = merge[70, 1, 0, :]
-        # mean_recon1 = torch.mean(recon)
-        # max1 = torch.max(recon)
-        # min1 = torch.min(recon)
-        # mean_original = torch.mean(merge)
-        # max_original = torch.max(merge)
-        # min_original = torch.min(merge)
-        # print("order: ", config.max_order)
-        # print("mean 1: ", mean_recon1)
-        # print("original mean: ", mean_original)
-        # print("max 1: ", max1)
-        # print("max original: ", max_original)
-        # print("min 1: ", min1)
-        # print("min original: ", min_original)
-
-        # generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
-        # target = merge[None,:].permute(0,4,3,1,2)
-        # error = spectral_distortion_metric(generated, target, domain='magnitude_db')
-        # print("lsd error: ", error)
-
-        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        # ax1.plot(x)
-        # ax1.set_title('recon')
-        # ax2.plot(y)
-        # ax2.set_title('original')
-        # plt.savefig("output.png")
-        # plt.close()
 
         print("!!!!!!!!!!!!!!!!!!!!!!!")
         print("id: ", left_train.subject_ids[0])
-        left = left_train[0]['features'][:, :, :, 1:]
-        right = right_train[0]['features'][:, :, :, 1:]
+        if domain == 'time':
+            left = left_train[0]['features'][:, :, :, :]
+            right = right_train[0]['features'][:, :, :, :]
+            left = np.array([[[remove_itd(x[0], int(len(x[0]) * 0.04), len(x[0]))] for x in y] for y in left])
+            right = np.array([[[remove_itd(x[0], int(len(x[0]) * 0.04), len(x[0]))] for x in y] for y in right])
+        else:
+            left = left_train[0]['features'][:, :, :, 1:]
+            right = right_train[0]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        order = 50
+        order = 22
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         # masked_merge = SHT.get_masked_hrirs(merge)
@@ -304,6 +265,11 @@ def main(config, mode):
         print("min 1: ", min1)
         print("min original: ", min_original)
 
+        ori_hrtf = merge.view(-1, 256)
+        recon_hrtf = recon.view(-1, 256)
+        if domain == 'magnitude_db':
+            ori = 10 ** (ori/20)
+            gen = 10 ** (gen/20)
         generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
         target = merge[None,:].permute(0,4,3,1,2)
         error = spectral_distortion_metric(generated, target, domain='magnitude_db')

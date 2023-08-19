@@ -75,7 +75,7 @@ class ResBlock(nn.Module):
             nn.BatchNorm1d(out_channels * self.expansion)
         )
         self.relu = nn.ReLU()
-        self.prelu = nn.PReLU()
+        self.prelu = nn.PReLU(out_channels)
         self.identity_downsample = identity_downsample
         self.stride = stride
 
@@ -95,8 +95,7 @@ class ResBlock(nn.Module):
 class ResEncoder(nn.Module):
     def __init__(self, block, nbins: int, order: int, latent_dim: int):
         super(ResEncoder, self).__init__()
-        # self.coefficient = (order + 1) ** 2
-        self.coefficient = order * (order + 1)
+        self.coefficient = (order + 1) ** 2
         num_blocks = 2
         self.expansion = 1
         self.in_channels = 256
@@ -117,7 +116,7 @@ class ResEncoder(nn.Module):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
         self.fc = nn.Sequential(nn.Linear(512*16, 512, bias=False),
-                                nn.BatchNorm1d(512, momentum=0.9),
+                                nn.BatchNorm1d(512),
                                 # nn.ReLU(True),
                                 nn.PReLU(),
                                 nn.Linear(512, latent_dim))
@@ -138,13 +137,9 @@ class ResEncoder(nn.Module):
         return nn.Sequential(*layers)
     
     def forward(self, x):
-        # print("input: ", x.shape)
         x = self.conv1(x)
-        # print("conv1: ", x.shape)
         x = self.res_layers(x)
-        # print("res: ", x.shape)
         x = x.view(x.size(0), -1)
-        # print("flatten: ", x.shape)
         z = self.fc(x)
         return z
     
@@ -152,8 +147,7 @@ class D_DBPN(nn.Module):
     def __init__(self, nbins, base_channels, num_features, latent_dim, max_order):
         super(D_DBPN, self).__init__()
 
-        # max_num_coefficient = (max_order + 1) ** 2
-        max_num_coefficient = max_order * (max_order + 1)
+        max_num_coefficient = (max_order + 1) ** 2
         kernel = 4
         stride = 2
         padding = 1
@@ -173,8 +167,8 @@ class D_DBPN(nn.Module):
         # Back-projection stages
         self.up1 = IterativeBlock(base_channels, kernel, stride, padding)
         self.up2 = IterativeBlock(base_channels, kernel, stride, padding)
-        self.up3 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
-        self.up4 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
+        self.up3 = IterativeBlock(base_channels, kernel, stride, padding)
+        self.up4 = IterativeBlock(base_channels, kernel, stride, padding)
         self.up5 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
         
         # Reconstruction
@@ -403,7 +397,7 @@ class Discriminator(nn.Module):
         # )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 32, 512),
+            nn.Linear(512 * 31, 512),
             # nn.BatchNorm1d(512),
             # nn.LeakyReLU(0.2, True),
             # nn.Linear(512, 512),
@@ -454,8 +448,8 @@ class FCEncoder(nn.Module):
 
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 506)
-    G = AutoEncoder(nbins=256, in_order=22, latent_dim=128, base_channels=256, num_features=512, out_oder=22)
+    x = torch.randn(2, 256, 484)
+    G = AutoEncoder(nbins=256, in_order=22, latent_dim=128, base_channels=256, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)
