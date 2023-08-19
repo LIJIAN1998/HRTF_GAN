@@ -217,7 +217,7 @@ for order in [28]:
 
     # inverse SHT
     SHT_orig = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask, PLOT_FLAG=False)
-    sh_coef = SHT_orig(merge)
+    # sh_coef = SHT_orig(merge)
     harmonics_orig = SHT_orig.get_harmonics()
     print("harmonics shape: ", harmonics_orig.shape, harmonics_orig.dtype)
     inverse = harmonics_orig @ sh_coef
