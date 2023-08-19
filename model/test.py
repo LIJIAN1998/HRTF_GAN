@@ -130,15 +130,15 @@ def test(config, val_prefetcher):
             recon = model(lr_coefficient)
 
         original_mask = masks[0].numpy().astype(bool)
-        SHT = SphericalHarmonicsTransform(max_order, ds.row_angles, ds.column_angles, ds.radii, masks[0].numpy().astype(bool))
+        SHT = SphericalHarmonicsTransform(max_order, ds.row_angles, ds.column_angles, ds.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float().to(device)
         if config.transform_flag:
             recon = recon * std + mean
-        sr = harmonics @ recon[0].T
-        total_positions = len(sr)
+        recon_hrtf = harmonics @ recon[0].T
+        total_positions = len(recon_hrtf)
         ori_hrtf = hrtf[0].reshape(nbins, -1).T
         total_all_positions = 0
-        sr = sr.reshape(-1, num_row_angles, num_col_angles, num_radii, nbins)
+        sr = recon_hrtf.reshape(-1, num_row_angles, num_col_angles, num_radii, nbins)
         if config.domain == "magnitude":
             sr = F.relu(sr) + margin
         
@@ -150,7 +150,7 @@ def test(config, val_prefetcher):
         min_value = None
         min_id = None
         print("subject: ", sample_id)
-        for ori, gen in zip(ori_hrtf, sr):
+        for ori, gen in zip(ori_hrtf, recon_hrtf):
             if domain == 'magnitude_db':
                 ori = 10 ** (ori/20)
                 gen = 10 ** (gen/20)
@@ -187,36 +187,38 @@ def test(config, val_prefetcher):
         print('Min Log SD (for %s position): %s' % (min_id, min_value))
         print('Max Log SD (for %s position): %s' % (max_id, max_value))
 
-        plot_tf(min_id, ori_hrtf, sr)
-        plot_tf(max_id, ori_hrtf, sr)
-        
-        
-        
-        file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
-        sr = sr[0].detach().cpu()
-        # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
-        hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
-
-        with open(valid_dir + file_name, "wb") as file:
-            pickle.dump(sr, file)
-
-        with open(valid_gt_dir + file_name, "wb") as file:
-            pickle.dump(hr, file)
-
         if plot_flag:
-            print("plot")
-            generated = sr
-            target = hr.permute(1, 2, 0, 3)
-            path = '/rds/general/user/jl2622/home/HRTF_GAN'
-            filename = f"sample_{sample_id}"
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-            x = generated[0, 0, 0, :]
-            y = target[0, 0, 0, :]
-            ax1.plot(x)
-            ax1.set_title('recon')
-            ax2.plot(y)
-            ax2.set_title('original')
-            plt.savefig(f"{path}/{filename}.png")
+            plot_tf(min_id, ori_hrtf, recon_hrtf)
+            plot_tf(max_id, ori_hrtf, recon_hrtf)
             plot_flag = False
+        
+        
+        
+        # file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
+        # sr = sr[0].detach().cpu()
+        # # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
+        # hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
+
+        # with open(valid_dir + file_name, "wb") as file:
+        #     pickle.dump(sr, file)
+
+        # with open(valid_gt_dir + file_name, "wb") as file:
+        #     pickle.dump(hr, file)
+
+        # if plot_flag:
+        #     print("plot")
+        #     generated = sr
+        #     target = hr.permute(1, 2, 0, 3)
+        #     path = '/rds/general/user/jl2622/home/HRTF_GAN'
+        #     filename = f"sample_{sample_id}"
+        #     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        #     x = generated[0, 0, 0, :]
+        #     y = target[0, 0, 0, :]
+        #     ax1.plot(x)
+        #     ax1.set_title('recon')
+        #     ax2.plot(y)
+        #     ax2.set_title('original')
+        #     plt.savefig(f"{path}/{filename}.png")
+        #     plot_flag = False
         # Preload the next batch of data
         batch_data = val_prefetcher.next()
