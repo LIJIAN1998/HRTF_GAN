@@ -181,7 +181,7 @@ left_ids = left_hrtf.subject_ids
 right_ids = right_hrtf.subject_ids
 
 order = 30
-for order in [21]:
+for order in [28]:
 
     sample_id = 0
     if domain == 'time':
