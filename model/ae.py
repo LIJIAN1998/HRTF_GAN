@@ -168,7 +168,7 @@ class D_DBPN(nn.Module):
         self.up1 = IterativeBlock(base_channels, kernel, stride, padding)
         self.up2 = IterativeBlock(base_channels, kernel, stride, padding)
         self.up3 = IterativeBlock(base_channels, kernel, stride, padding)
-        self.up4 = IterativeBlock(base_channels, kernel, stride, padding)
+        self.up4 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
         self.up5 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
         
         # Reconstruction
@@ -448,7 +448,7 @@ class FCEncoder(nn.Module):
 
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 484)
+    x = torch.randn(2, 256, 4)
     G = AutoEncoder(nbins=256, in_order=22, latent_dim=128, base_channels=256, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
