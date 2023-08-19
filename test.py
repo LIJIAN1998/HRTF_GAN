@@ -170,7 +170,7 @@ print(config.dataset)
 imp = importlib.import_module('hrtfdata.full')
 load_function = getattr(imp, config.dataset)
 
-domain = 'time'
+domain = 'magnitude_db'
 
 left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
                                                             'side': 'left', 'domain': domain}},  subject_ids='first')
