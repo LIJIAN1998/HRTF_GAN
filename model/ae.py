@@ -161,8 +161,9 @@ class D_DBPN(nn.Module):
         )
         activation = 'tanh'
 
-        self.conv0 = ConvBlock(512, num_features, 3, 1, 1)
-        self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
+        self.conv0 = ConvBlock(512, base_channels, 3, 1, 1, activation=activation)
+        # self.conv0 = ConvBlock(512, num_features, 3, 1, 1)
+        # self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
         # Back-projection stages
         self.up1 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
@@ -180,7 +181,7 @@ class D_DBPN(nn.Module):
     def forward(self, x):
         x = self.fc(x)
         x = self.conv0(x)
-        x = self.conv1(x)
+        # x = self.conv1(x)
 
         x = self.up1(x)
         x = self.up2(x)
