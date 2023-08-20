@@ -120,15 +120,16 @@ def test(config, val_prefetcher):
         # Transfer in-memory data to CUDA devices to speed up validation 
         lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                          non_blocking=True, dtype=torch.float)
+        hr_coefficient = batch_data["hr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
+                                                         non_blocking=True, dtype=torch.float)
         hrtf = batch_data["hrtf"]
         masks = batch_data["mask"]
         sample_id = batch_data["id"].item()
 
-        print("lr shape: ", lr_coefficient.shape)
         # Use the generator model to generate fake samples
         with torch.no_grad():
             # _, _, recon = model(lr_coefficient)
-            recon = model(lr_coefficient)
+            recon = model(hr_coefficient)
 
         original_mask = masks[0].numpy().astype(bool)
         SHT = SphericalHarmonicsTransform(max_order, ds.row_angles, ds.column_angles, ds.radii, original_mask)
