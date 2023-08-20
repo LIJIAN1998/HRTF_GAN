@@ -165,7 +165,7 @@ class D_DBPN(nn.Module):
         self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
         # Back-projection stages
-        self.up1 = IterativeBlock(base_channels, kernel, stride, padding)
+        self.up1 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
         self.up2 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
         self.up3 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
         self.up4 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
