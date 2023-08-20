@@ -193,8 +193,8 @@ def test(config, val_prefetcher):
             plot_tf(min_id, ori_hrtf, recon_hrtf)
             plot_tf(max_id, ori_hrtf, recon_hrtf)
             plot_flag = False
-        
-        
+
+        print('Log SD (across all positions): %s' % float(sd_metric))
         
         # file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         # sr = sr[0].detach().cpu()
