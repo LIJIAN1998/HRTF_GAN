@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 def spectral_distortion_inner(input_spectrum, target_spectrum):
     numerator = target_spectrum
     denominator = input_spectrum
-    return np.mean((20 * np.log10(numerator / denominator)) ** 2)
+    return torch.mean((20 * np.log10(numerator / denominator)) ** 2)
 
 def plot_tf(ir_id, ori_hrtf, recon_hrtf):
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
