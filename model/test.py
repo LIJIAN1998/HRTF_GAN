@@ -116,7 +116,9 @@ def test(config, val_prefetcher):
     margin = 1.8670232e-08
 
     plot_flag = True
+    count = 0
     while batch_data is not None:
+        print("count: ", count+1)
         # Transfer in-memory data to CUDA devices to speed up validation 
         lr_coefficient = batch_data["lr_coefficient"].to(device=device, memory_format=torch.contiguous_format,
                                                          non_blocking=True, dtype=torch.float)
