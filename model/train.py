@@ -303,8 +303,8 @@ def train(config, train_prefetcher):
             # zeros_label = Variable(torch.zeros(bs,1)).to(device) # labels for generated data
 
             # Generate fake samples using autoencoder
-            # sr = netG(lr_coefficient)
-            sr = netG(hr_coefficient)
+            sr = netG(lr_coefficient)
+            # sr = netG(hr_coefficient)
 
             # Discriminator Training
             netD.zero_grad()

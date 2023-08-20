@@ -115,7 +115,7 @@ class ResEncoder(nn.Module):
         for i in range(self.num_encode_layers):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
-        self.fc = nn.Sequential(nn.Linear(512*16, 512, bias=False),
+        self.fc = nn.Sequential(nn.Linear(512*13, 512, bias=False),
                                 nn.BatchNorm1d(512),
                                 # nn.ReLU(True),
                                 nn.PReLU(),
@@ -448,7 +448,7 @@ class FCEncoder(nn.Module):
 
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 4)
+    x = torch.randn(2, 256, 400)
     G = AutoEncoder(nbins=256, in_order=22, latent_dim=128, base_channels=256, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
