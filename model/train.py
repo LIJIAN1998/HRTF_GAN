@@ -157,7 +157,7 @@ def train(config, train_prefetcher):
     # load the dataset to get the row, column angles info
     domain = config.domain
     with open("log.txt", 'a') as f:
-        f.write("domain: ", domain)
+        f.write(f"domain: {domain}\n\n")
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
