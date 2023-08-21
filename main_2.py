@@ -228,16 +228,17 @@ def main(config, mode):
         orders = [19, 13, 9, 6, 4, 3, 2, 1, 1]
         upscale_factors = [2, 4, 8, 16, 32, 48, 72, 108, 216]
 
+        id = 1
         print("!!!!!!!!!!!!!!!!!!!!!!!")
-        print("id: ", left_train.subject_ids[0])
+        print("id: ", left_train.subject_ids[id])
         if domain == 'time':
-            left = left_train[0]['features'][:, :, :, :]
-            right = right_train[0]['features'][:, :, :, :]
+            left = left_train[id]['features'][:, :, :, :]
+            right = right_train[id]['features'][:, :, :, :]
             left = np.array([[[remove_itd(x[0], int(len(x[0]) * 0.04), len(x[0]))] for x in y] for y in left])
             right = np.array([[[remove_itd(x[0], int(len(x[0]) * 0.04), len(x[0]))] for x in y] for y in right])
         else:
-            left = left_train[0]['features'][:, :, :, 1:]
-            right = right_train[0]['features'][:, :, :, 1:]
+            left = left_train[id]['features'][:, :, :, 1:]
+            right = right_train[id]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
         order = 22
