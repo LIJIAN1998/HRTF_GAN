@@ -132,7 +132,7 @@ def test(config, val_prefetcher):
         # Use the generator model to generate fake samples
         with torch.no_grad():
             # _, _, recon = model(lr_coefficient)
-            recon = model(hr_coefficient)
+            recon = model(lr_coefficient)
 
         original_mask = masks[0].numpy().astype(bool)
         SHT = SphericalHarmonicsTransform(max_order, ds.row_angles, ds.column_angles, ds.radii, original_mask)
