@@ -273,7 +273,7 @@ def main(config, mode):
         print("min original: ", min_original)
 
         with open("coef.txt", "a") as f:
-            f.write(sh_coef)
+            f.write(f"{sh_coef}")
         print("coef: ", sh_coef[0, :40])
         data = sh_coef.view(-1)
         data_np = data.numpy()
