@@ -208,7 +208,7 @@ def main(config, mode):
         # run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
 
     elif mode == "debug":
-        domain = 'time'
+        domain = 'magnitude_db'
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                              'side': 'left', 'domain': domain}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
@@ -243,8 +243,6 @@ def main(config, mode):
         order = 22
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
-        # masked_merge = SHT.get_masked_hrirs(merge)
-        # print("masked merge: ", masked_merge.shape)
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape)
         recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
@@ -265,15 +263,24 @@ def main(config, mode):
         print("min 1: ", min1)
         print("min original: ", min_original)
 
-        ori_hrtf = merge.view(-1, 256)
-        recon_hrtf = recon.view(-1, 256)
-        if domain == 'magnitude_db':
-            ori = 10 ** (ori/20)
-            gen = 10 ** (gen/20)
-        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
-        target = merge[None,:].permute(0,4,3,1,2)
-        error = spectral_distortion_metric(generated, target, domain='magnitude_db')
-        print("lsd error: ", error)
+        data = merge.view(-1)
+        data_np = data.numpy()
+        plt.hist(data_np, bins=10, edgecolor='black')
+        plt.xlabel('Value')
+        plt.ylabel('Frequency')
+        plt.title('Histogram of Tensor Data')
+        plt.savefig("hist.png")
+        plt.close()
+
+        # ori_hrtf = merge.view(-1, 256)
+        # recon_hrtf = recon.view(-1, 256)
+        # if domain == 'magnitude_db':
+        #     ori = 10 ** (ori/20)
+        #     gen = 10 ** (gen/20)
+        # generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        # target = merge[None,:].permute(0,4,3,1,2)
+        # error = spectral_distortion_metric(generated, target, domain='magnitude_db')
+        # print("lsd error: ", error)
 
         # sh_loss = ((hr_coefficient - sh_coef.T)**2).mean()
         # print("sh loss: ", sh_loss)
