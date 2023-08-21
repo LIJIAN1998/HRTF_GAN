@@ -379,7 +379,7 @@ class Discriminator(nn.Module):
         # )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 34, 512),
+            nn.Linear(512 * 31, 512),
             # nn.BatchNorm1d(512),
             # nn.LeakyReLU(0.2, True),
             # nn.Linear(512, 512),
@@ -431,7 +431,7 @@ class FCEncoder(nn.Module):
 
 if __name__ == '__main__':
     x = torch.randn(2, 256, 400)
-    G = AutoEncoder(nbins=256, in_order=22, latent_dim=128, base_channels=256, num_features=512, out_oder=22)
+    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=256, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)
