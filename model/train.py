@@ -358,10 +358,11 @@ def train(config, train_prefetcher):
                 if domain == "magnitude":
                     recons = F.relu(recons) + margin # filter out negative values and make it non-zero
                 elif domain == "magnitude_db":
-                    print("domain db, change recons, hrtf!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1")
                     recons = torch.pow(10, recons / 20.)
                     hrtf = torch.pow(10, hrtf / 20.)
-                    print("recon: ", recons)
+                    with open("log.txt", "a") as f:
+                        f.write("domain db, change recons, hrtf!!!!!!!!!!!!!!!!!!!\n")
+                        f.write(f"recons: {recons}\n\n")
                 # during every 25th epoch and last epoch, save filename for mag spectrum plot
                 if epoch % 25 == 0 or epoch == (num_epochs - 1):
                     generated = recons[0].permute(2, 3, 1, 0)  # w x h x r x nbins
