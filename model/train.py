@@ -357,6 +357,9 @@ def train(config, train_prefetcher):
                 recons = recons.permute(0, 4, 3, 1, 2)  # bs x nbins x r x w x h
                 if domain == "magnitude":
                     recons = F.relu(recons) + margin # filter out negative values and make it non-zero
+                elif domain == "magnitude_db":
+                    recons = torch.pow(10, recons / 20.)
+                    hrtf = torch.pow(10, hrtf / 20.)
                 # during every 25th epoch and last epoch, save filename for mag spectrum plot
                 if epoch % 25 == 0 or epoch == (num_epochs - 1):
                     generated = recons[0].permute(2, 3, 1, 0)  # w x h x r x nbins
@@ -369,7 +372,6 @@ def train(config, train_prefetcher):
                 #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
                 content_loss_G = config.content_weight * unweighted_content_loss_G
                 # Generator total loss
-                # loss_G = content_loss_G + adversarial_loss_G + sh_loss_G
                 loss_G = content_loss_G + adversarial_loss_G + sh_cos_loss
                 loss_G.backward()
 
