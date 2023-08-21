@@ -210,7 +210,7 @@ class Decoder(nn.Module):
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, 512*13),
             nn.BatchNorm1d(512*13),
-            nn.ReLU(True),
+            nn.PReLU(),
             Reshape(-1, 512, 13),
             nn.ConvTranspose1d(512, 512, kernel_size=3, stride=1, bias=False), # 15
             nn.BatchNorm1d(512),
@@ -228,21 +228,21 @@ class Decoder(nn.Module):
             # 256 x 67
             nn.ConvTranspose1d(256, 256, kernel_size=3, stride=1, bias=False),  # 69
             nn.BatchNorm1d(256),
-            nn.PReLU(),
+            nn.Tanh(),
             nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, bias=False),  
             nn.BatchNorm1d(256),
-            nn.PReLU(),
+            nn.Tanh(),
             # 256 x 139
             nn.ConvTranspose1d(256, nbins, kernel_size=3, stride=1, bias=False),  # 141
             nn.BatchNorm1d(nbins),
-            nn.PReLU(),
+            nn.Tanh(),
             nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, bias=False),
             nn.BatchNorm1d(nbins),
-            nn.PReLU(),
+            nn.Tanh(),
             # nbins x 283
             nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=1, bias=False), # 285
             nn.BatchNorm1d(nbins),
-            nn.PReLU(),
+            nn.Tanh(),
             nn.ConvTranspose1d(nbins, nbins, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm1d(nbins),
             # nn.PReLU(),
