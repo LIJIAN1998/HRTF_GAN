@@ -210,21 +210,21 @@ class Decoder(nn.Module):
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, 512*13),
             nn.BatchNorm1d(512*13),
-            nn.PReLU(),
+            nn.Tanh(),
             Reshape(-1, 512, 13),
             nn.ConvTranspose1d(512, 512, kernel_size=3, stride=1, bias=False), # 15
             nn.BatchNorm1d(512),
-            nn.PReLU(),
+            nn.Tanh(),
             nn.ConvTranspose1d(512, 512, kernel_size=3, stride=2, bias=False),
             nn.BatchNorm1d(512),
-            nn.PReLU(),
+            nn.Tanh(),
             # 512 x 31
             nn.ConvTranspose1d(512, 256, kernel_size=3, stride=1, bias=False),  # 33
             nn.BatchNorm1d(256),
-            nn.PReLU(),
+            nn.Tanh(),
             nn.ConvTranspose1d(256, 256, kernel_size=3, stride=2, bias=False),
             nn.BatchNorm1d(256),
-            nn.PReLU(),
+            nn.Tanh(),
             # 256 x 67
             nn.ConvTranspose1d(256, 256, kernel_size=3, stride=1, bias=False),  # 69
             nn.BatchNorm1d(256),

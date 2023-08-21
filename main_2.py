@@ -240,9 +240,13 @@ def main(config, mode):
             left = left_train[id]['features'][:, :, :, 1:]
             right = right_train[id]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
+        mask = np.ones((72, 12, 1), dtype=bool)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        for i in range(72 // 2):
+            for j in range(12 // 1):
+                mask[2*i, 1*j, :] = original_mask[2*i, 1*j, :]
         order = 22
-        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape)
@@ -264,7 +268,7 @@ def main(config, mode):
         print("min 1: ", min1)
         print("min original: ", min_original)
 
-        data = merge.view(-1)
+        data = sh_coef.view(-1)
         data_np = data.numpy()
         plt.hist(data_np, bins=10, edgecolor='black')
         plt.xlabel('Value')
