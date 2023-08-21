@@ -69,11 +69,11 @@ class ResBlock(nn.Module):
         super(ResBlock, self).__init__()
         self.expansion = expansion
         self.conv1 = nn.Sequential(
-            nn.Conv1d(in_channnels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
+            nn.Conv1d(in_channnels, out_channels, kernel_size=3, stride=stride, padding=1),
             nn.BatchNorm1d(out_channels),
         ) 
         self.conv2 = nn.Sequential(
-            nn.Conv1d(out_channels, out_channels * self.expansion, kernel_size=3, padding=1, bias=False),
+            nn.Conv1d(out_channels, out_channels * self.expansion, kernel_size=3, padding=1),
             nn.BatchNorm1d(out_channels * self.expansion)
         )
         self.relu = nn.ReLU()
@@ -105,7 +105,7 @@ class ResEncoder(nn.Module):
         self.expansion = 1
         self.in_channels = 256
         self.conv1 = nn.Sequential(
-            nn.Conv1d(nbins, self.in_channels, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.Conv1d(nbins, self.in_channels, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm1d(self.in_channels),
             # nn.ReLU(),
             # nn.PReLU(),
@@ -121,7 +121,7 @@ class ResEncoder(nn.Module):
         for i in range(self.num_encode_layers):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
-        self.fc = nn.Sequential(nn.Linear(512*25, 512, bias=False),
+        self.fc = nn.Sequential(nn.Linear(512*25, 512),
                                 nn.BatchNorm1d(512),
                                 # nn.ReLU(True),
                                 # nn.PReLU(),
@@ -132,7 +132,7 @@ class ResEncoder(nn.Module):
         downsample = None
         if stride != 1:
             downsample = nn.Sequential(
-                nn.Conv1d(self.in_channels, out_channels * self.expansion, kernel_size=1, stride=stride, bias=False),
+                nn.Conv1d(self.in_channels, out_channels * self.expansion, kernel_size=1, stride=stride),
                 nn.BatchNorm1d(out_channels * self.expansion)
             )
         layers = []
