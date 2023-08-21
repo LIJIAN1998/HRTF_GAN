@@ -335,9 +335,9 @@ def sd_ild_loss(config, generated, target, sd_mean, sd_std, ild_mean, ild_std):
     # calculate SD and ILD metrics
     sd_metric = spectral_distortion_metric(generated, target, domain=config.domain)
     ild_metric = ILD_metric(config, generated, target)
-    with open("log.txt", "a") as f:
-        f.write(f"sd nan? {torch.isnan(sd_metric).any()}")
-        f.write(f"ild nan? {torch.isnan(ild_metric).any()}")
+    # with open("log.txt", "a") as f:
+    #     f.write(f"sd nan? {torch.isnan(sd_metric).any()}")
+    #     f.write(f"ild nan? {torch.isnan(ild_metric).any()}")
 
     # normalize SD and ILD based on means/standard deviations passed to the function
     sd_norm = torch.div(torch.sub(sd_metric, sd_mean), sd_std)

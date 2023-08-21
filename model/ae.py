@@ -114,14 +114,14 @@ class ResEncoder(nn.Module):
         self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
         # self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
-        self.num_encode_layers = 5
+        self.num_encode_layers = 4
         if self.coefficient in [16 ,4]:
             self.num_encode_layers -= 1
         res_layers.append(self._make_layer(block, 256, num_blocks))
         for i in range(self.num_encode_layers):
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
         self.res_layers = nn.Sequential(*res_layers)
-        self.fc = nn.Sequential(nn.Linear(512*13, 512, bias=False),
+        self.fc = nn.Sequential(nn.Linear(512*25, 512, bias=False),
                                 nn.BatchNorm1d(512),
                                 # nn.ReLU(True),
                                 # nn.PReLU(),
