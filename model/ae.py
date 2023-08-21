@@ -161,7 +161,7 @@ class D_DBPN(nn.Module):
             nn.PReLU(),
             Reshape(-1, 512, 16),
         )
-        activation = 'tanh'
+        activation = 'prelu'
 
         self.conv0 = ConvBlock(512, base_channels, 3, 1, 1, activation=activation)
         # self.conv0 = ConvBlock(512, num_features, 3, 1, 1)
@@ -395,39 +395,6 @@ class Discriminator(nn.Module):
         # x1 = x
         out = self.classifier(x)
         return out
-
-class FCEncoder(nn.Module):
-    def __init__(self, nbins: int, in_order: int, latent_dim: int) -> None:
-        super(FCEncoder, self).__init__()
-        num_coefficient = (in_order + 1) ** 2 
-        self.fc1 = nn.Sequential(nn.Linear(nbins * num_coefficient, 512 * 100),
-                                 nn.BatchNorm1d(512 * 100),
-                                 nn.Tanh())
-        self.fc2 = nn.Sequential(nn.Linear(512 * 100, 512 * 32),
-                                 nn.BatchNorm1d(512 * 32),
-                                 nn.Tanh())
-        self.fc3 = nn.Sequential(nn.Linear(512 * 32, 512 * 8),
-                                 nn.BatchNorm1d(512 * 32),
-                                 nn.Tanh())
-        self.fc4 = nn.Sequential(nn.Linear(512 * 8, 512 * 2),
-                                 nn.BatchNorm1d(512 * 32),
-                                 nn.Tanh())
-        self.fc5 = nn.Sequential(nn.Linear(512 * 2, 256),
-                                 nn.BatchNorm1d(256),
-                                 nn.Tanh())
-        self.fc6 = nn.Linear(256, latent_dim)
-
-    def forward(self, x):
-        x = x.view(x.size(0), -1)
-        x = self.fc1(x)
-        x = self.fc2(x)
-        x = self.fc3(x)
-        x = self.fc4(x)
-        x = self.fc5(x)
-        z = self.fc6(x)
-        return z
-        
-
 
 if __name__ == '__main__':
     x = torch.randn(2, 256, 400)

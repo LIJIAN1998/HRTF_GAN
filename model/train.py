@@ -299,8 +299,6 @@ def train(config, train_prefetcher):
             masks = batch_data["mask"]
             
             bs = lr_coefficient.size(0)
-            # ones_label = Variable(torch.ones(bs,1)).to(device) # labels for real data
-            # zeros_label = Variable(torch.zeros(bs,1)).to(device) # labels for generated data
 
             # Generate fake samples using autoencoder
             sr = netG(lr_coefficient)
@@ -368,8 +366,6 @@ def train(config, train_prefetcher):
                     filename = f"magnitude_{id}_{epoch}"
                     plot_hrtf(generated.detach().cpu(), target.detach().cpu(), path, filename)
                 unweighted_content_loss_G = content_criterion(config, recons, hrtf, sd_mean, sd_std, ild_mean, ild_std)
-                # with open('log.txt', "a") as f:
-                #     f.write(f"unweighted_content_loss: {unweighted_content_loss}\n")
                 content_loss_G = config.content_weight * unweighted_content_loss_G
                 # Generator total loss
                 loss_G = content_loss_G + adversarial_loss_G + sh_cos_loss
