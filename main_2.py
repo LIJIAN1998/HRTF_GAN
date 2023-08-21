@@ -253,6 +253,7 @@ def main(config, mode):
         print(sh_coef)
         print("max: ", torch.max(sh_coef))
         print("min: ", torch.min(sh_coef))
+        print("avg: ", torch.mean(sh_coef))
         # recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
         # merge = torch.from_numpy(merge.data).float()
         # x = recon[70, 1, 0, :]
