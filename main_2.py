@@ -250,6 +250,7 @@ def main(config, mode):
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape)
+        print(sh_coef)
         # recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
         # merge = torch.from_numpy(merge.data).float()
         # x = recon[70, 1, 0, :]
@@ -270,7 +271,7 @@ def main(config, mode):
 
         data = sh_coef.view(-1)
         data_np = data.numpy()
-        plt.hist(data_np, bins=10, edgecolor='black')
+        plt.hist(data_np, bins=20, edgecolor='black')
         plt.xlabel('Value')
         plt.ylabel('Frequency')
         plt.title('Histogram of Tensor Data')
