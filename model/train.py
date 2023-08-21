@@ -156,6 +156,8 @@ def train(config, train_prefetcher):
     """
     # load the dataset to get the row, column angles info
     domain = config.domain
+    with open("log.txt", 'a') as f:
+        f.write("domain: ", domain)
     data_dir = config.raw_hrtf_dir / config.dataset
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
@@ -356,6 +358,7 @@ def train(config, train_prefetcher):
                 if domain == "magnitude":
                     recons = F.relu(recons) + margin # filter out negative values and make it non-zero
                 elif domain == "magnitude_db":
+                    print("domain db, change recons, hrtf!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1")
                     recons = torch.pow(10, recons / 20.)
                     hrtf = torch.pow(10, hrtf / 20.)
                     print("recon: ", recons)
