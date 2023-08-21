@@ -208,7 +208,7 @@ def main(config, mode):
         # run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
 
     elif mode == "debug":
-        domain = 'magnitude'
+        domain = 'magnitude_db'
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                              'side': 'left', 'domain': domain}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
@@ -272,9 +272,12 @@ def main(config, mode):
         print("min 1: ", min1)
         print("min original: ", min_original)
 
+        with open("coef.txt", "a") as f:
+            f.write(sh_coef)
+        print("coef: ", sh_coef[0, :40])
         data = sh_coef.view(-1)
         data_np = data.numpy()
-        plt.hist(data_np, bins=20, range=(-20, 20), edgecolor='black')
+        plt.hist(data_np, bins=20, edgecolor='black')
         plt.xlabel('Value')
         plt.ylabel('Frequency')
         plt.title('Histogram of Tensor Data')
