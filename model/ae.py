@@ -166,9 +166,9 @@ class D_DBPN(nn.Module):
             nn.PReLU(),
             Reshape(-1, 512, 16),
         )
-        activation = 'prelu'
+        activation = 'tanh'
 
-        self.conv0 = ConvBlock(512, base_channels, 3, 1, 1, activation=activation)
+        self.conv0 = ConvBlock(512, base_channels, 3, 1, 1)
         # self.conv0 = ConvBlock(512, num_features, 3, 1, 1)
         # self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
