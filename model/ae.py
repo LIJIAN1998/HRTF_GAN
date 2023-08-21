@@ -28,13 +28,13 @@ class IterativeBlock(nn.Module):
         self.up2 = UpBlock(channels, kernel, stride, padding, activation=activation)
         self.down2 = D_DownBlock(channels, kernel, stride, padding, 2, activation=activation)
         self.up3 = D_UpBlock(channels, kernel, stride, padding, 2, activation=activation)
-        self.down3 = D_DownBlock(channels, kernel, stride, padding, 3, activation=activation)
-        self.up4 = D_UpBlock(channels, kernel, stride, padding, 3, activation=activation)
+        # self.down3 = D_DownBlock(channels, kernel, stride, padding, 3, activation=activation)
+        # self.up4 = D_UpBlock(channels, kernel, stride, padding, 3, activation=activation)
         # self.down4 = D_DownBlock(channels, kernel, stride, padding, 4, activation=activation)
         # self.up5 = D_UpBlock(channels, kernel, stride, padding, 4, activation=activation)
         # self.down5 = D_DownBlock(channels, kernel, stride, padding, 5, activation=activation)
         # self.up6 = D_UpBlock(channels, kernel, stride, padding, 5, activation=activation)
-        self.out_conv = ConvBlock(4*channels, out_channels, 3, 1, 1, activation=None)
+        self.out_conv = ConvBlock(3*channels, out_channels, 3, 1, 1, activation=None)
         
     def forward(self, x):
         h1 = self.up1(x)
@@ -47,11 +47,11 @@ class IterativeBlock(nn.Module):
         concat_l = torch.cat((l, l1), 1)
         h = self.up3(concat_l)
 
-        concat_h = torch.cat((h, concat_h), 1)
-        l = self.down3(concat_h)
+        # concat_h = torch.cat((h, concat_h), 1)
+        # l = self.down3(concat_h)
 
-        concat_l = torch.cat((l, concat_l), 1)
-        h = self.up4(concat_l)
+        # concat_l = torch.cat((l, concat_l), 1)
+        # h = self.up4(concat_l)
 
         # concat_h = torch.cat((h, concat_h), 1)
         # l = self.down4(concat_h)
