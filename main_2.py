@@ -273,7 +273,7 @@ def main(config, mode):
 
         data = sh_coef.view(-1)
         data_np = data.numpy()
-        plt.hist(data_np, bins=20, range=(-50, 50), edgecolor='black')
+        plt.hist(data_np, bins=20, edgecolor='black')
         plt.xlabel('Value')
         plt.ylabel('Frequency')
         plt.title('Histogram of Tensor Data')
