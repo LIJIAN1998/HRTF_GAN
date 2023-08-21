@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from model.base_blocks import *
+from base_blocks import *
 
 class Reshape(nn.Module):
     def __init__(self, *args):
@@ -21,7 +21,7 @@ class Trim(nn.Module):
         return x[:,:,:self.shape]
 
 class IterativeBlock(nn.Module):
-    def __init__(self, channels, kernel, stride, padding, activation='prelu'):
+    def __init__(self, channels, out_channels, kernel, stride, padding, activation='prelu'):
         super(IterativeBlock, self).__init__()
         self.up1 = UpBlock(channels, kernel, stride, padding, activation=activation)
         self.down1 = DownBlock(channels, kernel, stride, padding, activation=activation)
@@ -34,7 +34,7 @@ class IterativeBlock(nn.Module):
         # self.up5 = D_UpBlock(channels, kernel, stride, padding, 4, activation=activation)
         # self.down5 = D_DownBlock(channels, kernel, stride, padding, 5, activation=activation)
         # self.up6 = D_UpBlock(channels, kernel, stride, padding, 5, activation=activation)
-        self.out_conv = ConvBlock(4*channels, channels, 3, 1, 1, activation=None)
+        self.out_conv = ConvBlock(4*channels, out_channels, 3, 1, 1, activation=None)
         
     def forward(self, x):
         h1 = self.up1(x)
@@ -77,21 +77,24 @@ class ResBlock(nn.Module):
             nn.BatchNorm1d(out_channels * self.expansion)
         )
         self.relu = nn.ReLU()
-        self.prelu = nn.PReLU(out_channels)
+        self.prelu = nn.PReLU()
+        self.leakyRelu = nn.LeakyReLU(0.2)
         self.identity_downsample = identity_downsample
         self.stride = stride
 
     def forward(self, x):
         identity = x.clone()
         x = self.conv1(x)
-        x = self.prelu(x)
+        x = self.leakyRelu(x)
+        # x = self.prelu(x)
         x = self.conv2(x)
         
         if self.identity_downsample is not None:
             identity = self.identity_downsample(identity)
 
         x += identity
-        x = self.prelu(x)
+        # x = self.prelu(x)
+        x = self.leakyRelu(x)
         return x
 
 class ResEncoder(nn.Module):
@@ -105,7 +108,8 @@ class ResEncoder(nn.Module):
             nn.Conv1d(nbins, self.in_channels, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm1d(self.in_channels),
             # nn.ReLU(),
-            nn.PReLU()
+            # nn.PReLU(),
+            nn.LeakyReLU(0.2, True)
         )
         self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
@@ -120,7 +124,8 @@ class ResEncoder(nn.Module):
         self.fc = nn.Sequential(nn.Linear(512*13, 512, bias=False),
                                 nn.BatchNorm1d(512),
                                 # nn.ReLU(True),
-                                nn.PReLU(),
+                                # nn.PReLU(),
+                                nn.LeakyReLU(0.2, True),
                                 nn.Linear(512, latent_dim))
     
     def _make_layer(self, block, out_channels, num_blocks, stride=1):
@@ -168,14 +173,14 @@ class D_DBPN(nn.Module):
         # self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
         # Back-projection stages
-        self.up1 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
-        self.up2 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
-        self.up3 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
-        self.up4 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
-        self.up5 = IterativeBlock(base_channels, kernel, stride, padding, activation=activation)
+        self.up1 = IterativeBlock(base_channels, base_channels*2, kernel, stride, padding, activation=activation)
+        self.up2 = IterativeBlock(base_channels*2, base_channels*4, kernel, stride, padding, activation=activation)
+        self.up3 = IterativeBlock(base_channels*4, base_channels*8, kernel, stride, padding, activation=activation)
+        self.up4 = IterativeBlock(base_channels*8, base_channels*8, kernel, stride, padding, activation=activation)
+        self.up5 = IterativeBlock(base_channels*8, base_channels*8, kernel, stride, padding, activation=activation)
         
         # Reconstruction
-        self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1, activation=None)
+        self.out_conv = ConvBlock(base_channels*8, nbins, 3, 1, 1, activation=None)
         self.trim = Trim(max_num_coefficient)
 
         self.init_parameters()
@@ -398,7 +403,7 @@ class Discriminator(nn.Module):
 
 if __name__ == '__main__':
     x = torch.randn(2, 256, 400)
-    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=256, num_features=512, out_oder=21)
+    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=64, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)
