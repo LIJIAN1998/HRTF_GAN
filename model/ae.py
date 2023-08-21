@@ -30,9 +30,11 @@ class IterativeBlock(nn.Module):
         self.up3 = D_UpBlock(channels, kernel, stride, padding, 2, activation=activation)
         self.down3 = D_DownBlock(channels, kernel, stride, padding, 3, activation=activation)
         self.up4 = D_UpBlock(channels, kernel, stride, padding, 3, activation=activation)
-        self.down4 = D_DownBlock(channels, kernel, stride, padding, 4, activation=activation)
-        self.up5 = D_UpBlock(channels, kernel, stride, padding, 4, activation=activation)
-        self.out_conv = ConvBlock(5*channels, channels, 3, 1, 1, activation=None)
+        # self.down4 = D_DownBlock(channels, kernel, stride, padding, 4, activation=activation)
+        # self.up5 = D_UpBlock(channels, kernel, stride, padding, 4, activation=activation)
+        # self.down5 = D_DownBlock(channels, kernel, stride, padding, 5, activation=activation)
+        # self.up6 = D_UpBlock(channels, kernel, stride, padding, 5, activation=activation)
+        self.out_conv = ConvBlock(4*channels, channels, 3, 1, 1, activation=None)
         
     def forward(self, x):
         h1 = self.up1(x)
@@ -51,11 +53,11 @@ class IterativeBlock(nn.Module):
         concat_l = torch.cat((l, concat_l), 1)
         h = self.up4(concat_l)
 
-        concat_h = torch.cat((h, concat_h), 1)
-        l = self.down4(concat_h)
+        # concat_h = torch.cat((h, concat_h), 1)
+        # l = self.down4(concat_h)
 
-        concat_l = torch.cat((l, concat_l), 1)
-        h = self.up5(concat_l)
+        # concat_l = torch.cat((l, concat_l), 1)
+        # h = self.up5(concat_l)
 
         concat_h = torch.cat((h, concat_h), 1)
         out = self.out_conv(concat_h)
@@ -161,7 +163,7 @@ class D_DBPN(nn.Module):
         )
         activation = 'tanh'
 
-        self.conv0 = ConvBlock(512, base_channels, 3, 1, 1, activation=None)
+        self.conv0 = ConvBlock(512, base_channels, 3, 1, 1, activation=activation)
         # self.conv0 = ConvBlock(512, num_features, 3, 1, 1)
         # self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
@@ -259,8 +261,8 @@ class AutoEncoder(nn.Module):
         super(AutoEncoder, self).__init__()
 
         self.encoder = ResEncoder(ResBlock, nbins, in_order, latent_dim)
-        # self.decoder = D_DBPN(nbins, base_channels=base_channels, num_features=num_features, latent_dim=latent_dim, max_order=out_oder)
-        self.decoder = Decoder(nbins, latent_dim, out_oder)
+        self.decoder = D_DBPN(nbins, base_channels=base_channels, num_features=num_features, latent_dim=latent_dim, max_order=out_oder)
+        # self.decoder = Decoder(nbins, latent_dim, out_oder)
 
         # self.init_parameters()
 
