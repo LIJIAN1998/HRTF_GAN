@@ -208,7 +208,7 @@ def main(config, mode):
         # run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
 
     elif mode == "debug":
-        domain = 'magnitude_db'
+        domain = 'magnitude'
         left_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
                                                              'side': 'left', 'domain': domain}})
         right_hrtf = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
@@ -254,23 +254,23 @@ def main(config, mode):
         print("max: ", torch.max(sh_coef))
         print("min: ", torch.min(sh_coef))
         print("avg: ", torch.mean(sh_coef))
-        # recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
-        # merge = torch.from_numpy(merge.data).float()
+        recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
+        merge = torch.from_numpy(merge.data).float()
         # x = recon[70, 1, 0, :]
         # y = merge[70, 1, 0, :]
-        # mean_recon1 = torch.mean(recon)
-        # max1 = torch.max(recon)
-        # min1 = torch.min(recon)
-        # mean_original = torch.mean(merge)
-        # max_original = torch.max(merge)
-        # min_original = torch.min(merge)
-        # print("order: ", order)
-        # print("mean 1: ", mean_recon1)
-        # print("original mean: ", mean_original)
-        # print("max 1: ", max1)
-        # print("max original: ", max_original)
-        # print("min 1: ", min1)
-        # print("min original: ", min_original)
+        mean_recon1 = torch.mean(recon)
+        max1 = torch.max(recon)
+        min1 = torch.min(recon)
+        mean_original = torch.mean(merge)
+        max_original = torch.max(merge)
+        min_original = torch.min(merge)
+        print("order: ", order)
+        print("mean 1: ", mean_recon1)
+        print("original mean: ", mean_original)
+        print("max 1: ", max1)
+        print("max original: ", max_original)
+        print("min 1: ", min1)
+        print("min original: ", min_original)
 
         data = sh_coef.view(-1)
         data_np = data.numpy()
@@ -286,10 +286,11 @@ def main(config, mode):
         # if domain == 'magnitude_db':
         #     ori = 10 ** (ori/20)
         #     gen = 10 ** (gen/20)
-        # generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
-        # target = merge[None,:].permute(0,4,3,1,2)
-        # error = spectral_distortion_metric(generated, target, domain='magnitude_db')
-        # print("lsd error: ", error)
+        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        generated = F.relu(generated) + 1.8e-8
+        target = merge[None,:].permute(0,4,3,1,2)
+        error = spectral_distortion_metric(generated, target)
+        print("lsd error: ", error)
 
         # sh_loss = ((hr_coefficient - sh_coef.T)**2).mean()
         # print("sh loss: ", sh_loss)
