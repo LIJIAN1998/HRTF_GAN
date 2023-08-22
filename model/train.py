@@ -6,7 +6,8 @@ import importlib
 
 from model.util import *
 # from model.model import *
-from model.ae import *
+# from model.ae import *
+from model.DBPN import *
 
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
@@ -196,7 +197,8 @@ def train(config, train_prefetcher):
 
     # Define VAE and transfer to CUDA
     in_order = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
-    netG = AutoEncoder(nbins=nbins, in_order=in_order, latent_dim=latent_dim, base_channels=64, num_features=512, out_oder=max_order).to(device)
+    # netG = AutoEncoder(nbins=nbins, in_order=in_order, latent_dim=latent_dim, base_channels=64, num_features=512, out_oder=max_order).to(device)
+    netG = D_DBPN(nbins=nbins, max_order=max_order).to(device)
     # netG = D_DBPN(nbins, base_channels=256, num_features=512, scale_factor=upscale_factor, max_order=max_order).to(device)
     # vae = VAE(nbins=nbins, max_degree=in_order, latent_dim=latent_dim).to(device)
     netD = Discriminator(nbins=nbins).to(device)
@@ -208,8 +210,8 @@ def train(config, train_prefetcher):
     # Define optimizers
     optD = optim.Adam(netD.parameters(), lr=0.00003)
     optG = optim.Adam(netG.parameters(), lr=0.0002)
-    scheduler_D = ExponentialLR(optD, gamma=decay_lr)
-    scheduler_G = ExponentialLR(optG, gamma=decay_lr)
+    # scheduler_D = ExponentialLR(optD, gamma=decay_lr)
+    # scheduler_G = ExponentialLR(optG, gamma=decay_lr)
     # optD = optim.Adam(netD.parameters(), lr=lr*alpha)
     # optEncoder = optim.Adam(vae.encoder.parameters(), lr=lr)
     # optDecoder = optim.Adam(vae.decoder.parameters(), lr=lr)
@@ -415,8 +417,8 @@ def train(config, train_prefetcher):
             # After training a batch of data, add 1 to the number of data batches to ensure that the
             # terminal print data normally
             batch_index += 1
-        scheduler_D.step()
-        scheduler_G.step()
+        # scheduler_D.step()
+        # scheduler_G.step()
 
         train_loss_D_list.append(train_loss_D / len(train_prefetcher))
         train_loss_D_hr_list.append(train_loss_D_hr / len(train_prefetcher))
