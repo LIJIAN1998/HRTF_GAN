@@ -21,6 +21,30 @@ class Trim(nn.Module):
     def forward(self, x):
         return x[:,:,:self.shape]
 
+class ResBlock(nn.Module):
+    def __init__(self, channnels):
+        super(ResBlock, self).__init__()
+        self.conv1 = nn.Sequential(
+            nn.Conv1d(channnels, channnels, kernel_size=3, padding=1),
+            nn.BatchNorm1d(channnels),
+        ) 
+        self.conv2 = nn.Sequential(
+            nn.Conv1d(channnels, channnels, kernel_size=3, padding=1),
+            nn.BatchNorm1d(channnels)
+        )
+        self.prelu = nn.PReLU()
+
+    def forward(self, x):
+        identity = x.clone()
+        x = self.conv1(x)
+        # x = self.leakyRelu(x)
+        x = self.prelu(x)
+        x = self.conv2(x)
+        out = torch.add(x, identity)
+        # x = self.prelu(x)
+        # x = self.leakyRelu(x)
+        return out
+
 class IterativeBlock(nn.Module):
     def __init__(self, channels, out_channels, kernel, stride, padding, activation='prelu'):
         super(IterativeBlock, self).__init__()
@@ -123,7 +147,7 @@ class Discriminator(nn.Module):
         self.features = nn.Sequential(
             # input size: nbins x 529     484
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(64),
+            # nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(64),
@@ -164,7 +188,7 @@ class Discriminator(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Linear(512 * 31, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             nn.LeakyReLU(0.2, True),
             nn.Linear(512, 1),
             nn.Sigmoid()
