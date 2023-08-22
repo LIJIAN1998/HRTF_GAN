@@ -226,14 +226,14 @@ class D_DBPN(nn.Module):
         # self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
         # Back-projection stages
-        self.up1 = IterativeBlock(base_channels, base_channels*2, kernel, stride, padding)
-        self.up2 = IterativeBlock(base_channels*2, base_channels*4, kernel, stride, padding)
-        self.up3 = IterativeBlock(base_channels*4, base_channels*8, kernel, stride, padding)
-        self.up4 = IterativeBlock(base_channels*8, base_channels*8, kernel, stride, padding)
-        self.up5 = IterativeBlock(base_channels*8, base_channels*8, kernel, stride, padding)
+        self.up1 = IterativeBlock(base_channels, base_channels, kernel, stride, padding)
+        self.up2 = IterativeBlock(base_channels, base_channels, kernel, stride, padding)
+        self.up3 = IterativeBlock(base_channels, base_channels, kernel, stride, padding)
+        self.up4 = IterativeBlock(base_channels, base_channels, kernel, stride, padding)
+        self.up5 = IterativeBlock(base_channels, base_channels, kernel, stride, padding)
         
         # Reconstruction
-        self.out_conv = ConvBlock(base_channels*8, nbins, 3, 1, 1, activation=None)
+        self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1, activation=None)
         self.trim = Trim(max_num_coefficient)
 
         self.init_parameters()
