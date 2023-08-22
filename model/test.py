@@ -119,6 +119,7 @@ def test(config, val_prefetcher):
 
     plot_flag = True
     count = 0
+    avg_lsd = []
     while batch_data is not None:
         print("count: ", count+1)
         count += 1
@@ -190,6 +191,7 @@ def test(config, val_prefetcher):
         
         sd_metric = total_all_positions / total_positions
         total_sd_metric += sd_metric
+        avg_lsd.append(sd_metric)
 
         print('Min Log SD (for %s position): %s' % (min_id, min_value))
         print('Max Log SD (for %s position): %s' % (max_id, max_value))
@@ -201,16 +203,16 @@ def test(config, val_prefetcher):
 
         print('Log SD (across all positions): %s' % float(sd_metric))
         
-        # file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
-        # sr = sr[0].detach().cpu()
-        # # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
-        # hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
+        file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
+        sr = sr[0].detach().cpu()
+        # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
+        hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
 
-        # with open(valid_dir + file_name, "wb") as file:
-        #     pickle.dump(sr, file)
+        with open(valid_dir + file_name, "wb") as file:
+            pickle.dump(sr, file)
 
-        # with open(valid_gt_dir + file_name, "wb") as file:
-        #     pickle.dump(hr, file)
+        with open(valid_gt_dir + file_name, "wb") as file:
+            pickle.dump(hr, file)
 
         # if plot_flag:
         #     print("plot")
@@ -229,3 +231,6 @@ def test(config, val_prefetcher):
         #     plot_flag = False
         # Preload the next batch of data
         batch_data = val_prefetcher.next()
+    print("lsd for all test subject: ", avg_lsd)
+    mean_lsd = np.mean(avg_lsd)
+    print("avg lsd: ", mean_lsd)
