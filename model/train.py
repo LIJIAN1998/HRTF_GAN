@@ -339,9 +339,9 @@ def train(config, train_prefetcher):
                 sr0 = sr[0].T
                 hr0 = hr_coefficient[0].T
                 with open("log.txt", "a") as f:
-                    f.write(f"lr: {lr0.shape}, {lr0[0, :50]}\n")
-                    f.write(f"sr: {sr0.shape}, {sr0[0, :50]}\n")
-                    f.write(f"hr: {hr0.shape}, {hr0[0, :50]}\n")
+                    f.write(f"lr: {lr0.shape}, {lr0[0, :30]}\n")
+                    f.write(f"sr: {sr0.shape}, {sr0[0, :30]}\n")
+                    f.write(f"hr: {hr0.shape}, {hr0[0, :30]}\n")
                     # print("sr: ",sr0.shape, sr0[0, :20])
                     # print("hr: ",hr0.shape, hr0[0, :20])
                 # convert reconstructed coefficient back to hrtf
