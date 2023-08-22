@@ -6,8 +6,9 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-from model.model import VAE, D_DBPN
-from model.ae import AutoEncoder
+from model.DBPN import D_DBPN
+# from model.model import VAE, D_DBPN
+# from model.ae import AutoEncoder
 import shutil
 from pathlib import Path
 
@@ -64,7 +65,8 @@ def test(config, val_prefetcher):
 
     device = torch.device(config.device_name if (
             torch.cuda.is_available() and ngpu > 0) else "cpu")
-    model = AutoEncoder(nbins=nbins, in_order=degree, latent_dim=config.latent_dim, base_channels=512, num_features=512, out_oder=max_order)
+    # model = AutoEncoder(nbins=nbins, in_order=degree, latent_dim=config.latent_dim, base_channels=512, num_features=512, out_oder=max_order)
+    model = D_DBPN(nbins, max_order)
     # model = D_DBPN(channels=nbins, base_channels=256, num_features=512, scale_factor=upscale_factor, max_order=max_order)
     # model = VAE(nbins=nbins, max_degree=degree, latent_dim=config.latent_dim).to(device)
     print("Build VAE model successfully.")
