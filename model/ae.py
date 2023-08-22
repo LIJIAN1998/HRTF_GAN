@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from model.base_blocks import *
+from base_blocks import *
 
 class Reshape(nn.Module):
     def __init__(self, *args):
@@ -63,7 +63,58 @@ class IterativeBlock(nn.Module):
         out = self.out_conv(concat_h)
 
         return out
-    
+
+class SimpleE(nn.Module):
+    def __init__(self, nbins, latent_dim):
+        super(SimpleE, self).__init__()
+        self.conv1 = nn.Sequential(
+            nn.Conv1d(nbins, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm1d(256),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv1d(256, 256, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm1d(256),
+            nn.LeakyReLU(0.2, True),
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv1d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm1d(256),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv1d(256, 256, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm1d(256),
+            nn.LeakyReLU(0.2, True),
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv1d(256, 512, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv1d(512, 512, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+        )
+        self.conv4 = nn.Sequential(
+            nn.Conv1d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv1d(512, 512, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+        )
+        self.fc = nn.Sequential(
+            nn.Linear(512*25, 512),
+            nn.BatchNorm1d(512),
+            nn.LeakyReLU(0.2, True),
+            nn.Linear(512, latent_dim)
+        )
+        
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
+        x = x.view(x.size(0), -1)
+        z = self.fc(x)
+        return z
+
 class ResBlock(nn.Module):
     def __init__(self, in_channnels, out_channels, stride=1, expansion=1, identity_downsample=None):
         super(ResBlock, self).__init__()
@@ -267,8 +318,10 @@ class AutoEncoder(nn.Module):
     def __init__(self, nbins: int, in_order: int, latent_dim: int, base_channels: int, num_features: int, out_oder: int=22):
         super(AutoEncoder, self).__init__()
 
-        self.encoder = ResEncoder(ResBlock, nbins, in_order, latent_dim)
-        self.decoder = D_DBPN(nbins, base_channels=base_channels, num_features=num_features, latent_dim=latent_dim, max_order=out_oder)
+        # self.encoder = ResEncoder(ResBlock, nbins, in_order, latent_dim)
+        self.encoder = SimpleE(nbins, latent_dim)
+        self.decoder = D_DBPN(nbins, base_channels=base_channels, num_features=num_features,
+                              latent_dim=latent_dim, max_order=out_oder)
         # self.decoder = Decoder(nbins, latent_dim, out_oder)
 
         # self.init_parameters()
