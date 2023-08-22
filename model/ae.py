@@ -85,7 +85,8 @@ class ResBlock(nn.Module):
     def forward(self, x):
         identity = x.clone()
         x = self.conv1(x)
-        x = self.leakyRelu(x)
+        x = self.relu(x)
+        # x = self.leakyRelu(x)
         # x = self.prelu(x)
         x = self.conv2(x)
         
@@ -93,8 +94,9 @@ class ResBlock(nn.Module):
             identity = self.identity_downsample(identity)
 
         x += identity
+        x = self.relu(x)
         # x = self.prelu(x)
-        x = self.leakyRelu(x)
+        # x = self.leakyRelu(x)
         return x
 
 class ResEncoder(nn.Module):
@@ -107,9 +109,9 @@ class ResEncoder(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv1d(nbins, self.in_channels, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm1d(self.in_channels),
-            # nn.ReLU(),
+            nn.ReLU(),
             # nn.PReLU(),
-            nn.LeakyReLU(0.2, True)
+            # nn.LeakyReLU(0.2, True)
         )
         self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
@@ -123,9 +125,9 @@ class ResEncoder(nn.Module):
         self.res_layers = nn.Sequential(*res_layers)
         self.fc = nn.Sequential(nn.Linear(512*25, 512),
                                 nn.BatchNorm1d(512),
-                                # nn.ReLU(True),
+                                nn.ReLU(True),
                                 # nn.PReLU(),
-                                nn.LeakyReLU(0.2, True),
+                                # nn.LeakyReLU(0.2, True),
                                 nn.Linear(512, latent_dim))
     
     def _make_layer(self, block, out_channels, num_blocks, stride=1):
@@ -162,8 +164,8 @@ class D_DBPN(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(latent_dim, 512*16),
             nn.BatchNorm1d(512*16),
-            # nn.ReLU(True),
-            nn.PReLU(),
+            nn.ReLU(True),
+            # nn.PReLU(),
             Reshape(-1, 512, 16),
         )
         activation = 'tanh'
@@ -173,9 +175,9 @@ class D_DBPN(nn.Module):
         # self.conv1 = ConvBlock(num_features, base_channels, 1, 1, 0)
 
         # Back-projection stages
-        self.up1 = IterativeBlock(base_channels, base_channels*2, kernel, stride, padding, activation=activation)
+        self.up1 = IterativeBlock(base_channels, base_channels*2, kernel, stride, padding)
         self.up2 = IterativeBlock(base_channels*2, base_channels*4, kernel, stride, padding)
-        self.up3 = IterativeBlock(base_channels*4, base_channels*8, kernel, stride, padding, activation=activation)
+        self.up3 = IterativeBlock(base_channels*4, base_channels*8, kernel, stride, padding)
         self.up4 = IterativeBlock(base_channels*8, base_channels*8, kernel, stride, padding)
         self.up5 = IterativeBlock(base_channels*8, base_channels*8, kernel, stride, padding, activation=activation)
         
