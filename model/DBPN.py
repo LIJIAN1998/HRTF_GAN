@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from base_blocks import *
-# from model.base_blocks import *
+# from base_blocks import *
+from model.base_blocks import *
 
 class Reshape(nn.Module):
     def __init__(self, *args):
