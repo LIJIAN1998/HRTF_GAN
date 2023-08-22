@@ -275,7 +275,7 @@ def main(config, mode):
         with open("coef.txt", "a") as f:
             f.write(f"{sh_coef}")
         print("coef: ", sh_coef[0, :40])
-        data = sh_coef.view(-1)
+        data = sh_coef.T[0].view(-1)
         data_np = data.numpy()
         plt.hist(data_np, bins=20, edgecolor='black')
         plt.xlabel('Value')
