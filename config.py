@@ -86,7 +86,7 @@ class Config:
         # self.lr_encoder = 0.0002
         # self.lr_decoder = 0.0002
         # self.lr_dis = 0.0000015
-        self.latent_dim = 256
+        self.latent_dim = 128
         # how often to train the generator
         self.critic_iters = 4
 
