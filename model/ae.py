@@ -350,7 +350,7 @@ class Discriminator(nn.Module):
         self.features = nn.Sequential(
             # input size: nbins x 529     484
             nn.Conv1d(self.nbins, 64, kernel_size=3, padding=1, stride=1, bias=False),
-            nn.BatchNorm1d(64),
+            # nn.BatchNorm1d(64),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(64, 64, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm1d(64),
