@@ -174,9 +174,9 @@ class D_DBPN(nn.Module):
 
         # Back-projection stages
         self.up1 = IterativeBlock(base_channels, base_channels*2, kernel, stride, padding, activation=activation)
-        self.up2 = IterativeBlock(base_channels*2, base_channels*4, kernel, stride, padding, activation=activation)
+        self.up2 = IterativeBlock(base_channels*2, base_channels*4, kernel, stride, padding)
         self.up3 = IterativeBlock(base_channels*4, base_channels*8, kernel, stride, padding, activation=activation)
-        self.up4 = IterativeBlock(base_channels*8, base_channels*8, kernel, stride, padding, activation=activation)
+        self.up4 = IterativeBlock(base_channels*8, base_channels*8, kernel, stride, padding)
         self.up5 = IterativeBlock(base_channels*8, base_channels*8, kernel, stride, padding, activation=activation)
         
         # Reconstruction
