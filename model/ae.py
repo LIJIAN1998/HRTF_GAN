@@ -167,14 +167,39 @@ class ResEncoder(nn.Module):
         self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
         # self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
-        self.num_encode_layers = 4
-        if self.coefficient in [16 ,4]:
-            self.num_encode_layers -= 1
+        stride = 2
+        if order == 19:
+            self.num_encode_layers = 4
+            feature = 25
+        elif order == 13:
+            self.num_encode_layers = 3
+            feature = 25
+        elif order == 9:
+            self.num_encode_layers = 3
+            feature = 13
+        elif order == 6:
+            self.num_encode_layers = 2
+            featrue = 13
+        elif order == 4:
+            self.num_encode_layers = 2
+            feature = 7
+        elif order == 3:
+            self.num_encode_layers = 2
+            feature = 4
+        elif order == 2:
+            self.num_encode_layers = 1
+            feature = 5
+        elif order == 1:
+            self.num_encode_layers = 1
+            feature = 4
+            stride = 1
+        # if self.coefficient in [16 ,4]:
+        #     self.num_encode_layers -= 1
         res_layers.append(self._make_layer(block, 256, num_blocks))
         for i in range(self.num_encode_layers):
-            res_layers.append(self._make_layer(block, 512, num_blocks, stride=2))
+            res_layers.append(self._make_layer(block, 512, num_blocks, stride=1))
         self.res_layers = nn.Sequential(*res_layers)
-        self.fc = nn.Sequential(nn.Linear(512*25, 512),
+        self.fc = nn.Sequential(nn.Linear(512*feature, 512),
                                 nn.BatchNorm1d(512),
                                 # nn.ReLU(True),
                                 nn.PReLU(),
@@ -183,7 +208,7 @@ class ResEncoder(nn.Module):
     
     def _make_layer(self, block, out_channels, num_blocks, stride=1):
         downsample = None
-        if stride != 1:
+        if stride != 1 or self.in_channels != out_channels:
             downsample = nn.Sequential(
                 nn.Conv1d(self.in_channels, out_channels * self.expansion, kernel_size=1, stride=stride),
                 nn.BatchNorm1d(out_channels * self.expansion)
@@ -457,8 +482,8 @@ class Discriminator(nn.Module):
         return out
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 400)
-    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=64, num_features=512, out_oder=21)
+    x = torch.randn(2, 256, 4)
+    G = AutoEncoder(nbins=256, in_order=1, latent_dim=128, base_channels=64, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)
