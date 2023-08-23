@@ -482,8 +482,8 @@ class Discriminator(nn.Module):
         return out
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 4)
-    G = AutoEncoder(nbins=256, in_order=1, latent_dim=128, base_channels=64, num_features=512, out_oder=21)
+    x = torch.randn(2, 256, 9)
+    G = AutoEncoder(nbins=256, in_order=2, latent_dim=128, base_channels=64, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)
