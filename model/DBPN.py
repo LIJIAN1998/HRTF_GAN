@@ -64,7 +64,7 @@ class IterativeBlock(nn.Module):
     def forward(self, x):
         h1 = self.up1(x)
         l1 = self.down1(h1)
-        h2 = self.up2(x)
+        h2 = self.up2(l1)
         
         concat_h = torch.cat((h2, h1), 1)
         l = self.down2(concat_h)
