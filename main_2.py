@@ -132,7 +132,6 @@ def main(config, mode):
             f.write(f"normalize? {config.transform_flag}\n")
             f.write(f"domain: {config.domain}\n")
             f.write(f"max order: {config.max_order}\n")
-            f.write(f"transform applied: {config.transform_flag}\n")
             f.write(f"upscale factor: {config.upscale_factor}\n")
 
         if config.transform_flag:
