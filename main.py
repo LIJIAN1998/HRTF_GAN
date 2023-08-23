@@ -136,7 +136,8 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
-        config.upscale_factor = 2
+        with open("log.txt", "a") as f:
+            f.write(f"upscale factor: {config.upscale_factor}\n")
         if config.transform_flag:
             mean_std_dir = config.mean_std_coef_dir
             mean_std_full = mean_std_dir + "/mean_std_full.pickle"
