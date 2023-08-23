@@ -197,7 +197,7 @@ class ResEncoder(nn.Module):
         #     self.num_encode_layers -= 1
         res_layers.append(self._make_layer(block, 256, num_blocks))
         for i in range(self.num_encode_layers):
-            res_layers.append(self._make_layer(block, 512, num_blocks, stride=1))
+            res_layers.append(self._make_layer(block, 512, num_blocks, stride=stride))
         self.res_layers = nn.Sequential(*res_layers)
         self.fc = nn.Sequential(nn.Linear(512*feature, 512),
                                 nn.BatchNorm1d(512),
