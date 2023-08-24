@@ -160,6 +160,22 @@ def main(config, mode):
         # run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
+        # create hr hrtf pickles
+        config.domain = "magnitude"
+        _, test_prefetcher = load_hrtf(config)
+        valid_gt_dir = config.valid_gt_path
+        shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+        Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+        test_prefetcher.reset()
+        batch_data = test_prefetcher.next()
+        while batch_data is not None:
+            shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+            Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+            hrtf = batch_data["hrtf"]
+            hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu()  # r x w x h x nbins
+            with open(valid_gt_dir + file_name, "wb") as file:
+                pickle.dump(hr, file)
+
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
         # run_barycentric_interpolation(config, barycentric_output_path)

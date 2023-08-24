@@ -179,7 +179,7 @@ class ResEncoder(nn.Module):
             feature = 13
         elif order == 6:
             self.num_encode_layers = 2
-            featrue = 13
+            feature = 13
         elif order == 4:
             self.num_encode_layers = 2
             feature = 7
