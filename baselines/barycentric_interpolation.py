@@ -222,7 +222,7 @@ def my_barycentric_interpolation(config, barycentric_output_path):
             hr_hrtf = pickle.load(f)  # r x w x h x nbins
 
         if config.domain == "magnitude_db":
-            hr_hrtf = torch.pow(10, hr_hrtf)
+            hr_hrtf = torch.pow(10, hr_hrtf / 20)
         sphere_coords_lr = []
         sphere_coords_lr_index = []
         num_file += 1
