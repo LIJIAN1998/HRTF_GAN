@@ -215,12 +215,14 @@ def my_barycentric_interpolation(config, barycentric_output_path):
     if config.merge_flag:
         nbins = config.nbins_hrtf * 2
 
-    print("before loop through gt files")
+    # print("before loop through gt files")
     num_file = 0
     for file_name in valid_gt_file_names:
         with open(config.valid_gt_path + file_name, "rb") as f:
             hr_hrtf = pickle.load(f)  # r x w x h x nbins
 
+        if config.domain == "magnitude_db":
+            hr_hrtf = torch.pow(10, hr_hrtf)
         sphere_coords_lr = []
         sphere_coords_lr_index = []
         num_file += 1
