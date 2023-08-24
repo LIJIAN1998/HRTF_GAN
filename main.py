@@ -174,9 +174,9 @@ def main(config, mode):
 
         config.path = config.barycentric_hrtf_dir
         file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        # run_lsd_evaluation(config, barycentric_output_path, file_ext)
+        run_lsd_evaluation(config, barycentric_output_path, file_ext)
 
-        file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        # file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
         # run_localisation_evaluation(config, barycentric_output_path, file_ext)
 
     elif mode == 'hrtf_selection_baseline':
