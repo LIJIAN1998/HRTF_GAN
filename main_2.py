@@ -241,8 +241,8 @@ def main(config, mode):
         merge = np.ma.concatenate([left, right], axis=3)
         mask = np.ones((72, 12, 1), dtype=bool)
         original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        for i in range(72 // 2):
-            for j in range(12 // 1):
+        for i in range(72 // 36):
+            for j in range(12 // 6):
                 mask[2*i, 1*j, :] = original_mask[2*i, 1*j, :]
         order = 22
         SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
@@ -272,17 +272,17 @@ def main(config, mode):
         print("min 1: ", min1)
         print("min original: ", min_original)
 
-        with open("coef.txt", "a") as f:
-            f.write(f"{sh_coef}")
-        print("coef: ", sh_coef[0, :40])
-        data = sh_coef.T[0].view(-1)
-        data_np = data.numpy()
-        plt.hist(data_np, bins=20, edgecolor='black')
-        plt.xlabel('Value')
-        plt.ylabel('Frequency')
-        plt.title('Histogram of Tensor Data')
-        plt.savefig("hist.png")
-        plt.close()
+        # with open("coef.txt", "a") as f:
+        #     f.write(f"{sh_coef}")
+        # print("coef: ", sh_coef[0, :40])
+        # data = sh_coef.T[0].view(-1)
+        # data_np = data.numpy()
+        # plt.hist(data_np, bins=20, edgecolor='black')
+        # plt.xlabel('Value')
+        # plt.ylabel('Frequency')
+        # plt.title('Histogram of Tensor Data')
+        # plt.savefig("hist.png")
+        # plt.close()
 
         # ori_hrtf = merge.view(-1, 256)
         # recon_hrtf = recon.view(-1, 256)
