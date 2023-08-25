@@ -197,7 +197,7 @@ def train(config, train_prefetcher):
 
     # Define VAE and transfer to CUDA
     in_order = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
-    netG = AutoEncoder(nbins=nbins, in_order=in_order, latent_dim=latent_dim, base_channels=256, num_features=512, out_oder=max_order).to(device)
+    netG = AutoEncoder(nbins=nbins, in_order=6, latent_dim=latent_dim, base_channels=256, num_features=512, out_oder=max_order).to(device)
     # netG = D_DBPN(nbins=nbins, max_order=max_order).to(device)
     # netG = D_DBPN(nbins, base_channels=256, num_features=512, scale_factor=upscale_factor, max_order=max_order).to(device)
     # vae = VAE(nbins=nbins, max_degree=in_order, latent_dim=latent_dim).to(device)
@@ -337,15 +337,13 @@ def train(config, train_prefetcher):
                 adversarial_loss_G = config.adversarial_weight * adversarial_criterion(pred_fake, label)
                 sh_cos_loss = cos_similarity_criterion(sr, hr_coefficient)
                 sh_mse_loss = ((sr - hr_coefficient) ** 2).mean()  # sh coefficient loss
-                lr0 = lr_coefficient[0].T    # num coef x nbins
-                sr0 = sr[0].T
-                hr0 = hr_coefficient[0].T
                 with open("log.txt", "a") as f:
+                    lr0 = lr_coefficient[0].T    # num coef x nbins
+                    sr0 = sr[0].T
+                    hr0 = hr_coefficient[0].T
                     f.write(f"lr: {lr0.shape}, {lr0[0, :30]}\n")
                     f.write(f"sr: {sr0.shape}, {sr0[0, :30]}\n")
                     f.write(f"hr: {hr0.shape}, {hr0[0, :30]}\n")
-                    # print("sr: ",sr0.shape, sr0[0, :20])
-                    # print("hr: ",hr0.shape, hr0[0, :20])
                 # convert reconstructed coefficient back to hrtf
                 harmonics_list = []
                 for i in range(masks.size(0)):
