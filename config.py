@@ -31,7 +31,7 @@ class Config:
         self.train_samples_ratio = 0.8
         self.hrir_samplerate = 48000.0
         self.transform_flag = False
-        self.domain = 'magnitude_db'
+        self.domain = 'magnitude'
         self.max_order = 21
 
         # Data dirs
