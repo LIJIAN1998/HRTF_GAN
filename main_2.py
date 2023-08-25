@@ -290,9 +290,9 @@ def main(config, mode):
         #     ori = 10 ** (ori/20)
         #     gen = 10 ** (gen/20)
         generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
-        generated = F.relu(generated) + 1.8e-8
+        # generated = F.relu(generated) + 1.8e-8
         target = merge[None,:].permute(0,4,3,1,2)
-        error = spectral_distortion_metric(generated, target)
+        error = spectral_distortion_metric(generated, target, domain=domain)
         print("lsd error: ", error)
 
         # sh_loss = ((hr_coefficient - sh_coef.T)**2).mean()
