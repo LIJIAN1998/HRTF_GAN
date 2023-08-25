@@ -245,7 +245,7 @@ def main(config, mode):
             for j in range(12 // 6):
                 mask[2*i, 1*j, :] = original_mask[2*i, 1*j, :]
         order = 22
-        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, original_mask)
+        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
         harmonics = torch.from_numpy(SHT.get_harmonics()).float()
         sh_coef = torch.from_numpy(SHT(merge)).float()
         print("coef: ", sh_coef.shape)
