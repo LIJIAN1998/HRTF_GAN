@@ -64,57 +64,6 @@ class IterativeBlock(nn.Module):
 
         return out
 
-class SimpleE(nn.Module):
-    def __init__(self, nbins, latent_dim):
-        super(SimpleE, self).__init__()
-        self.conv1 = nn.Sequential(
-            nn.Conv1d(nbins, 256, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm1d(256),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(256, 256, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm1d(256),
-            nn.LeakyReLU(0.2, True),
-        )
-        self.conv2 = nn.Sequential(
-            nn.Conv1d(256, 256, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm1d(256),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(256, 256, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm1d(256),
-            nn.LeakyReLU(0.2, True),
-        )
-        self.conv3 = nn.Sequential(
-            nn.Conv1d(256, 512, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(512, 512, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-        )
-        self.conv4 = nn.Sequential(
-            nn.Conv1d(512, 512, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Conv1d(512, 512, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-        )
-        self.fc = nn.Sequential(
-            nn.Linear(512*25, 512),
-            nn.BatchNorm1d(512),
-            nn.LeakyReLU(0.2, True),
-            nn.Linear(512, latent_dim)
-        )
-        
-    def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        x = self.conv4(x)
-        x = x.view(x.size(0), -1)
-        z = self.fc(x)
-        return z
-
 class ResBlock(nn.Module):
     def __init__(self, in_channnels, out_channels, stride=1, expansion=1, identity_downsample=None):
         super(ResBlock, self).__init__()
@@ -167,36 +116,43 @@ class ResEncoder(nn.Module):
         self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
         # self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
-        stride = 2
         if order == 19:
-            self.num_encode_layers = 4
+            # self.num_encode_layers = 4
+            strides = [2, 2, 2, 2]
             feature = 25
         elif order == 13:
-            self.num_encode_layers = 3
+            # self.num_encode_layers = 3
+            strides = [2, 2, 2, 1]
             feature = 25
         elif order == 9:
-            self.num_encode_layers = 3
-            feature = 13
+            # self.num_encode_layers = 3
+            strides = [2, 2, 1, 1]
+            feature = 25
         elif order == 6:
-            self.num_encode_layers = 2
-            feature = 13
+            # self.num_encode_layers = 2
+            strides = [2, 1, 1, 1]
+            feature = 25
         elif order == 4:
-            self.num_encode_layers = 2
-            feature = 7
+            # self.num_encode_layers = 2
+            strides = [2, 1, 1, 1]
+            feature = 13
         elif order == 3:
-            self.num_encode_layers = 2
-            feature = 4
+            # self.num_encode_layers = 2
+            strides = [2, 1, 1, 1]
+            feature = 8
         elif order == 2:
-            self.num_encode_layers = 1
+            # self.num_encode_layers = 1
+            strides = [2, 1, 1, 1]
             feature = 5
         elif order == 1:
-            self.num_encode_layers = 1
+            # self.num_encode_layers = 1
+            strides = [1, 1, 1, 1]
             feature = 4
-            stride = 1
         # if self.coefficient in [16 ,4]:
         #     self.num_encode_layers -= 1
         res_layers.append(self._make_layer(block, 256, num_blocks))
-        for i in range(self.num_encode_layers):
+        # for i in range(self.num_encode_layers):
+        for stride in strides:
             res_layers.append(self._make_layer(block, 512, num_blocks, stride=stride))
         self.res_layers = nn.Sequential(*res_layers)
         self.fc = nn.Sequential(nn.Linear(512*feature, 512),
@@ -482,8 +438,8 @@ class Discriminator(nn.Module):
         return out
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 100)
-    G = AutoEncoder(nbins=256, in_order=9, latent_dim=128, base_channels=64, num_features=512, out_oder=21)
+    x = torch.randn(2, 256, 400)
+    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=64, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)
