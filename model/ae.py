@@ -34,7 +34,7 @@ class IterativeBlock(nn.Module):
         # self.up5 = D_UpBlock(channels, kernel, stride, padding, 4, activation=activation)
         # self.down5 = D_DownBlock(channels, kernel, stride, padding, 5, activation=activation)
         # self.up6 = D_UpBlock(channels, kernel, stride, padding, 5, activation=activation)
-        self.out_conv = ConvBlock(4*channels, out_channels, 3, 1, 1, activation=None)
+        self.out_conv = ConvBlock(4*channels, out_channels, 3, 1, 1, activation=activation)
         
     def forward(self, x):
         h1 = self.up1(x)
@@ -113,7 +113,6 @@ class ResEncoder(nn.Module):
             nn.PReLU(),
             # nn.LeakyReLU(0.2, True)
         )
-        self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         res_layers = []
         # self.num_encode_layers = int(np.log2(self.coefficient // 2)) + 1
         if order == 19:
