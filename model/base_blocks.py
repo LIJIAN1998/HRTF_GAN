@@ -111,7 +111,7 @@ class D_UpBlock(nn.Module):
     def __init__(self, channels, kernel_size=8, stride=4, padding=2, num_stages=1, bias=True, activation='prelu', norm=None):
         super(D_UpBlock, self).__init__()
         self.conv = ConvBlock(channels*num_stages, channels, 1, 1, 0, bias, activation, norm)
-        self.up1 = DeconvBlock(channels, channels, kernel_size, stride, padding, bias, norm)
+        self.up1 = DeconvBlock(channels, channels, kernel_size, stride, padding, bias, activation, norm)
         self.up2 = ConvBlock(channels, channels, kernel_size, stride, padding, bias, activation, norm)
         self.up3 = DeconvBlock(channels, channels, kernel_size, stride, padding, bias, activation, norm)
 
