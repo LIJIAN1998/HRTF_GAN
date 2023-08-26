@@ -23,18 +23,20 @@ class Trim(nn.Module):
 class IterativeBlock(nn.Module):
     def __init__(self, channels, out_channels, kernel, stride, padding, activation='prelu'):
         super(IterativeBlock, self).__init__()
-        self.up1 = UpBlock(channels, kernel, stride, padding, activation=activation)
-        self.down1 = DownBlock(channels, kernel, stride, padding, activation=activation)
-        self.up2 = UpBlock(channels, kernel, stride, padding, activation=activation)
-        self.down2 = D_DownBlock(channels, kernel, stride, padding, 2, activation=activation)
-        self.up3 = D_UpBlock(channels, kernel, stride, padding, 2, activation=activation)
-        self.down3 = D_DownBlock(channels, kernel, stride, padding, 3, activation=activation)
-        self.up4 = D_UpBlock(channels, kernel, stride, padding, 3, activation=activation)
+        bias = False
+        norm = 'batch'
+        self.up1 = UpBlock(channels, kernel, stride, padding, bias=bias, activation=activation, norm=norm)
+        self.down1 = DownBlock(channels, kernel, stride, padding, bias=bias, activation=activation, norm=norm)
+        self.up2 = UpBlock(channels, kernel, stride, padding, bias=bias, activation=activation, norm=norm)
+        self.down2 = D_DownBlock(channels, kernel, stride, padding, 2, bias=bias, activation=activation, norm=norm)
+        self.up3 = D_UpBlock(channels, kernel, stride, padding, 2, bias=bias, activation=activation, norm=norm)
+        self.down3 = D_DownBlock(channels, kernel, stride, padding, 3, bias=bias, activation=activation, norm=norm)
+        self.up4 = D_UpBlock(channels, kernel, stride, padding, 3, bias=bias, activation=activation, norm=norm)
         # self.down4 = D_DownBlock(channels, kernel, stride, padding, 4, activation=activation)
         # self.up5 = D_UpBlock(channels, kernel, stride, padding, 4, activation=activation)
         # self.down5 = D_DownBlock(channels, kernel, stride, padding, 5, activation=activation)
         # self.up6 = D_UpBlock(channels, kernel, stride, padding, 5, activation=activation)
-        self.out_conv = ConvBlock(4*channels, out_channels, 3, 1, 1, activation=activation)
+        self.out_conv = ConvBlock(4*channels, out_channels, 3, 1, 1, bias=bias, activation=activation, norm=norm)
         
     def forward(self, x):
         h1 = self.up1(x)

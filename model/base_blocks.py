@@ -69,9 +69,9 @@ class DeconvBlock(nn.Module):
 class UpBlock(nn.Module):
     def __init__(self, channels, kernel_size=8, stride=4, padding=2, bias=True, activation='prelu', norm=None):
         super(UpBlock, self).__init__()
-        self.conv1 = DeconvBlock(channels, channels, kernel_size, stride, padding, bias, activation, norm=None)
-        self.conv2 = ConvBlock(channels, channels, kernel_size, stride, padding, bias, activation, norm=None)
-        self.conv3 = DeconvBlock(channels, channels, kernel_size, stride, padding, bias, activation, norm=None)
+        self.conv1 = DeconvBlock(channels, channels, kernel_size, stride, padding, bias, activation, norm)
+        self.conv2 = ConvBlock(channels, channels, kernel_size, stride, padding, bias, activation, norm)
+        self.conv3 = DeconvBlock(channels, channels, kernel_size, stride, padding, bias, activation, norm)
 
     def forward(self, x):
         h0 = self.conv1(x)
