@@ -162,6 +162,8 @@ def main(config, mode):
     elif mode == 'barycentric_baseline':
         # store hr hrtf pickles
         config.domain = "magnitude"
+        config.upscale_factor = 216
+        print("domain: ", config.domain)
         print("upsacle factor: ", config.upscale_factor)
         _, test_prefetcher = load_hrtf(config)
         # valid_gt_dir = config.valid_gt_path
