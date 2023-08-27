@@ -23,8 +23,8 @@ class Trim(nn.Module):
 class IterativeBlock(nn.Module):
     def __init__(self, channels, out_channels, kernel, stride, padding, activation='prelu'):
         super(IterativeBlock, self).__init__()
-        bias = False
-        norm = 'batch'
+        bias = True
+        norm = None
         self.up1 = UpBlock(channels, kernel, stride, padding, bias=bias, activation=activation, norm=norm)
         self.down1 = DownBlock(channels, kernel, stride, padding, bias=bias, activation=activation, norm=norm)
         self.up2 = UpBlock(channels, kernel, stride, padding, bias=bias, activation=activation, norm=norm)
