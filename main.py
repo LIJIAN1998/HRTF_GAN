@@ -160,20 +160,22 @@ def main(config, mode):
         # run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
-        # create hr hrtf pickles
+        # store hr hrtf pickles
         config.domain = "magnitude"
+        print("upsacle factor: ", config.upscale_factor)
         _, test_prefetcher = load_hrtf(config)
-        valid_gt_dir = config.valid_gt_path
-        shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
-        Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+        # valid_gt_dir = config.valid_gt_path
+        valid_mag_dir = config.valid_mag_path
+        shutil.rmtree(Path(valid_mag_dir), ignore_errors=True)
+        Path(valid_mag_dir).mkdir(parents=True, exist_ok=True)
         test_prefetcher.reset()
         batch_data = test_prefetcher.next()
         while batch_data is not None:
-            shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
-            Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
             hrtf = batch_data["hrtf"]
+            sample_id = batch_data["id"].item()
             hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu()  # r x w x h x nbins
-            with open(valid_gt_dir + file_name, "wb") as file:
+            file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
+            with open(valid_mag_dir + file_name, "wb") as file:
                 pickle.dump(hr, file)
 
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'

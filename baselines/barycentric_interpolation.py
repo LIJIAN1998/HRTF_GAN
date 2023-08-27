@@ -188,7 +188,8 @@ def debug_barycentric(config, barycentric_output_path):
 
 def my_barycentric_interpolation(config, barycentric_output_path):
     print("my barycentric interpolation")
-    valid_gt_path = glob.glob('%s/%s_*' % (config.valid_gt_path, config.dataset))
+    valid_gt_path = glob.glob('%s/%s_*' % (config.valid_mag_path, config.dataset))
+    # valid_gt_path = glob.glob('%s/%s_*' % (config.valid_gt_path, config.dataset))
     valid_gt_file_names = ['/' + os.path.basename(x) for x in valid_gt_path]
 
     # Clear/Create directory
