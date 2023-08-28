@@ -49,10 +49,11 @@ def plot_lsd(lsd_2d, row_angles, column_angles, filename):
     y = col_indices.flatten()
     values = lsd_2d.flatten()
 
+    plt.figure(figsize=(10, 5)) 
     plt.scatter(x, y, c=values, cmap='viridis', s=50, marker='o')
     plt.colorbar(label='Values')
-    plt.xlabel('X Coordinates')
-    plt.ylabel('Y Coordinates')
+    plt.xlabel('Azimuth (degree')
+    plt.ylabel('Elevation (degree)')
     plt.title('Scatter Plot of 2D Array')
     plt.savefig(filename)
 
