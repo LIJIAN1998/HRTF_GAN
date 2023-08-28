@@ -131,6 +131,7 @@ def test(config, val_prefetcher):
         hrtf = batch_data["hrtf"]
         masks = batch_data["mask"]
         sample_id = batch_data["id"].item()
+        print("lr shape: ", lr_coefficient.shape)
 
         # Use the generator model to generate fake samples
         with torch.no_grad():
