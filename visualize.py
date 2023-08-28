@@ -99,6 +99,7 @@ hrtf = batch_data["hrtf"]
 masks = batch_data["mask"]
 sample_id = batch_data["id"].item()
 
+model.eval()
 with torch.no_grad():
     recon = model(lr_coefficient)
 
