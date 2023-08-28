@@ -123,7 +123,7 @@ with open(config.valid_mag_path + file_name, "rb") as f:
 
 barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
 barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
-with open(barycentric_data_folder + file_name, "rb") as f:
+with open(barycentric_output_path + file_name, "rb") as f:
     bary_hrtf = pickle.load(f)   # w x h x r x nbins
 
 print("bary size: ", bary_hrtf.shape)
