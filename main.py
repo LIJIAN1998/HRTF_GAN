@@ -176,6 +176,7 @@ def main(config, mode):
             hrtf = batch_data["hrtf"]
             sample_id = batch_data["id"].item()
             hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu()  # r x w x h x nbins
+            print(f"data {sample_id} has negative? ", (hr<0).any())
             file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
             with open(valid_mag_dir + file_name, "wb") as file:
                 pickle.dump(hr, file)
