@@ -222,6 +222,8 @@ def my_barycentric_interpolation(config, barycentric_output_path):
         with open(config.valid_mag_path + file_name, "rb") as f:
             hr_hrtf = pickle.load(f)  # r x w x h x nbins
 
+        if (hr_hrtf<0).any():
+            print("bary interpolation found negative: ", file_name)
         sphere_coords_lr = []
         sphere_coords_lr_index = []
         num_file += 1
@@ -263,7 +265,8 @@ def my_barycentric_interpolation(config, barycentric_output_path):
                                                   euclidean_sphere_triangles, euclidean_sphere_coeffs)
         
         barycentric_hr_merged = torch.tensor(np.concatenate((barycentric_hr_left, barycentric_hr_right), axis=3)).permute(1, 2, 0, 3)
-
+        if (barycentric_hr_merged<0).any():
+            print("interpolated result negative: ", file_name)
         with open(barycentric_output_path + file_name, "wb") as file:
             pickle.dump(barycentric_hr_merged, file)
         
