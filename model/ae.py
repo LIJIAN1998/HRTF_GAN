@@ -135,8 +135,8 @@ class ResEncoder(nn.Module):
             feature = 25
         elif order == 4:
             # self.num_encode_layers = 2
-            strides = [2, 2, 2, 1]
-            feature = 4
+            strides = [2, 2, 1, 1]
+            feature = 7
         elif order == 3:
             # self.num_encode_layers = 2
             strides = [2, 1, 1, 1]
