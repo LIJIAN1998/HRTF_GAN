@@ -31,8 +31,8 @@ def calc_lsd(ori_hrtf, recon_hrtf, domain):
         average_over_frequencies = spectral_distortion_inner(abs(gen), abs(ori))
         total_all_positions += np.sqrt(average_over_frequencies)
         lsd_list.append(np.sqrt(average_over_frequencies))
-        sd_metric = total_all_positions / total_positions
-        print('Log SD (across all positions): %s' % float(sd_metric))
+    sd_metric = total_all_positions / total_positions
+    print('Log SD (across all positions): %s' % float(sd_metric))
     return np.array(lsd_list)
 
 def replace_lsd(lsd_arr, upscale_factor):
