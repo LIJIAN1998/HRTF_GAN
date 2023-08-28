@@ -47,10 +47,10 @@ def plot_lsd(lsd_2d, row_angles, column_angles, filename):
     row_indices, col_indices = np.meshgrid(row_angles, column_angles)
     x = row_indices.flatten()
     y = col_indices.flatten()
-    values = lsd_2d.flatten()
+    values = lsd_2d.T.flatten()  # column for row angles, row for column angles
 
     plt.figure(figsize=(16, 5)) 
-    plt.scatter(x, y, c=values, cmap='gray_r', s=50, marker='o')
+    plt.scatter(x, y, c=values, cmap='OrRd', s=50, marker='o', edgecolor='black')
     plt.colorbar(label='Values')
     plt.xlabel('Azimuth (degree')
     plt.ylabel('Elevation (degree)')
@@ -88,7 +88,7 @@ device = torch.device(config.device_name if (
     torch.cuda.is_available() and ngpu > 0) else "cpu")
 model = AutoEncoder(nbins=nbins, in_order=degree, latent_dim=config.latent_dim, base_channels=256, num_features=512, out_oder=max_order)
 print("Build VAE model successfully.")
-model.load_state_dict(torch.load(f"{config.model_path}/Gen32_1.pt", map_location=torch.device('cpu')))
+model.load_state_dict(torch.load(f"{config.model_path}/Gen.pt", map_location=torch.device('cpu')))
 print(f"Load VAE model weights `{os.path.abspath(config.model_path)}` successfully.")
 
 _, test_prefetcher = load_hrtf(config)
