@@ -23,8 +23,8 @@ def replace_nodes(config, val_dir, file_name):
     with open(val_dir + file_name, "rb") as f:
         sr_hrtf = pickle.load(f) # w x h x r x nbins
 
-    # with open(config.valid_gt_path + file_name, "rb") as f:
-    with open(config.valid_mag_path + file_name, "rb") as f:
+    with open(config.valid_gt_path + file_name, "rb") as f:
+    # with open(config.valid_mag_path + file_name, "rb") as f:
         hr_hrtf = pickle.load(f).permute(1, 2, 0, 3)  # r x w x h x nbins -> w x h x r x nbins
 
     row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
