@@ -135,8 +135,8 @@ class ResEncoder(nn.Module):
             feature = 25
         elif order == 4:
             # self.num_encode_layers = 2
-            strides = [2, 1, 1, 1]
-            feature = 13
+            strides = [2, 2, 1, 1]
+            feature = 7
         elif order == 3:
             # self.num_encode_layers = 2
             strides = [2, 1, 1, 1]
@@ -439,8 +439,8 @@ class Discriminator(nn.Module):
         return out
 
 if __name__ == '__main__':
-    x = torch.randn(2, 256, 400)
-    G = AutoEncoder(nbins=256, in_order=19, latent_dim=128, base_channels=64, num_features=512, out_oder=21)
+    x = torch.randn(2, 256, 25)
+    G = AutoEncoder(nbins=256, in_order=4, latent_dim=128, base_channels=64, num_features=512, out_oder=21)
     x = G(x)
     print(x.shape)
     D = Discriminator(256)
