@@ -179,6 +179,7 @@ def main(config, mode):
             file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
             with open(valid_mag_dir + file_name, "wb") as file:
                 pickle.dump(hr, file)
+            batch_data = test_prefetcher.next()
 
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
