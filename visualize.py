@@ -76,7 +76,7 @@ def plot_lsd(lsd_2d_1, lsd_2d_2, row_angles, column_angles, filename):
 
 print("start visualize.py")
 config = Config("ari-upscale-4", using_hpc=True)
-config.upscale_factor = 108
+config.upscale_factor = 216
 data_dir = config.raw_hrtf_dir / config.dataset
 imp = importlib.import_module('hrtfdata.full')
 load_function = getattr(imp, config.dataset)
@@ -106,7 +106,7 @@ device = torch.device(config.device_name if (
     torch.cuda.is_available() and ngpu > 0) else "cpu")
 model = AutoEncoder(nbins=nbins, in_order=degree, latent_dim=config.latent_dim, base_channels=256, num_features=512, out_oder=max_order)
 print("Build VAE model successfully.")
-model.load_state_dict(torch.load(f"{config.model_path}/Gen_108n.pt", map_location=torch.device('cpu')))
+model.load_state_dict(torch.load(f"{config.model_path}/Gen_216bn.pt", map_location=torch.device('cpu')))
 print(f"Load VAE model weights `{os.path.abspath(config.model_path)}` successfully.")
 
 _, test_prefetcher = load_hrtf(config)
