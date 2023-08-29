@@ -10,9 +10,9 @@ cd $PBS_O_WORKDIR
 # python model/model.py > output.txt
 # python main.py test --hpc True --tag ari-upscale-4 > test_output.txt
 # python main.py barycentric_baseline --hpc True --tag ari-upscale-4 > baseline_output.txt
-python main.py hrtf_selection_baseline --hpc True --tag ari-upscale-4 > selection_output.txt
+# python main.py hrtf_selection_baseline --hpc True --tag ari-upscale-4 > selection_output.txt
 # python test.py -i $PBS_ARRAY_INDEX
-# python visualize.py > vis.txt
+python visualize.py > vis.txt
 # cp output.txt $PBS_O_WORKDIR
 
 conda deactivate
