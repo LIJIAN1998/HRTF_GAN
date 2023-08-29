@@ -126,5 +126,10 @@ barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
 with open(barycentric_output_path + file_name, "rb") as f:
     bary_hrtf = pickle.load(f)   # w x h x r x nbins
 
-print("bary size: ", bary_hrtf.shape)
+hr_hrtf = hr_hrtf.reshape(-1, nbins)
+bary_hrtf = bary_hrtf.reshape(-1, nbins)
+lsd_arr_bary = calc_lsd(hr_hrtf, bary_hrtf, domain="magnitude")
+lsd_2d_bary = replace_lsd(lsd_arr_bary, upscale_factor)
+filename = "lsd_bary.png"
+plot_lsd(lsd_2d_bary, row_angles, column_angles, filename)
 
