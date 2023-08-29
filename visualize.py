@@ -149,6 +149,7 @@ hr_hrtf = hr_hrtf.reshape(-1, nbins)
 
 with open(config.hrtf_selection_dir + "/maximum.pickle", "rb") as f:
     max_hrtf = pickle.load(f)
+print("max hrtf shape: ", max_hrtf.shape)
 
 lsd_max_select = calc_lsd(hr_hrtf, max_hrtf, domain="magnitude")
 lsd_max_2d = lsd_max_select.reshape(72,12)
