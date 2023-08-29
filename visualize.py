@@ -52,15 +52,15 @@ def plot_lsd(lsd_2d_1, lsd_2d_2, row_angles, column_angles, filename):
     plt.subplot(2, 1, 1)
     values_1 = lsd_2d_1.T.flatten() # column for row angles, row for column angles
     plt.scatter(x, y, c=values_1, cmap='OrRd', s=50, marker='o', edgecolor='black')
-    plt.colorbar(label='Values')
-    plt.xlabel('Azimuth (degree)')
+    plt.colorbar(label='Average LSD Error')
     plt.ylabel('Elevation (degree)')
     plt.title('AE-GAN')
+    plt.xticks([])  # Remove x-axis labels and ticks
 
     plt.subplot(2, 1, 2)
     values_2 = lsd_2d_2.T.flatten()
-    plt.scatter(x, y, c=values_1, cmap='OrRd', s=50, marker='o', edgecolor='black')
-    plt.colorbar(label='Values')
+    plt.scatter(x, y, c=values_2, cmap='OrRd', s=50, marker='o', edgecolor='black')
+    plt.colorbar(label='Average LSD Error')
     plt.xlabel('Azimuth (degree)')
     plt.ylabel('Elevation (degree)')
     plt.title('Barycentric')
