@@ -147,13 +147,13 @@ hr_hrtf = hr_hrtf.reshape(-1, nbins)
 # filename = f"lsd_{upscale_factor}.png"
 # plot_lsd(lsd_2d, lsd_2d_bary, row_angles, column_angles, filename)
 
-with open(config.hrtf_selection_dir + "maximum.pickle", "rb") as f:
+with open(config.hrtf_selection_dir + "/maximum.pickle", "rb") as f:
     max_hrtf = pickle.load(f)
 
 lsd_max_select = calc_lsd(hr_hrtf, max_hrtf, domain="magnitude")
 lsd_max_2d = lsd_max_select.reshape(72,12)
 
-with open(config.hrtf_selection_dir + "minimum.pickle", "rb") as f:
+with open(config.hrtf_selection_dir + "/minimum.pickle", "rb") as f:
     min_hrtf = pickle.load(f)
 
 lsd_min_select = calc_lsd(hr_hrtf, min_hrtf, domain="magnitude")
