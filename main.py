@@ -160,27 +160,26 @@ def main(config, mode):
         # run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
-        # store hr hrtf pickles
         config.domain = "magnitude"
-        config.upscale_factor = 216
+        config.upscale_factor = 32
         print("domain: ", config.domain)
         print("upsacle factor: ", config.upscale_factor)
-        _, test_prefetcher = load_hrtf(config)
-        # valid_gt_dir = config.valid_gt_path
-        valid_mag_dir = config.valid_mag_path
-        shutil.rmtree(Path(valid_mag_dir), ignore_errors=True)
-        Path(valid_mag_dir).mkdir(parents=True, exist_ok=True)
-        test_prefetcher.reset()
-        batch_data = test_prefetcher.next()
-        while batch_data is not None:
-            hrtf = batch_data["hrtf"]
-            sample_id = batch_data["id"].item()
-            hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu()  # r x w x h x nbins
-            print(f"data {sample_id} has negative? ", (hr<0).any())
-            file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
-            with open(valid_mag_dir + file_name, "wb") as file:
-                pickle.dump(hr, file)
-            batch_data = test_prefetcher.next()
+        #  store hr hrtf pickles
+        # _, test_prefetcher = load_hrtf(config)
+        # valid_mag_dir = config.valid_mag_path
+        # shutil.rmtree(Path(valid_mag_dir), ignore_errors=True)
+        # Path(valid_mag_dir).mkdir(parents=True, exist_ok=True)
+        # test_prefetcher.reset()
+        # batch_data = test_prefetcher.next()
+        # while batch_data is not None:
+        #     hrtf = batch_data["hrtf"]
+        #     sample_id = batch_data["id"].item()
+        #     hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu()  # r x w x h x nbins
+        #     # print(f"data {sample_id} has negative? ", (hr<0).any())
+        #     file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
+        #     with open(valid_mag_dir + file_name, "wb") as file:
+        #         pickle.dump(hr, file)
+        #     batch_data = test_prefetcher.next()
 
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
@@ -202,6 +201,7 @@ def main(config, mode):
         # run_localisation_evaluation(config, barycentric_output_path, file_ext)
 
     elif mode == 'hrtf_selection_baseline':
+        config.domain = "magnitude"
         run_hrtf_selection(config, config.hrtf_selection_dir)
 
         if config.gen_sofa_flag:
@@ -214,9 +214,9 @@ def main(config, mode):
         config.path = config.hrtf_selection_dir
 
         file_ext = f'lsd_errors_hrtf_selection_minimum_data.pickle'
-        # run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
+        run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
         file_ext = f'loc_errors_hrtf_selection_minimum_data.pickle'
-        # run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
+        run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
 
         file_ext = f'lsd_errors_hrtf_selection_maximum_data.pickle'
         # run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
