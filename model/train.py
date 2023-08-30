@@ -415,8 +415,6 @@ def train(config, train_prefetcher):
             # After training a batch of data, add 1 to the number of data batches to ensure that the
             # terminal print data normally
             batch_index += 1
-        # scheduler_D.step()
-        # scheduler_G.step()
 
         train_loss_D_list.append(train_loss_D / len(train_prefetcher))
         train_loss_D_hr_list.append(train_loss_D_hr / len(train_prefetcher))

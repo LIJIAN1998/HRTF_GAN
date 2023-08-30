@@ -161,7 +161,7 @@ def main(config, mode):
 
     elif mode == 'barycentric_baseline':
         config.domain = "magnitude"
-        config.upscale_factor = 108
+        config.upscale_factor = 32
         print("domain: ", config.domain)
         print("upsacle factor: ", config.upscale_factor)
         #  store hr hrtf pickles
@@ -186,19 +186,19 @@ def main(config, mode):
         # run_barycentric_interpolation(config, barycentric_output_path)
         # print("!!!!!!!!!!!!!!!!!!my interpolation!!!!!!!!!!!!!!!!!!!!!!!!")
         # sphere_coords = debug_barycentric(config, barycentric_output_path)
-        sphere_coords = my_barycentric_interpolation(config, barycentric_output_path)
-        if config.gen_sofa_flag:
-            row_angles = list(set([x[1] for x in sphere_coords]))
-            column_angles = list(set([x[0] for x  in sphere_coords]))
-            my_convert_to_sofa(barycentric_output_path, config, row_angles, column_angles)
-            print('Created barycentric baseline sofa files')
+        # sphere_coords = my_barycentric_interpolation(config, barycentric_output_path)
+        # if config.gen_sofa_flag:
+        #     row_angles = list(set([x[1] for x in sphere_coords]))  # rad
+        #     column_angles = list(set([x[0] for x  in sphere_coords]))  # rad
+        #     my_convert_to_sofa(barycentric_output_path, config, row_angles, column_angles)
+        #     print('Created barycentric baseline sofa files')
 
         config.path = config.barycentric_hrtf_dir
-        file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        run_lsd_evaluation(config, barycentric_output_path, file_ext)
+        # file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        # run_lsd_evaluation(config, barycentric_output_path, file_ext)
 
-        # file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        # run_localisation_evaluation(config, barycentric_output_path, file_ext)
+        file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        run_localisation_evaluation(config, barycentric_output_path, file_ext)
 
     elif mode == 'hrtf_selection_baseline':
         config.domain = "magnitude"

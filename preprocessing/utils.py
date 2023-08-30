@@ -127,7 +127,7 @@ def add_itd(az, el, hrir, side, fs=48000, r=0.0875, c=343):
     return delayed_hrir, sofa_delay
 
 def my_gen_sofa_file(config, left_hrtf, right_hrtf, az, el):
-    source_position = [az + 360 if az < 0 else az, el, 1.2]
+    source_position = [az + 360 if az < 0 else az, el, 1.5]
 
     left_hrtf[left_hrtf == 0.0] = 1.0e-08
     left_phase = np.imag(-hilbert(np.log(np.abs(left_hrtf))))
@@ -172,7 +172,7 @@ def my_save_sofa(clean_hrtf, config, row_angles, column_angles, sofa_path_output
     full_hrirs = []
     source_positions = []
     delays = []
-    left_full_hrtf = clean_hrtf[:, :, :, :config.nbins_hrtf]   # w x h x r x nbins
+    left_full_hrtf = clean_hrtf[:, :, :, :config.nbins_hrtf]   # r x w x h x nbins
     right_full_hrtf = clean_hrtf[:, :, :, config.nbins_hrtf:]
 
     for i in range(clean_hrtf.size(1)):  # loop through azimuth
@@ -255,8 +255,6 @@ def my_convert_to_sofa(hrtf_dir, config, row_angles, column_angles, phase_ext='_
 
     hrtf_file_names = [hrir_file_name for hrir_file_name in os.listdir(hrtf_dir)
                        if os.path.isfile(os.path.join(hrtf_dir, hrir_file_name)) and phase_ext not in hrir_file_name]
-    phase_file_names = [phase_file_name for phase_file_name in os.listdir(hrtf_dir)
-                        if os.path.isfile(os.path.join(hrtf_dir, phase_file_name)) and phase_ext not in phase_file_name]
     
     # Clear/Create directories
     shutil.rmtree(Path(sofa_path_output), ignore_errors=True)
@@ -265,6 +263,8 @@ def my_convert_to_sofa(hrtf_dir, config, row_angles, column_angles, phase_ext='_
     for f in hrtf_file_names:
         with open(os.path.join(hrtf_dir, f), "rb") as hrtf_file:
             hrtf = pickle.load(hrtf_file) # r x w x h x nbins
+            expected_shape = (1, 72, 12, 256)
+            assert hrtf.shape == expected_shape, f"Expected shape {expected_shape}, but got shape {hrtf.shape}"
             sofa_filename_output = os.path.basename(hrtf_file.name).replace('.pickle', '.sofa').replace(mag_ext, '')
             sofa_output = sofa_path_output + sofa_filename_output
 

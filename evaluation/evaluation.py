@@ -135,12 +135,12 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
         #     cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
 
         my_convert_to_sofa(nodes_replaced_path, config, row_angles, column_angles)
-        my_convert_to_sofa(config.valid_gt_path, config, row_angles, column_angles)
+        my_convert_to_sofa(config.valid_mag_path, config, row_angles, column_angles)
         # convert_to_sofa(nodes_replaced_path, config, cube, sphere)
         print('Created valid sofa files')
 
         hrtf_file_names = [hrtf_file_name for hrtf_file_name in os.listdir(nodes_replaced_path + '/sofa_min_phase')]
-    return
+
     eng = matlab.engine.start_matlab()
     s = eng.genpath(config.amt_dir)
     eng.addpath(s, nargout=0)
@@ -151,7 +151,7 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
 
     loc_errors = []
     for file in hrtf_file_names:
-        target_sofa_file = config.valid_gt_path + '/sofa_min_phase/' + file
+        target_sofa_file = config.valid_mag_path + '/sofa_min_phase/' + file
         # target_sofa_file = config.valid_hrtf_merge_dir + '/sofa_min_phase/' + file
         if hrtf_selection == 'minimum' or hrtf_selection == 'maximum':
             generated_sofa_file = f'{nodes_replaced_path}/sofa_min_phase/{hrtf_selection}.sofa'
