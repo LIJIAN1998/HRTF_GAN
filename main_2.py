@@ -239,38 +239,42 @@ def main(config, mode):
             left = left_train[id]['features'][:, :, :, 1:]
             right = right_train[id]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
-        mask = np.ones((72, 12, 1), dtype=bool)
-        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
-        for i in range(72 // 36):
-            for j in range(12 // 6):
-                mask[2*i, 1*j, :] = original_mask[2*i, 1*j, :]
-        order = 22
-        SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
-        harmonics = torch.from_numpy(SHT.get_harmonics()).float()
-        sh_coef = torch.from_numpy(SHT(merge)).float()
-        print("coef: ", sh_coef.shape)
-        print(sh_coef)
-        print("max: ", torch.max(sh_coef))
-        print("min: ", torch.min(sh_coef))
-        print("avg: ", torch.mean(sh_coef))
-        print("std: ", torch.std(sh_coef))
-        recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
-        merge = torch.from_numpy(merge.data).float()
-        # x = recon[70, 1, 0, :]
-        # y = merge[70, 1, 0, :]
-        mean_recon1 = torch.mean(recon)
-        max1 = torch.max(recon)
-        min1 = torch.min(recon)
-        mean_original = torch.mean(merge)
-        max_original = torch.max(merge)
-        min_original = torch.min(merge)
-        print("order: ", order)
-        print("mean 1: ", mean_recon1)
-        print("original mean: ", mean_original)
-        print("max 1: ", max1)
-        print("max original: ", max_original)
-        print("min 1: ", min1)
-        print("min original: ", min_original)
+        print("first elevation: ")
+        print(merge[:, 0, :, :10])
+        print("last elevation:")
+        print(merge[:, -1, :, :10])
+        # mask = np.ones((72, 12, 1), dtype=bool)
+        # original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        # for i in range(72 // 36):
+        #     for j in range(12 // 6):
+        #         mask[2*i, 1*j, :] = original_mask[2*i, 1*j, :]
+        # order = 22
+        # SHT = SphericalHarmonicsTransform(order, left_hrtf.row_angles, left_hrtf.column_angles, left_hrtf.radii, mask)
+        # harmonics = torch.from_numpy(SHT.get_harmonics()).float()
+        # sh_coef = torch.from_numpy(SHT(merge)).float()
+        # print("coef: ", sh_coef.shape)
+        # print(sh_coef)
+        # print("max: ", torch.max(sh_coef))
+        # print("min: ", torch.min(sh_coef))
+        # print("avg: ", torch.mean(sh_coef))
+        # print("std: ", torch.std(sh_coef))
+        # recon = (harmonics @ sh_coef).reshape(72, 12, 1, 256).detach().cpu()
+        # merge = torch.from_numpy(merge.data).float()
+        # # x = recon[70, 1, 0, :]
+        # # y = merge[70, 1, 0, :]
+        # mean_recon1 = torch.mean(recon)
+        # max1 = torch.max(recon)
+        # min1 = torch.min(recon)
+        # mean_original = torch.mean(merge)
+        # max_original = torch.max(merge)
+        # min_original = torch.min(merge)
+        # print("order: ", order)
+        # print("mean 1: ", mean_recon1)
+        # print("original mean: ", mean_original)
+        # print("max 1: ", max1)
+        # print("max original: ", max_original)
+        # print("min 1: ", min1)
+        # print("min original: ", min_original)
 
         # with open("coef.txt", "a") as f:
         #     f.write(f"{sh_coef}")
@@ -289,11 +293,11 @@ def main(config, mode):
         # if domain == 'magnitude_db':
         #     ori = 10 ** (ori/20)
         #     gen = 10 ** (gen/20)
-        generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
+        # generated = recon[None,:].permute(0, 4, 3, 1, 2) # 1 x nbins x r x w x h
         # generated = F.relu(generated) + 1.8e-8
-        target = merge[None,:].permute(0,4,3,1,2)
-        error = spectral_distortion_metric(generated, target, domain=domain)
-        print("lsd error: ", error)
+        # target = merge[None,:].permute(0,4,3,1,2)
+        # error = spectral_distortion_metric(generated, target, domain=domain)
+        # print("lsd error: ", error)
 
         # sh_loss = ((hr_coefficient - sh_coef.T)**2).mean()
         # print("sh loss: ", sh_loss)
