@@ -114,7 +114,7 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
 
     if hrtf_selection == 'minimum' or hrtf_selection == 'maximum':
         nodes_replaced_path = sr_dir
-        hrtf_file_names = [hrtf_file_name for hrtf_file_name in os.listdir(config.valid_gt_path + '/sofa_min_phase')]
+        hrtf_file_names = [hrtf_file_name for hrtf_file_name in os.listdir(config.valid_mag_path + '/sofa_min_phase')]
     else:
         sr_data_paths = glob.glob('%s/%s_*' % (sr_dir, config.dataset))
         sr_data_file_names = ['/' + os.path.basename(x) for x in sr_data_paths]
