@@ -135,7 +135,7 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
         #     cube, sphere, sphere_triangles, sphere_coeffs = pickle.load(file)
 
         my_convert_to_sofa(nodes_replaced_path, config, row_angles, column_angles)
-        my_convert_to_sofa(config.valid_mag_path, config, row_angles, column_angles)
+        # my_convert_to_sofa(config.valid_mag_path, config, row_angles, column_angles)
         # convert_to_sofa(nodes_replaced_path, config, cube, sphere)
         print('Created valid sofa files')
 
@@ -187,7 +187,8 @@ def run_target_localisation_evaluation(config):
     eng.addpath(s, nargout=0)
 
     loc_target_errors = []
-    target_sofa_path = config.valid_hrtf_merge_dir + '/sofa_min_phase'
+    target_sofa_path = config.valid_mag_path + '/sofa_min_phase'
+    # target_sofa_path = config.valid_hrtf_merge_dir + '/sofa_min_phase'
     hrtf_file_names = [hrtf_file_name for hrtf_file_name in os.listdir(target_sofa_path)]
     for file in hrtf_file_names:
         target_sofa_file = target_sofa_path + '/' + file

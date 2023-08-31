@@ -239,12 +239,17 @@ def main(config, mode):
             left = left_train[id]['features'][:, :, :, 1:]
             right = right_train[id]['features'][:, :, :, 1:]
         merge = np.ma.concatenate([left, right], axis=3)
-        print("first elevation: ")
+        print("first elevation: ", merge[:, 0, :, :10].shape)
         print(merge[:, 0, :, :10])
-        print("last elevation:")
+        print("last elevation:", merge[:, -1, :, :10].shape)
         print(merge[:, -1, :, :10])
         # mask = np.ones((72, 12, 1), dtype=bool)
-        # original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        original_mask = np.all(np.ma.getmaskarray(left), axis=3)
+        for c in range(12):
+            print("el: ", c)
+            print(original_mask[:, c].shape)
+            print(original_mask[:, c].any())
+
         # for i in range(72 // 36):
         #     for j in range(12 // 6):
         #         mask[2*i, 1*j, :] = original_mask[2*i, 1*j, :]
