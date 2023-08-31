@@ -161,7 +161,7 @@ def main(config, mode):
 
     elif mode == 'barycentric_baseline':
         config.domain = "magnitude"
-        config.upscale_factor = 108
+        config.upscale_factor = 216
         print("domain: ", config.domain)
         print("upsacle factor: ", config.upscale_factor)
         #  store hr hrtf pickles
