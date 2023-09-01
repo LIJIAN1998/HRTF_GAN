@@ -136,7 +136,7 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
-        config.upscale_factor = 72
+        config.upscale_factor = 108
         with open("log.txt", "a") as f:
             f.write(f"upscale factor: {config.upscale_factor}\n")
         if config.transform_flag:
