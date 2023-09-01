@@ -204,16 +204,16 @@ def main(config, mode):
 
     elif mode == 'hrtf_selection_baseline':
         config.domain = "magnitude"
-        run_hrtf_selection(config, config.hrtf_selection_dir)
+        # run_hrtf_selection(config, config.hrtf_selection_dir)
 
-        if config.gen_sofa_flag:
-            ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
-                                                                 'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
-            row_angles = ds.row_angles
-            column_angles = ds.column_angles
-            my_convert_to_sofa(config.hrtf_selection_dir, config, row_angles, column_angles)
+        # if config.gen_sofa_flag:
+        #     ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+        #                                                          'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+        #     row_angles = ds.row_angles
+        #     column_angles = ds.column_angles
+        #     my_convert_to_sofa(config.hrtf_selection_dir, config, row_angles, column_angles)
 
-        config.path = config.hrtf_selection_dir
+        # config.path = config.hrtf_selection_dir
 
         # file_ext = f'lsd_errors_hrtf_selection_minimum_data.pickle'
         # run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
