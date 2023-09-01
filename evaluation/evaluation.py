@@ -185,6 +185,8 @@ def run_target_localisation_evaluation(config):
     eng.addpath(s, nargout=0)
     s = eng.genpath(config.data_dirs_path)
     eng.addpath(s, nargout=0)
+    s = eng.genpath('/rds/general/user/jl2622/home/HRTF_GAN/evaluation')
+    eng.addpath(s, nargout=0)
 
     loc_target_errors = []
     target_sofa_path = config.valid_mag_path + '/sofa_min_phase'
