@@ -104,8 +104,8 @@ def test(config, val_prefetcher):
     # Clear/Create directories
     shutil.rmtree(Path(valid_dir), ignore_errors=True)
     Path(valid_dir).mkdir(parents=True, exist_ok=True)
-    shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
-    Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
+    # shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
+    # Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
 
     if config.transform_flag:
         mean_std_dir = config.mean_std_coef_dir
@@ -117,7 +117,7 @@ def test(config, val_prefetcher):
 
     margin = 1.8670232e-08
 
-    plot_flag = True
+    plot_flag = False
     count = 0
     avg_lsd = []
     while batch_data is not None:
@@ -131,7 +131,6 @@ def test(config, val_prefetcher):
         hrtf = batch_data["hrtf"]
         masks = batch_data["mask"]
         sample_id = batch_data["id"].item()
-        print("lr shape: ", lr_coefficient.shape)
 
         # Use the generator model to generate fake samples
         with torch.no_grad():
@@ -181,7 +180,7 @@ def test(config, val_prefetcher):
                 average_over_frequencies = spectral_distortion_inner(gen_tf, ori_tf)
                 total_all_positions += np.sqrt(average_over_frequencies)
 
-            print('Log SD (for %s position): %s' % (ir_id, np.sqrt(average_over_frequencies)))
+            # print('Log SD (for %s position): %s' % (ir_id, np.sqrt(average_over_frequencies)))
             if max_value is None or np.sqrt(average_over_frequencies) > max_value:
                 max_value = np.sqrt(average_over_frequencies)
                 max_id = ir_id
@@ -194,8 +193,8 @@ def test(config, val_prefetcher):
         total_sd_metric += sd_metric
         avg_lsd.append(sd_metric)
 
-        print('Min Log SD (for %s position): %s' % (min_id, min_value))
-        print('Max Log SD (for %s position): %s' % (max_id, max_value))
+        # print('Min Log SD (for %s position): %s' % (min_id, min_value))
+        # print('Max Log SD (for %s position): %s' % (max_id, max_value))
 
         if plot_flag:
             plot_tf(min_id, ori_hrtf, recon_hrtf)
@@ -206,30 +205,16 @@ def test(config, val_prefetcher):
         
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = sr[0].detach().cpu()
+        sr = 10 ** (sr / 20)
         # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
-        hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
+        # hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
 
         with open(valid_dir + file_name, "wb") as file:
             pickle.dump(sr, file)
 
-        with open(valid_gt_dir + file_name, "wb") as file:
-            pickle.dump(hr, file)
+        # with open(valid_gt_dir + file_name, "wb") as file:
+        #     pickle.dump(hr, file)
 
-        # if plot_flag:
-        #     print("plot")
-        #     generated = sr
-        #     target = hr.permute(1, 2, 0, 3)
-        #     path = '/rds/general/user/jl2622/home/HRTF_GAN'
-        #     filename = f"sample_{sample_id}"
-        #     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-        #     x = generated[0, 0, 0, :]
-        #     y = target[0, 0, 0, :]
-        #     ax1.plot(x)
-        #     ax1.set_title('recon')
-        #     ax2.plot(y)
-        #     ax2.set_title('original')
-        #     plt.savefig(f"{path}/{filename}.png")
-        #     plot_flag = False
         # Preload the next batch of data
         batch_data = val_prefetcher.next()
     print("lsd for all test subject: ", avg_lsd)

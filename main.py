@@ -136,6 +136,7 @@ def main(config, mode):
         train(config, train_prefetcher)
 
     elif mode == 'test':
+        config.upscale_factor = 32
         with open("log.txt", "a") as f:
             f.write(f"upscale factor: {config.upscale_factor}\n")
         if config.transform_flag:
@@ -156,8 +157,8 @@ def main(config, mode):
 
         test(config, test_prefetcher)
 
-        run_lsd_evaluation(config, config.valid_path)
-        # run_localisation_evaluation(config, config.valid_path)
+        # run_lsd_evaluation(config, config.valid_path)
+        run_localisation_evaluation(config, config.valid_path)
 
     elif mode == 'barycentric_baseline':
         config.domain = "magnitude"
@@ -213,7 +214,7 @@ def main(config, mode):
         #     column_angles = ds.column_angles
         #     my_convert_to_sofa(config.hrtf_selection_dir, config, row_angles, column_angles)
 
-        # config.path = config.hrtf_selection_dir
+        config.path = config.hrtf_selection_dir
 
         # file_ext = f'lsd_errors_hrtf_selection_minimum_data.pickle'
         # run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
