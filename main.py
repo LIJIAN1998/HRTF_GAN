@@ -19,7 +19,7 @@ from preprocessing.utils import interpolate_fft, generate_euclidean_cube, conver
 
 from baselines.barycentric_interpolation import run_barycentric_interpolation, my_barycentric_interpolation, debug_barycentric
 from baselines.hrtf_selection import run_hrtf_selection
-from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa
+from evaluation.evaluation import run_lsd_evaluation, run_localisation_evaluation, check_sofa, run_target_localisation_evaluation
 
 from hrtfdata.transforms.hrirs import SphericalHarmonicsTransform
 from scipy.ndimage import binary_dilation
@@ -161,9 +161,10 @@ def main(config, mode):
 
     elif mode == 'barycentric_baseline':
         config.domain = "magnitude"
-        config.upscale_factor = 216
-        print("domain: ", config.domain)
-        print("upsacle factor: ", config.upscale_factor)
+        # config.upscale_factor = 216
+        # print("domain: ", config.domain)
+        # print("upsacle factor: ", config.upscale_factor)
+        print("target loc test")
         #  store hr hrtf pickles
         # _, test_prefetcher = load_hrtf(config)
         # valid_mag_dir = config.valid_mag_path
@@ -193,12 +194,13 @@ def main(config, mode):
         #     my_convert_to_sofa(barycentric_output_path, config, row_angles, column_angles)
         #     print('Created barycentric baseline sofa files')
 
-        config.path = config.barycentric_hrtf_dir
+        # config.path = config.barycentric_hrtf_dir
         # file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
         # run_lsd_evaluation(config, barycentric_output_path, file_ext)
 
-        file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        run_localisation_evaluation(config, barycentric_output_path, file_ext)
+        # file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        # run_localisation_evaluation(config, barycentric_output_path, file_ext)
+        run_target_localisation_evaluation(config)
 
     elif mode == 'hrtf_selection_baseline':
         config.domain = "magnitude"
