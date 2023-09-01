@@ -215,7 +215,7 @@ class D_DBPN(nn.Module):
         self.up5 = IterativeBlock(base_channels, base_channels, kernel, stride, padding)
         
         # Reconstruction
-        self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1)
+        self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1, activation=None)
         self.trim = Trim(max_num_coefficient)
 
         self.init_parameters()
