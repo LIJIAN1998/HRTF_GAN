@@ -186,7 +186,7 @@ class ResEncoder(nn.Module):
         return z
     
 class D_DBPN(nn.Module):
-    def __init__(self, nbins, base_channels, num_features, latent_dim, max_order):
+    def __init__(self, nbins, base_channels, latent_dim, max_order):
         super(D_DBPN, self).__init__()
 
         max_num_coefficient = (max_order + 1) ** 2
@@ -215,7 +215,7 @@ class D_DBPN(nn.Module):
         self.up5 = IterativeBlock(base_channels, base_channels, kernel, stride, padding)
         
         # Reconstruction
-        self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1, activation=None)
+        self.out_conv = ConvBlock(base_channels, nbins, 3, 1, 1)
         self.trim = Trim(max_num_coefficient)
 
         self.init_parameters()

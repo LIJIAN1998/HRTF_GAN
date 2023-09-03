@@ -197,7 +197,7 @@ def train(config, train_prefetcher):
 
     # Define VAE and transfer to CUDA
     in_order = int(np.sqrt(num_row_angles*num_col_angles*num_radii/config.upscale_factor) - 1)
-    netG = AutoEncoder(nbins=nbins, in_order=in_order, latent_dim=latent_dim, base_channels=256, num_features=512, out_oder=max_order).to(device)
+    netG = AutoEncoder(nbins=nbins, in_order=in_order, latent_dim=latent_dim, base_channels=256, out_oder=max_order).to(device)
     # netG = D_DBPN(nbins=nbins, max_order=max_order).to(device)
     # netG = D_DBPN(nbins, base_channels=256, num_features=512, scale_factor=upscale_factor, max_order=max_order).to(device)
     # vae = VAE(nbins=nbins, max_degree=in_order, latent_dim=latent_dim).to(device)
