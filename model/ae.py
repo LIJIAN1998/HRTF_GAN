@@ -297,12 +297,12 @@ class Decoder(nn.Module):
         return x
 
 class AutoEncoder(nn.Module):
-    def __init__(self, nbins: int, in_order: int, latent_dim: int, base_channels: int, num_features: int, out_oder: int=22):
+    def __init__(self, nbins: int, in_order: int, latent_dim: int, base_channels: int, out_oder: int=22):
         super(AutoEncoder, self).__init__()
 
         self.encoder = ResEncoder(ResBlock, nbins, in_order, latent_dim)
         # self.encoder = SimpleE(nbins, latent_dim)
-        self.decoder = D_DBPN(nbins, base_channels=base_channels, num_features=num_features,
+        self.decoder = D_DBPN(nbins, base_channels=base_channels,
                               latent_dim=latent_dim, max_order=out_oder)
         # self.decoder = Decoder(nbins, latent_dim, out_oder)
 
