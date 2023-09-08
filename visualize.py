@@ -102,7 +102,7 @@ if config.merge_flag:
 
 device = torch.device(config.device_name if (
     torch.cuda.is_available() and ngpu > 0) else "cpu")
-model = AutoEncoder(nbins=nbins, in_order=degree, latent_dim=config.latent_dim, base_channels=256, num_features=512, out_oder=max_order)
+model = AutoEncoder(nbins=nbins, in_order=degree, latent_dim=config.latent_dim, base_channels=256, out_oder=max_order)
 print("Build VAE model successfully.")
 model.load_state_dict(torch.load(f"{config.model_path}/Gen_216bn.pt", map_location=torch.device('cpu')))
 print(f"Load VAE model weights `{os.path.abspath(config.model_path)}` successfully.")
