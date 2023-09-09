@@ -45,17 +45,7 @@ def main(config, mode):
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
 
-    if mode == 'generate_projection':
-        # Must be run in this mode once per dataset, finds barycentric coordinates for each point in the cubed sphere
-        # No need to load the entire dataset in this case
-        ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 
-                                                              'side': 'left', 'domain': 'time'}}, subject_ids='first')
-        # need to use protected member to get this data, no getters
-        print("projection dir: ", config.projection_dir)
-        cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
-        generate_euclidean_cube(config, cs.get_sphere_coords(), edge_len=config.hrtf_size)
-
-    elif mode == 'preprocess':
+    if mode == 'preprocess':
         ds_left = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
                                                                   'side': 'left', 'domain': 'magnitude'}})
         ds_right = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
@@ -96,14 +86,11 @@ def main(config, mode):
                 j += 1
                 train_hrtfs[j] = merge[:, :, :, config.nbins_hrtf:] # add right
                 j += 1
-            else:
+            else: # store test HRTFs
                 subject_id = str(ds_left.subject_ids[i])
                 file_name = '/' + f"{config.dataset}_{subject_id}.pickle"
                 with open(valid_gt_dir + file_name, "wb") as file:
                     pickle.dump(merge, file)
-
-        if config.gen_sofa_flag:
-            my_convert_to_sofa(valid_gt_dir, config, ds_left.row_angles, ds_left.column_angles)
 
         # save dataset mean and standard deviation for each channel, across all HRTFs in the training data
         mean = torch.mean(train_hrtfs, [0, 1, 2, 3])
@@ -115,28 +102,23 @@ def main(config, mode):
             pickle.dump((mean, std, min_hrtf, max_hrtf), file)
 
     elif mode == 'train':
-        print("using cuda? ", torch.cuda.is_available())
-        # config_file_path = f"{config.path}/config_files/config_150.json"
-        # config.load(150)
-        config.upscale_factor = 32
-        bs, optmizer, lr, alpha, lambda_feature, latent_dim, critic_iters = config.get_train_params()
+        bs, optmizer, lr_G, lr_D, latent_dim, critic_iters = config.get_train_params()
         with open(f"log.txt", "a") as f:
             # f.write(f"config loaded: {config_file_path}\n")
             f.write(f"batch size: {bs}\n")
             f.write(f"optimizer: {optmizer}\n")
-            f.write(f"lr: {lr}\n")
-            f.write(f"alpha: {alpha}\n")
-            f.write(f"lambda: {lambda_feature}\n")
+            f.write(f"generator lr: {lr_G}\n")
+            f.write(f"discriminator lr: {lr_D}\n")
             f.write(f"latent_dim: {latent_dim}\n")
             f.write(f"critic iters: {critic_iters}\n")
         train_prefetcher, _ = load_hrtf(config)
         print("train fetcher: ", len(train_prefetcher))
         # Trains the model, according to the parameters specified in Config
-        # util.initialise_folders(config, overwrite=True)
+        util.initialise_folders(config, overwrite=True)
         train(config, train_prefetcher)
 
     elif mode == 'test':
-        config.upscale_factor = 216
+        # config.upscale_factor = 216
         with open("log.txt", "a") as f:
             f.write(f"upscale factor: {config.upscale_factor}\n")
         if config.transform_flag:
@@ -165,67 +147,66 @@ def main(config, mode):
         # config.upscale_factor = 216
         # print("domain: ", config.domain)
         # print("upsacle factor: ", config.upscale_factor)
-        print("target loc test")
         #  store hr hrtf pickles
-        # _, test_prefetcher = load_hrtf(config)
-        # valid_mag_dir = config.valid_mag_path
-        # shutil.rmtree(Path(valid_mag_dir), ignore_errors=True)
-        # Path(valid_mag_dir).mkdir(parents=True, exist_ok=True)
-        # test_prefetcher.reset()
-        # batch_data = test_prefetcher.next()
-        # while batch_data is not None:
-        #     hrtf = batch_data["hrtf"]
-        #     sample_id = batch_data["id"].item()
-        #     hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu()  # r x w x h x nbins
-        #     # print(f"data {sample_id} has negative? ", (hr<0).any())
-        #     file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
-        #     with open(valid_mag_dir + file_name, "wb") as file:
-        #         pickle.dump(hr, file)
-        #     batch_data = test_prefetcher.next()
+        _, test_prefetcher = load_hrtf(config)
+        valid_mag_dir = config.valid_mag_path
+        shutil.rmtree(Path(valid_mag_dir), ignore_errors=True)
+        Path(valid_mag_dir).mkdir(parents=True, exist_ok=True)
+        test_prefetcher.reset()
+        batch_data = test_prefetcher.next()
+        while batch_data is not None:
+            hrtf = batch_data["hrtf"]
+            sample_id = batch_data["id"].item()
+            hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu()  # r x w x h x nbins
+            # print(f"data {sample_id} has negative? ", (hr<0).any())
+            file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
+            with open(valid_mag_dir + file_name, "wb") as file:
+                pickle.dump(hr, file)
+            batch_data = test_prefetcher.next()
 
         barycentric_data_folder = f'/barycentric_interpolated_data_{config.upscale_factor}'
         barycentric_output_path = config.barycentric_hrtf_dir + barycentric_data_folder
         # run_barycentric_interpolation(config, barycentric_output_path)
         # print("!!!!!!!!!!!!!!!!!!my interpolation!!!!!!!!!!!!!!!!!!!!!!!!")
-        # sphere_coords = debug_barycentric(config, barycentric_output_path)
-        # sphere_coords = my_barycentric_interpolation(config, barycentric_output_path)
+        sphere_coords = my_barycentric_interpolation(config, barycentric_output_path)
         # if config.gen_sofa_flag:
         #     row_angles = list(set([x[1] for x in sphere_coords]))  # rad
         #     column_angles = list(set([x[0] for x  in sphere_coords]))  # rad
         #     my_convert_to_sofa(barycentric_output_path, config, row_angles, column_angles)
         #     print('Created barycentric baseline sofa files')
 
-        # config.path = config.barycentric_hrtf_dir
-        # file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        # run_lsd_evaluation(config, barycentric_output_path, file_ext)
+        config.path = config.barycentric_hrtf_dir
+        file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        run_lsd_evaluation(config, barycentric_output_path, file_ext)
 
-        # file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        # run_localisation_evaluation(config, barycentric_output_path, file_ext)
-        run_target_localisation_evaluation(config)
+        file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
+        run_localisation_evaluation(config, barycentric_output_path, file_ext)
+        # run_target_localisation_evaluation(config)
 
     elif mode == 'hrtf_selection_baseline':
         config.domain = "magnitude"
-        # run_hrtf_selection(config, config.hrtf_selection_dir)
+        run_hrtf_selection(config, config.hrtf_selection_dir)
 
-        # if config.gen_sofa_flag:
-        #     ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
-        #                                                          'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
-        #     row_angles = ds.row_angles
-        #     column_angles = ds.column_angles
-        #     my_convert_to_sofa(config.hrtf_selection_dir, config, row_angles, column_angles)
+        if config.gen_sofa_flag:
+            ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate,
+                                                                 'side': 'left', 'domain': 'magnitude'}}, subject_ids='first')
+            row_angles = ds.row_angles
+            column_angles = ds.column_angles
+            my_convert_to_sofa(config.hrtf_selection_dir, config, row_angles, column_angles)
 
         config.path = config.hrtf_selection_dir
 
-        # file_ext = f'lsd_errors_hrtf_selection_minimum_data.pickle'
-        # run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
+        file_ext = f'lsd_errors_hrtf_selection_minimum_data.pickle'
+        run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
         file_ext = f'loc_errors_hrtf_selection_minimum_data.pickle'
         run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
 
-        # file_ext = f'lsd_errors_hrtf_selection_maximum_data.pickle'
-        # run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
+        file_ext = f'lsd_errors_hrtf_selection_maximum_data.pickle'
+        run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
         file_ext = f'loc_errors_hrtf_selection_maximum_data.pickle'
         run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
 
+    # ignore the debugging code
     elif mode == "debug":
         # ds = load_function(data_dir, feature_spec={'hrirs': {'samplerate': config.hrir_samplerate, 'side': 'both', 'domain': 'time'}})
         # cs = CubedSphere(mask=ds[0]['features'].mask, row_angles=ds.row_angles, column_angles=ds.column_angles)
