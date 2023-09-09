@@ -57,6 +57,7 @@ def test(config, val_prefetcher):
 
     ngpu = config.ngpu
     valid_dir = config.valid_path
+    recon_mag_dir = config.recon_mag_path
     valid_gt_dir = config.valid_gt_path
 
     nbins = config.nbins_hrtf
@@ -104,6 +105,8 @@ def test(config, val_prefetcher):
     # Clear/Create directories
     shutil.rmtree(Path(valid_dir), ignore_errors=True)
     Path(valid_dir).mkdir(parents=True, exist_ok=True)
+    shutil.rmtree(Path(recon_mag_dir), ignore_errors=True)
+    Path(recon_mag_dir).mkdir(parents=True, exist_ok=True)
     # shutil.rmtree(Path(valid_gt_dir), ignore_errors=True)
     # Path(valid_gt_dir).mkdir(parents=True, exist_ok=True)
 
@@ -205,11 +208,16 @@ def test(config, val_prefetcher):
         
         file_name = '/' + f"{config.dataset}_{sample_id}.pickle"
         sr = sr[0].detach().cpu()
-        sr = 10 ** (sr / 20)
+        # sr = 10 ** (sr / 20)
         # sr = torch.permute(sr[0], (2, 3, 1, 0)).detach().cpu() # w x h x r x nbins
         # hr = torch.permute(hrtf[0], (1, 2, 3, 0)).detach().cpu() # r x w x h x nbins
-
+        
+        # 
         with open(valid_dir + file_name, "wb") as file:
+            pickle.dump(sr, file)
+
+        with open(recon_mag_dir + file_name, "wb") as file:
+            sr = 10 ** (sr / 20)
             pickle.dump(sr, file)
 
         # with open(valid_gt_dir + file_name, "wb") as file:

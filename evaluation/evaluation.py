@@ -18,13 +18,16 @@ import matlab.engine
 
 from model.dataset import get_sample_ratio
 
-def replace_nodes(config, val_dir, file_name):
+def replace_nodes(config, val_dir, ori_dir, file_name):
     # Overwrite the generated points that exist in the original data
     with open(val_dir + file_name, "rb") as f:
         sr_hrtf = pickle.load(f) # w x h x r x nbins
 
+    # when evaluate the model, use valid_gt_path.
+    # for barycentric interpolation and hrtf selection, use valid_mag_path
     # with open(config.valid_gt_path + file_name, "rb") as f:
-    with open(config.valid_mag_path + file_name, "rb") as f:
+    # with open(config.valid_mag_path + file_name, "rb") as f:
+    with open(ori_dir + file_name, "rb") as f:
         hr_hrtf = pickle.load(f).permute(1, 2, 0, 3)  # r x w x h x nbins -> w x h x r x nbins
 
     row_ratio, col_ratio = get_sample_ratio(config.upscale_factor)
@@ -38,7 +41,7 @@ def replace_nodes(config, val_dir, file_name):
 
     return target, generated
 
-def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
+def run_lsd_evaluation(config, sr_dir, ori_dir, file_ext=None, hrtf_selection=None):
 
     file_ext = 'lsd_errors.pickle' if file_ext is None else file_ext
 
@@ -54,7 +57,7 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
             with open(config.valid_mag_path + file_name, "rb") as f:
                 hr_hrtf = pickle.load(f)
 
-            with open(f'{val_dir}/{hrtf_selection}.pickle', "rb") as f:
+            with open(f'{sr_dir}/{hrtf_selection}.pickle', "rb") as f:
                 sr_hrtf = pickle.load(f)
 
             generated = torch.permute(sr_hrtf[:, None], (1, 4, 0, 2, 3)) 
@@ -65,7 +68,7 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
             lsd_errors.append([subject_id,  float(error.detach())])
             print('LSD Error of subject %s: %0.4f' % (subject_id, float(error.detach())))
     else:
-        val_data_paths = glob.glob(f"{val_dir}/{config.dataset}_*")
+        val_data_paths = glob.glob(f"{sr_dir}/{config.dataset}_*")
         # sr_data_paths = glob.glob('%s/%s_*' % (val_dir, config.dataset))
         val_data_file_names = ['/' + os.path.basename(x) for x in val_data_paths]
         print("val dir: ", val_data_paths)
@@ -73,7 +76,7 @@ def run_lsd_evaluation(config, val_dir, file_ext=None, hrtf_selection=None):
 
         lsd_errors = []
         for file_name in val_data_file_names:
-            target, generated = replace_nodes(config, val_dir, file_name)
+            target, generated = replace_nodes(config, sr_dir, ori_dir, file_name)
             # print(f"{file_name} contains negative? :", (generated < 0).any(), (target < 0).any())
             error = spectral_distortion_metric(generated, target, domain=config.domain)
             subject_id = ''.join(re.findall(r'\d+', file_name))
@@ -100,7 +103,7 @@ def check_sofa(config):
     [pol_acc1, pol_rms1, querr1] = eng.test(generated_sofa, target_sofa, nargout=3)
     print(pol_acc1, pol_rms1, querr1)
 
-def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=None):
+def run_localisation_evaluation(config, sr_dir, ori_dir, file_ext=None, hrtf_selection=None):
 
     imp = importlib.import_module('hrtfdata.full')
     load_function = getattr(imp, config.dataset)
@@ -125,7 +128,7 @@ def run_localisation_evaluation(config, sr_dir, file_ext=None, hrtf_selection=No
         Path(nodes_replaced_path).mkdir(parents=True, exist_ok=True)
 
         for file_name in sr_data_file_names:
-            target, generated = replace_nodes(config, sr_dir, file_name)
+            target, generated = replace_nodes(config, sr_dir, ori_dir, file_name)
 
             with open(nodes_replaced_path + file_name, "wb") as file:
                 pickle.dump(torch.permute(generated[0], (1, 2, 3, 0)), file) # r x w x h x nbins

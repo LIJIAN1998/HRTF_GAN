@@ -51,6 +51,7 @@ class Config:
         self.existing_model_path = f'{self.data_dirs_path}{self.runs_folder}/{self.existing_model_tag}'
 
         self.valid_path = f'{self.data_dirs_path}{self.runs_folder}/{self.tag}/valid'
+        self.recon_mag_path = f'{self.data_dirs_path}{self.runs_folder}/{self.tag}/recon_mag'
         self.valid_gt_path = f'{self.data_dirs_path}{self.runs_folder}/{self.tag}/valid_gt'
         self.valid_mag_path = f'{self.data_dirs_path}{self.runs_folder}/{self.tag}/valid_mag'
         self.model_path = f'{self.data_dirs_path}{self.runs_folder}/{self.tag}'

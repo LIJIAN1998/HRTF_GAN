@@ -139,8 +139,8 @@ def main(config, mode):
 
         test(config, test_prefetcher)
 
-        run_lsd_evaluation(config, config.valid_path)
-        run_localisation_evaluation(config, config.valid_path)
+        run_lsd_evaluation(config, config.valid_path, config.valid_gt_path)
+        run_localisation_evaluation(config, config.recon_mag_path, config.valid_mag_path)
 
     elif mode == 'barycentric_baseline':
         config.domain = "magnitude"
@@ -177,10 +177,10 @@ def main(config, mode):
 
         config.path = config.barycentric_hrtf_dir
         file_ext = f'lsd_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        run_lsd_evaluation(config, barycentric_output_path, file_ext)
+        run_lsd_evaluation(config, barycentric_output_path, valid_mag_dir, file_ext)
 
         file_ext = f'loc_errors_barycentric_interpolated_data_{config.upscale_factor}.pickle'
-        run_localisation_evaluation(config, barycentric_output_path, file_ext)
+        run_localisation_evaluation(config, barycentric_output_path, valid_mag_dir, file_ext)
         # run_target_localisation_evaluation(config)
 
     elif mode == 'hrtf_selection_baseline':
@@ -197,14 +197,14 @@ def main(config, mode):
         config.path = config.hrtf_selection_dir
 
         file_ext = f'lsd_errors_hrtf_selection_minimum_data.pickle'
-        run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
+        run_lsd_evaluation(config, config.hrtf_selection_dir, valid_mag_dir, file_ext, hrtf_selection='minimum')
         file_ext = f'loc_errors_hrtf_selection_minimum_data.pickle'
-        run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='minimum')
+        run_localisation_evaluation(config, config.hrtf_selection_dir, valid_mag_dir, file_ext, hrtf_selection='minimum')
 
         file_ext = f'lsd_errors_hrtf_selection_maximum_data.pickle'
-        run_lsd_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
+        run_lsd_evaluation(config, config.hrtf_selection_dir, valid_mag_dir, file_ext, hrtf_selection='maximum')
         file_ext = f'loc_errors_hrtf_selection_maximum_data.pickle'
-        run_localisation_evaluation(config, config.hrtf_selection_dir, file_ext, hrtf_selection='maximum')
+        run_localisation_evaluation(config, config.hrtf_selection_dir, valid_mag_dir, file_ext, hrtf_selection='maximum')
 
     # ignore the debugging code
     elif mode == "debug":
